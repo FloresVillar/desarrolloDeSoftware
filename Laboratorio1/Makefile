@@ -105,7 +105,7 @@ shell: ## Abrir una shell con la venv activada (verás (bdd) en el prompt)
 
 .PHONY: run
 run: ## Ejecutar la app Flask en primer plano. Detener con CTRL+C.
-	@echo "Iniciando la aplicación en http://127.0.0.1:$(PORT) ..."
+	@echo "Iniciando la aplicación en http://0.0.0.0:$(PORT) ..."
 	@PORT=$(PORT) MESSAGE="$(MESSAGE)" RELEASE="$(RELEASE)" $(PY) app.py
 
 .PHONY: check-http
