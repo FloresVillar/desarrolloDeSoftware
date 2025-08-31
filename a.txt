@@ -1,2 +1,0 @@
-dns consulta servidores autoritativos, en linux etc este archivo tiene
-prioridad para resolver nombres
