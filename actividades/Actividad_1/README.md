@@ -45,12 +45,38 @@ Numero de despliegues exitosos por dia, utilizando curl, redirigiendo la salida 
 un ejemplo concreto es que librerias como numpy pasen esta condicion de seguridad.Los Acerca de los umbrales: 
 Umbral estricto (0 vulnerabilidades)
 umbral permisivo( <=2 vulnerabilidades ) 
-Dependiendo de estos se permitira que promocione o no  hacia la siguiente del ciclo del software.Sin embargo, en caso de no poder resolver este gate(por falta de una actualizacion), ha de aplicarse la siguiente politica de "captura de excepcion" la cual considera para la *caducidad* un maximo de 30 dias,*responsable* el lider tecnico del proyecto , *plan de correcion* esta incluiría colocar la actualizacion de la dependencia mientras tanto se puede usar un reemplazo.
+Dependiendo de estos se permitira que promocione o no  hacia la siguiente del ciclo del software.Sin embargo, en caso de no poder resolver este gate(por falta de una actualizacion), ha de aplicarse la siguiente politica de "captura de excepcion" la cual considera para la *caducidad* un maximo de 30 dias,*responsable* el lider tecnico del proyecto , *plan de correcion* esta incluiría colocar la actualizacion de la dependencia en los pendientes(backlogs) mientras tanto se podría usar un reemplazo.
+- **Evitando "teatro de seguridad"** 
+Como conseguimos que realmente se haga un trabajo de seguridad, pues dotaremos de eficacia a nuestras tecnicas de modo que 
+1. se dismunuyan hallazgos repetidos 
+2. Reducir el tiempo promedio para la correccion(MTTR).
+El primero se medirá con el registro en un historial en cada escaneo SAST/DAST calculando luego el porcentaje de problemas que se repiten respecto de la ejecucion anterior, asi si la tendencia es decreciente implicará que el equipo aprendio y aplicó la correccion.
+Mientras que el segundo se calcula al obtener la diferencia entre la resolucion y la deteccion, el objetivo es que el MTTR se reduzca-por ejemplo- trimestralmente. 
+
 ## 4.5 CI/CD y estrategias de despliegue(sandbox, canary azul/verde)
 
-![Cascada vs Devops](imagenes/pipeline_canary.png)
+- ![Pipeline Canary](imagenes/pipeline_canary.png)
 * imagen 5. Ciclo tradicional Estrategias de despligue. Fuente en [FUENTES.md](FUENTES.md).*
 
+- Como es sabido canary release divide el trafico entre dos grupos de usuarios,version antigua y la de la actualizacion.Entonces al escoger el microservicio "autenticación" que son cruciales en cuanto a la experiencia del usuario y un tanto mas relevante en cuanto a seguridad.
+
+- **tabla solicitada**
+| Riesgo                          | Mitigacion
+|---------------------------------|--------------------------------------|
+|Ruptura de una funcion en endpoint de login →  Tests automatizados 
+                                                que  comparan E/S esperadas con la version anterior
+|Costo operativo del doble despliegue        →  Limitar el 
+                                                tiempo definido maximo un dia del trafico canary
+|impacto en usuarios sensibles ej clientes empresariales →  Seleccionar 
+                                                            un grupo de bajo impacto 
+
+- **KPI primario para promocion/rollback** 
+Métrica: tasa de errores  HTTP *5xx* en el microservicio en cuestión 
+Umbral: *<= 0.5%* de las solicitudes canary
+Ventana de observacion: *30 minutos* de trafico real antes de promover el 100%
+
+- El escenario descrito muestra que un indicador numérico( error 5x) es aceptable pero el indicador relacionado directamente con el usuario (adopcion del app de pago) cae.
+Ambos tipos de metricas tienen que coexistir en el *gate* ya que una representa el cumplimiento de normativas tecnicas y la otra refleja la satisfaccion del usuario final.
 ## 4.6 Fundamentos practicos sin comandos 
 
 ### 1.HTTP - contrato observable
