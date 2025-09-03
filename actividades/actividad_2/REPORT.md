@@ -7,7 +7,7 @@ en las siguientes se definen las variables de entorno como PUERTO y LANZAMIENTO
 luego creamos una instancia de flask ``app=Flask(MODULO de recursos)``para procesar los request http.Seguidamente se usa un decorador 
 ``@app.route("/")`` para agregar comportamiento a ```def root()``` de modo que cada vez que  alguien haga un request hacia *http://localhost:PUERTO* o *("/")* se ejecutara root()
 Cabe resaltar que se creó el entorno virtual ,`actividad-2` que es donde se corre la version de flask descargada.
-- ![Levantando la app con variables de entorno 12-App](imagenes/1.png)
+- ![Levantando la app con variables de entorno 12-App](imagenes/1_1.png)
 
 -  salida stdout ` mensaje=Hola CC3S2,lanzamiento=v1`
 
@@ -101,3 +101,50 @@ con eso en mente al  hacerse  las consultas consecutivas los tiempos indicados v
 
 4. **pregunta guia**
 el  archivo /etc/hosts contiene registros que  entradas estaticas  tipo ip - nombre de hosts  y es local, valido para mi pc mientras que la zona DNS autoritativa es dinamica , esta distribuida con TTL y valida para todo el mundo
+
+## 3 TLS: seguridad en transito NGINX
+En este punto se tiene lo siguiente; un app.py que usa ``app = Flask`` como servidor este esta alojado en nuestra maquina fisica y escucha en  ``port=8080``, cuando se hace una peticion a ``http//localhost:8080`` se redirecciona hacia ``@app.route("/")`` que ejecuta ``root()`` , el servidor se pone en marcha escuchando a todas las interfaces en dicho puerto mediante ``app.run(host="0.0.0.0",port=PUERTO)`` (1)
+Pero no podemos exponer nuestro servidor a internet directamente necesitamos un servidor NGINGX que actuara como proxy inverso , de modo que sera nginx quien escuche en el puerto 80-por ejemplo- y pase las peticiones a ``127.0.0.1:8080``. Esto se configura en la el archivo miapp.conf el cual tendra el la estructura siguiente
+``
+server {    listen  puerto_donde_escucha;
+            server_name nombre_dominio_asociado;
+    location / {
+            proxy_pass direccion_donde_reenviar;
+    }
+} ``
+
+![arhivo de conf miapp2.conf y target nginx](imagenes/3_0.png)
+
+entonces la configuracion para obtener un proxy inverso que se expondra a intenet que estara vinculado  a nuestro dominio esta en miapp2.conf 
+luego necesitamos ubicar estas *reglas* miapp2.conf en 
+*/etc/nginx/sites-available* y relanzar el servicio nginx
+``sudo cp miapp2.conf /etc/nginx/sites-available/<br>
+sudo ln -s /etc/nginx/available/ /etc/nginx/sites-enabled/<br>
+sudo systemctl reload nginx``<br>
+pero siguiendo un enfoque 12-factor app
+luego todo esto se ubica en makefile, aqui deffinimos variables ?=  := 
+``
+    APP_NAME ?= miapp2
+    DOMINIO ?= miapp2.local
+    DISPONIBLES :=/etc/nginx/available/$(APP_NAME).conf
+    PERMITIDOS :=/etc/nginx/site-enabled/$(APP_NAME).conf
+``
+como el dominio , el puerto , la ruta donde para sitios disponibles y permitidos
+y seguidamente declaramos un target que ejecuta el blqoue que nos interesa
+
+``.PHONY nginx
+ngnix:
+`   @sudo cp miapp2.conf $(DISPONIBLES) `
+`   @sudo ln -s $(DISPONIBLES) $(PERMITIDOS)` creando enlace simbolico entre DISPONIBLES ↔ PERMITIDOS
+`   @sudo systemctl reload nginx `
+``
+okay , entonces al hacer make nginx se añade esa cofiguracion al servidor nginx , creando el enlace 
+entre DISPONIBLES y PERMITIDOS, para que cada vez que miapp2.conf se modifique 
+esos cambios los conozco NGINX
+
+luego al hacer make nginx se automatizan la ejecucion de esos comandos
+
+como nginx siempre esta activo en segundo plano como proceso demonio, no nos preocupamos de ello
+ahora al hacer python3 miapp2.py nuestro servidor flask arranca (1), cuando hagamos las peticiones a
+http://NUESTRO_DOMINIO  → port 80 → nginx →  127.0.0.1:8081<br>
+![llamada curl a miapp2.local](imagenes/3_0_1.png)
