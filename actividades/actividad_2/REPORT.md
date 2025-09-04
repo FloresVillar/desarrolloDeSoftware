@@ -148,3 +148,63 @@ como nginx siempre esta activo en segundo plano como proceso demonio, no nos pre
 ahora al hacer python3 miapp2.py nuestro servidor flask arranca (1), cuando hagamos las peticiones a
 http://NUESTRO_DOMINIO  → port 80 → nginx →  127.0.0.1:8081<br>
 ![llamada curl a miapp2.local](imagenes/3_0_1.png)
+## 1
+ahora se hara una terminacion TLS en nginx, esto es que nuestro proxy inverso estara escuchando en el puerto 443 , TLS requiere un certificado
+y una llave estos se declaran en .conf y sera en makefile donde se ejecutan los comandos para crearlos
+en miapp2.conf `` 
+                listen 443 ssl;<br>
+                ssl_certificate /etc/ssl/miapp2/miapp2.local.crt;<br>
+                ssl_certificate_key /etc/ssl/miapp2/miapp2.local.key; ``
+y en Makefile : ``
+              OPENSSL :=&(shell command -vv openssl ...)
+              DIRECTORIOS :=......
+              KEY , CRT
+
+              .PHONY:tls-cert
+              tls-cert:
+                comandos del target
+    ``
+y una vez creados los certificados se repetira el proceso que se hizo cuando  nginx quedo vinculado a nuestro dominio y se encargara de recibir el request en 443 para luego hacer el proxy_pass hacia Flask  corriendo en 127.0.0.1:8081 (2)
+``
+.PHONY: nginx
+nginx:
+
+``@if [ -z "$(NGINX)" ]; then echo "nginx no encontrado (omitiendo)"; exit 1; fi
+	@sudo mkdir -p $(NGINX_CERT_DIR)
+	@if [ -f "$(CRT_FILE)" ] && [ -f "$(KEY_FILE)" ]; then \
+	  sudo cp $(CRT_FILE) $(NGINX_CERT_DIR)/$(DOMAIN).crt; \
+	  sudo cp $(KEY_FILE) $(NGINX_CERT_DIR)/$(DOMAIN).key; \
+	else echo "Faltan certificados. Ejecuta 'make tls-cert' primero."; exit 1; fi
+    ubicar la configuracion en sitios permitido y reiniciar el servidor nginx
+
+![CERTIFICADO TLS](imagenes/3_1.png)
+los certificados son guardados en certs  y tambien en /et/ssl/miapp2 que es donde nginx los espera para usarlos.
+
+1[certs y /etc/ssl/miapp2](imagenes/3_1_2.png)
+
+y ahora con make niginx copiamos los certificados a /etc/nginx/  donde nginx espera usarlos
+luego para ver que realmente se TLS seguro, arrancamos el servidor, entonces tenemos (1)  y (2)
+ahora realizamos una peticion via ``curl -vk https://miapp2.local`` y sucede lo siguiente :
+
+![flujo completo](imagenes/3_1_3.png)
+
+lo cual que verificado mediante ``curl -vk https://miapp2.local``
+![curl -vk ](imagenes/3_1_4.png)
+# 2 configura nginx
+ahora se añadira variables de configuracion en .conf para que Flask sepa la informacion exacta del cliente y si usa http o https, entonces de este modo podra hacer los logs respectivos
+
+``  proxy_se_theader X-Forwarded-Host $host<br>
+    proxy_set_header X-Forwarded-For $remote_addr<br>
+    proxy_set_header X-Forwarded-Proto https<br>
+``
+![X-Forwarded-Host,For,Proto](imagenes/3_2_1.png)
+
+# 3 valida el handshake 
+1[validar via openssl,curl](imagenes/3_3_1.png)
+en ```curl -k https://miapp2.local `` con la opcion -k indicamos que obviamos el hecho de que cert y key sean autofirmados
+
+# 4 Puertos y logs
+``ss -ltnp | head -n 1 && ss -ltnp | grep -E ':(443:8081)'``
+![ss](imagenes/3_4_1.png)
+
+
