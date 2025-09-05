@@ -207,4 +207,51 @@ en ```curl -k https://miapp2.local `` con la opcion -k indicamos que obviamos el
 ``ss -ltnp | head -n 1 && ss -ltnp | grep -E ':(443:8081)'``
 ![ss](imagenes/3_4_1.png)
 
+``journalctl``
+![journalctl](imagenes/3_4_2.png)
 
+## 4 12-Factor App: port binding , conf y logs 
+# 1 port binding 
+para poder pasar el puerto sin tocar CODIGO se necesita hacer make run PORT = N_PUERTO
+entonces se define el target ``.PHONY run run :``
+que ejecutara python3 app2.py pero para alinearnos al factor port binding y config usaremos las variables de configuracion         `   VENV ?=venv<br>
+    VENV_BIN :=$(VENV)/bin<br>
+    PY :=$(VENV_BIN)/python3<br>
+`
+que no es otra cosa que obtener la ruta del binario para que ejecute la app, usando la version del entorno virtual.
+en el cuerpo de run 
+``@ PUERTO = $(PORT) MENSAJE =$(MESSAGE) LANZAMIENTO=$(RELEASE) $(PY) app2.py ``
+
+estos nombre de variables deben coinciden con las variables locales en app2.py 
+`   os.environ.get("PUERTO"," ")<br>
+    os.environ.get("MENSAJE"," ")<br>
+    os.environ.get("LANZAMIENTO," ")<br>
+`
+y teniendo en cuenta (1) y (2) , al hacer make run PORT = 8087 los valores por defecto en os.environ.get() ceden al valor ingresado via make
+la duda es como hace makefile para "leer" directamente desde terminal? pues en la linea `@ mensaje = $(MESSAGE)...` crea variables temporales y se las pasa a app2.py 
+![make run PORT=](imagenes/4_1.png)
+# 2 config por entorno
+desde terminal haciendo ``make run MESSAGE = "primera modificacion"`` y se los pasa a app2.py al ejecutar el target .PHONY run run: @.. $(PY) app2.py , y esos valores para MENSAJE LANZAMIENTO son enviados al alcance de flask que ejecuta root() donde se muestra las variables.
+![config por entorno](imagenes/4_2.png)
+# 4 logs a stdout
+de momento el 'log' es un un mensaje simple mostrada por print que  se almacena en file =stdout un stream ojbeto con file descriptor 1
+luego no se quiere que los logs esten atados a memoria interna de la app, sino que puedan ser colectados desde afuera, entonces el stdout se redirige a un archivo externo usando el operador de SHELL, mediante make run > saliga.log  y tambien el stream stderr hacia salida mediante 2>&1.
+De modo que el comando ``make run MESSAGE = "aaa" > salida.log 2>&1`` realiza dicho cometido 
+![log a saliga.log](imagenes/4_3.png)
+
+# 5 Operacion reproducibe 
+en Makefile : los target .PHONY run run : para ejecutar <br>
+ .PHONY nginx nginx: sube las configuraciones par el proxy inverso y presentacion de certificados a cliente <br>
+.PHONY tls-cert tls-cert crea los cetificados y los almacena en ssl donde tls espera buscarlos. 
+Se hizo todo de antemano de forma reproducible.
+
+*mejoras incrementales* tambien fueron tomados en cuenta en los pasos anteriores
+
+# preguntas guias 
+1. indempotencia :ejecutar un metodo produce el mismo resultado para paras ejecuciones, por ejemplo una consulta GET. Entonces en el caso de retries (reintentos) si el metodo es idempotente las consultas no generan duplicados de datos.Los heath checks determinan si el servicio esta funcionando correctamente , en el caso de usar metodos no idempotentes se podria determinar redirigir el trafico.
+2. hosts se usa de manera local, pero los ip dominios se actualizan manualmente, el ttl indica cuanto tiempo se guarda la ip antes de volver a consultar al servidor dns, esto hace que las resoluciones sean mas rapidas
+3.el SNI permite que un servidor tenga varios nombres de dominio, y el certificado asociado que usara TLS segun el pedido del cliente.
+4. los logs no son archivos locales sino que se pasan a streams, estos son luego recogidos por herramientas recolectores
+5. ss -ltnp → verifica que el puerto esté abierto y Nginx esté escuchando.
+curl -v → prueba desde el cliente que la aplicación responde correctamente.
+journalctl -u nginx → revisa los logs internos de Nginx para detectar errores de configuración, TLS, permisos o fallos de proxy.

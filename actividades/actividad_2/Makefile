@@ -1,18 +1,18 @@
 APP_NAME ?= miapp2
 DOMAIN ?= miapp2.local
 PORT ?=8081
-VENV :=actividad_2
+VENV := venv_actividad_2
 MESSAGE ?=hoooola
 RELEASE ?=v0
 
-VENV_BIN :=$(VENV)/bin
-PY :=$(VENV_BIN)/python
+VENV_BIN := $(VENV)/bin
+PY :=$(VENV_BIN)/python3
 
 ##------lanzando la applicacion make run
 .PHONY: run
 run:
 	@echo "iniciando la aplicacion en http://0.0.0.0:$(PORT)"
-	@PUERTO=$(PORT) MENSAJE=$(MESSAGE) LANZAMIENTO=$(RELEASE) $(PY) app2.py
+	@PUERTO=$(PORT) MENSAJE="$(MESSAGE)" LANZAMIENTO="$(RELEASE)" $(PY) app2.py
 
 ##--- activando la configuracion Nginx----
 ## sudo cp miapp2.conf /etc/nginx/sites-available/	
@@ -46,7 +46,7 @@ nginx:
 	@sudo nginx -t
 	@sudo systemctl reload nginx 
 	@echo " NGINX recargado prueba http://$(DOMAIN)"
-
+#creacion de certificado y key , revisar luego deteniddamente
 
 .PHONY:	tls-cert 
 tls-cert:
