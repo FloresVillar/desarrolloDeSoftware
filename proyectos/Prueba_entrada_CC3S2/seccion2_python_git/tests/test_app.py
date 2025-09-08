@@ -1,20 +1,30 @@
 import pytest
 from app.app import summarize
-
+#se define los datos reutilizables , luego los test unitarios propiamente
+#siguiendo el patron Arrange-Act-Assert (arrancar - actuar - afirmar) 
 @pytest.fixture
-def sample():
+def datos_reutilizables(): #arrancamos
     return ["1", "2", "3"]
 
-def test_ok(sample):
+def normal(sample):
     # Arrange–Act–Assert
-    # Act
-    with pytest.raises(NotImplementedError):
-        summarize(sample)
+    # Act    
+    #with pytest.raises(NotImplementedError):
+    #    summarize(sample)
+    resultado = summarize(datos_reutilizables) #actuamos
+    assert resultado["sum"] == 6   #afirmamos
+    assert resultado["count"] == 3
+    assert resultado["avg"] == 2
 
-def test_empty():
+def borde():
     with pytest.raises(Exception):
         summarize([])
 
-def test_non_numeric():
+def error():
     with pytest.raises(Exception):
         summarize(["a", "2"])
+
+# documentacion ![pytest](https://docs.pytest.org/en/7.1.x/how-to/assert.html#asserting-with-the-assert-statement)
+#para guardar en coverage.txt revisando la documentacion , un tanto rebuscasda,se usa pytest-cov
+#que intutitivamente es para cov cobertura , ``pytest --cov=app --cov-report=term-missing | tee coverage.txt ``
+# como se ve se mide a app, y se busca a los archivos que empiecen por test_*.py, y se ejcutan las funciones normal, borde  y error
