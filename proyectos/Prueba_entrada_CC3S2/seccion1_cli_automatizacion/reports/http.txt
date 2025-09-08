@@ -1,0 +1,12 @@
+curl -I example.com
+HTTP/2 200 
+content-type: text/html
+etag: "84238dfc8092e5d9c0dac8ef93371a07:1736799080.121134"
+last-modified: Mon, 13 Jan 2025 20:11:20 GMT
+cache-control: max-age=86000
+date: Mon, 08 Sep 2025 06:57:18 GMT
+alt-svc: h3=":443"; ma=93600,h3-29=":443"; ma=93600
+
+Explicación (editar): el cliente curl hace una peticion para obtener las cabeceras al dominio en cuestion 
+  el resultado de esa consulta (GET) se pasa al comando que edita streams , este borra las lineas vacias
+  /PATRON DE BUSQUEDA/ ^ inicio   \r retorno de carro   $ final  luego lo borra

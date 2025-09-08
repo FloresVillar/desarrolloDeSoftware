@@ -9,8 +9,11 @@ mkdir -p reports
   echo "curl -I example.com"
   curl -Is https://example.com | sed '/^\r$/d'
   echo
-  echo "Explicación (editar): Código HTTP X significa ..."
+  echo "Explicación (editar): el cliente curl hace una peticion para obtener las cabeceras al dominio en cuestion 
+  el resultado de esa consulta (GET) se pasa al comando que edita streams , este borra las lineas vacias
+  /PATRON DE BUSQUEDA/ ^ inicio   \r retorno de carro   $ final  luego lo borra"
 } > reports/http.txt
+# ![sed](https://www.hostinger.com/es/tutoriales/comando-sed-linux)
 
 # TODO: DNS — muestra A/AAAA/MX y comenta TTL
 {
@@ -18,7 +21,8 @@ mkdir -p reports
   echo "AAAA"; dig AAAA example.com +noall +answer
   echo "MX";   dig MX example.com +noall +answer
   echo
-  echo "Nota (editar): TTL alto vs bajo impacta en ..."
+  echo "Nota (editar): TTL alto vs bajo impacta en el timepo de vida que ese dominio estara el cache,
+  con TTL alto  se hara menos consultas al servidor autoritativo, caso contrario mas consultas."
 } > reports/dns.txt
 
 # TODO: TLS - registra versión TLS
@@ -32,7 +36,8 @@ mkdir -p reports
   echo "ss -tuln"
   ss -tuln || true
   echo
-  echo "Riesgos (editar): Puertos abiertos innecesarios pueden ..."
+  echo "Riesgos (editar): Puertos abiertos innecesarios pueden exponer varias puertas de entrada a 
+ ataques como inyeccion SQL o csrf"
 } > reports/sockets.txt
 
 echo "Reportes generados en ./reports"
