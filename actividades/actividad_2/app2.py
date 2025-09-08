@@ -49,6 +49,14 @@ def ping():
         "mensaje" : "saludo desde ping",
         "x_request_id" : request.headers.get("X-Request-ID"),
         "traceparent" : request.headers.get("traceparent")
-    })    
+    }) 
+ordenes_cache = {}
+@app.route("/orders",methods=["POST"])
+def orden():
+    idem_llave = request.headers.get("Idempotency-Key")
+    cuerpo = request.get_json(force=True)
+    if not idem_llave:
+        return jsonify({"error":"no hay Idempotency-Key"}),400
+    if idem_llave in 
 if __name__=="__main__":
     app.run(host="0.0.0.0",port=PUERT) 
