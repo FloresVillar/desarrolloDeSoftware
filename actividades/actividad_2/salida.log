@@ -8,3 +8,4 @@ iniciando la aplicacion en http://0.0.0.0:8081
 [33mPress CTRL+C to quit[0m
  mensaje=hoooola,lanzamiento=v0
 127.0.0.1 - - [04/Sep/2025 20:39:51] "GET / HTTP/1.1" 200 -
+make: *** [Makefile:15: run] Hangup
