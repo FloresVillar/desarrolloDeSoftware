@@ -104,4 +104,48 @@ lo ideal es determinar un punto de salud sin logica de negocio para verificar di
 ## indempotencia y reintentos
 ejecutaremos la misma operacion con el mismo resultado, ejemplo, si enviamos un get (ver) el resultado sera el mismo
 
+para ``curl --retry 3 --retry-all-errors --fail https://HOST:PORT/items/123
+``
+![get/put/delete](imagenes/lectura4_2_0.png)
 agregamos un endpoint con soporte para Indempotency-Key 
+y se probara con la solicitud tipo POST que suele modificar entre llamadas
+
+``  
+    @app.route(ruta para el endpoint) 
+    obtener el llava_idempotencia de la llamada (request)
+    obtener el cuerpo de la llamada
+    si no existe return 
+    si llave_idempotencia esta en cache
+        retorna respuesta para esa llave de cache
+    crear una nueva orden con los campos id, sku,qty,status         
+``
+![mismas](imagenes/lectura4_2_1.png)
+
+## observabilidad
+
+ahora acerca de la observabilidad ,
+las opciones 'nombre=%{nombre}s' tienen un sentido intuitivo. 
+se va a medir latencias en cada fase de peticion https
+*%{time_namelookup}* dns lookup tiempo desde que se inicio la peticion hasta la resolucion del nombre A/AAAA
+
+*%{time_connect}* tcp connect tiempo desde el incio hasta que se completa la conexion tcp
+
+*%{time_appconnect}* TSl handshake tiempo que tomo hacer el handshake tls (ssl/tls) 
+
+*{time_pretranser}* tiempo para que libcurl de por hecho la negociacion preliminar(auth,proxy,tls) y listo para Enviar/ recibir 
+
+*{tiime_starttransfer}* TTFB tiempo HASTA que llega el primer byte de respuesta del servidor
+TTFB = DNS + TCP + TLS + tiempo_servidor_procesa
+
+*{time_total}* total 
+
+![](imagenes/lectura4_3_1.png)
+
+### Liveness vs Readness (sin kubernetes)
+*patron recomendado*
+- /healthz 200 proceso vivo no revisa dependencias
+- /readyz 200 solo cuando dependencias esten ok (db,cola) 503 mientras inicia
+
+``curl -k -fsS https://miapp2.local:443/saludz >/dev/null && echo "VIVO" || echo "NO VIVO"
+
+

@@ -43,6 +43,7 @@ def recurso():
         respuesta.headers["Etag"] = etag_recurso
         respuesta.headers["Cache-Control"] = "no-cache"
         return respuesta
+
 @app.route("/api/ping")
 def ping():
     return jsonify({
@@ -50,13 +51,34 @@ def ping():
         "x_request_id" : request.headers.get("X-Request-ID"),
         "traceparent" : request.headers.get("traceparent")
     }) 
+
+@app.route("/items/123")
+def items():
+    return jsonify({"campo":"123"})
+
 ordenes_cache = {}
-@app.route("/orders",methods=["POST"])
+
+@app.route("/ordenes",methods=["POST"])
 def orden():
     idem_llave = request.headers.get("Idempotency-Key")
     cuerpo = request.get_json(force=True)
     if not idem_llave:
         return jsonify({"error":"no hay Idempotency-Key"}),400
-    if idem_llave in 
+    if idem_llave in ordenes_cache:
+        respuesta_anterior = ordenes_cache[idem_llave]
+        return jsonify(respuesta_anterior),200
+    orden = {
+        "id":hashlib.md5(idem_llave.encode()).hexdigest()[:8],
+        "sku":cuerpo.get("sku"),
+        "qty":cuerpo.get("qty"),
+        "status":"creado"
+    }
+    ordenes_cache[idem_llave] = orden
+    return jsonify(orden),201
+
+@route("/saludz")
+def salud_z():
+    return jsonify({"salud":"z"})
+
 if __name__=="__main__":
     app.run(host="0.0.0.0",port=PUERT) 
