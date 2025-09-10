@@ -142,10 +142,129 @@ TTFB = DNS + TCP + TLS + tiempo_servidor_procesa
 ![](imagenes/lectura4_3_1.png)
 
 ### Liveness vs Readness (sin kubernetes)
-*patron recomendado*
+*patron de monitoreo recomendado*
 - /healthz 200 proceso vivo no revisa dependencias
 - /readyz 200 solo cuando dependencias esten ok (db,cola) 503 mientras inicia
 
 ``curl -k -fsS https://miapp2.local:443/saludz >/dev/null && echo "VIVO" || echo "NO VIVO"
+con esto se verifica que el proceso que da vida al servidor de la aplicacion (la misma applicacion) este corriendo, que sigue vivo en memoria y respondiendo 
 
+y en una sola linea ``until curl -k -fsS http://miapp2.local:443/listoz >/dev/null; do echo "No ready aún..."; sleep 1; done; echo "READY"``
+![healthz y readyz](imagenes/lectura4_4_1.png)
+
+ver en tiempo real 
+
+``watch -n1 'comando' ``
+y la estadistica de sockets
+``ss -tlnp``
+
+## Liveness / Readiness en CI/CD  y systemd
+
+## control de tasa (429)  y comportamiento de bajo carga
+
+# ejemplos de actualizacion condicionesl Etag / If-match
+
+## DNS identidad y disponibilidad en la red
+# transicion : 
+DNS pilar de la identidad del servicio, se alinea con la automatizacion  y medicion de CALMS para garantizar disponibilidad y consistencia
+
+DNS resuelve nombres a direccion , la disponibilidad percibida , los registros principales son A/AAAA  etc 
+el TTL controla la cache , un ttl de 300s permite cambios rapidos en canario , mientras quue uno de 86400 reduce consulta en servicios estables.
+
+*segun lectura *
+
+consulta dns stub--resolver(cliente)
+                ↓ 
+resolver recursivo (ISP)(que cachea respuestas y sigue la cadena raiz)  (1) en cache ? SI res
+                ↓
+TLD(.com.org clasifica) 
+                ↓
+         autoritativos
+
+*segun chat gpt*
+[Cliente]
+   |
+   v
+[Stub resolver]
+   |
+   v
+[Resolver recursivo del ISP(cachea respuestas y sigue la cadena raiz)]
+   |  (1) ¿En caché?
+   |       ├─ Sí → responde
+   |       └─ No → sigue la cadena
+   v
+[Root servers]()
+   |
+   v
+[TLD servers (.com, .org, .pe, ... clasifica) ]
+pregunta a los Ns(name servers) de example.com
+   |
+   v
+[Servidores autoritativos del dominio]
+   |
+   v
+[Respuesta: IP o NXDOMAIN (usa cache negativa que amortigua consultas de nombres no existentes)]
+   |
+   v
+[Resolver recursivo cachea respuesta]
+   |
+   v
+[Stub resolver → Cliente]
+
+la cache negativa para NXDOMAIN amortigua consultas a nombres inexistentes
+
+en entornos corporativos , split-horizon DNS (respuestas distintas segun origen) entregan ip´s privadas a clientes internos y publicas a externos
+ej : ``internal.example.com`` resuelve 10.0.0.1 internamente  y a una IP publica via CDN(red de  servidores distribuidores  que almacenan en cache contenido web)
+
+        En devsecops 
+            ↓
+DNSSEC              CAA  
+
+DNSSEC (DNS security extensions) valida integridad con firmas criptograficas
+CAA  = (certificate Authority Authorization) restringe emisores de certificados
+Verificaciones evitando discrepancias y revisa /etc/hosts
+*ver servidores raiz . *
+es la raiz de la jerarquia de nombres de dominio en internet, 13 nombres de servidores de raiz, aunque teoricamente solo hay una
+# espacio de nommbres de y TLD (raiz→TLD→ dominio)
+* viendo servidores raiz
+``dig . NS +nocomments +noquestion +answer``
+* viendo TLD´s server
+``dig com. NS +nocomments +noquestion +answer``
+``dig pe. NS +nocomments +noquestion +answer``
+* viendo los servidores responsables de example.com
+``dig example.com NS +nocomments +noquestion +answer``
+![servidores responsables del dominio example.com](imagenes/dns_responsables.png)
+* consulta directa a su NS 
+``dig +nsearch example.com``
+# flujo de resolucion DNS (trazado a paso )                                               
+* camino completo raiz → TLD → autoritativo (sin cache del recursor)
+tal como indica , no pasa por cache , va directo de la raiz al servidor autoritativo
+``dig a_que_servidor los_NS_de_los_TLD desactiva_Recursion`` → ``dig @1.root-servers.net com. NS +norecurse``
+![autoritativos de example](imagenes/autoritativos_example.png)
+
+para hacerlo paso a paso
+- a raiz``dig @a.root-servers.net com. NS +norecurse``
+- a tld``dig @a.gtld-servers.net example.com NS +norecurse``
+- `a autoritativo``dig @<ns_autoritativo_de_eample> www.example.com A +norecurse``
+
+# resolver local y orden de resolucion (libc/ NSS)
+*Stub resolver*, inicia la consulta DNS, envia la consulta al resolver recursivo 
+resolver recursivo (configurado en /etc/resolv.conf)
+↓ 
+el *resolver recursivo* hace el trabajo pesado 
+consulta a la raiz→TLD→autoritativo y devuelve la respusta al stub, puede ser remoto ISP, google 8.8.8.8 o uno local(systemd-resolver 127.0.0.53)
+
+*glibc resolver + NSS (name service switch )*
+"las funciones de libc getadd gethost no preguntan directamente dns, consultan al sistema de nombres configurado por NSS" ..chat gpt 
+que en plabaras simples seria que usa el dominio disponible
+
+- devuelve ip de acuerdo a lo que diga nss
+``getent hosts www.google.com``
+``esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware$ getent hosts www.google.com
+2800:3f0:4003:c0f::67 www.google.com
+2800:3f0:4003:c0f::6a www.google.com
+2800:3f0:4003:c0f::69 www.google.com
+2800:3f0:4003:c0f::63 www.google.com``
+- ipv4 e ipv6
+``getent ahosts www.example.com``
 
