@@ -1,0 +1,16 @@
+[Unit]
+Description=Arranque automatico de servicios, gestion de servicios en ejecucion
+After=network-online.target 
+
+[Service]
+Environment=PUERTO=8081
+Environment=MENSAJE=Lanzar servicio
+Environment=LANZAMIENTO=V0
+WorkingDirectory={{APP_DIR}}
+ExecStart={{APP_DIR}}/.venv/bin/python {{APP_DIR}}/app.py
+Restart=always
+RestartSec=2
+User={{USER}}
+
+[Install]
+WantedBy=multi-user.target

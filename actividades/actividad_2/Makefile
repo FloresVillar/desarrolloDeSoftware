@@ -37,7 +37,7 @@ CERT_DIR :=certs
 CRT_FILE :=$(CERT_DIR)/$(DOMAIN).crt
 KEY_FILE :=$(CERT_DIR)/$(DOMAIN).key
 NGINX_CERT_DIR := /etc/ssl/miapp2
-
+#el enlace con .conf esta en la linea sudo cp nginx/miapp2.conf
 .PHONY: nginx
 nginx:
 	@if [ -z "$(NGINX)" ]; then echo "nginx no encontrado (omitiendo)"; exit 1; fi
@@ -46,7 +46,7 @@ nginx:
 	  sudo cp $(CRT_FILE) $(NGINX_CERT_DIR)/$(DOMAIN).crt; \
 	  sudo cp $(KEY_FILE) $(NGINX_CERT_DIR)/$(DOMAIN).key; \
 	else echo "Faltan certificados. Ejecuta 'make tls-cert' primero."; exit 1; fi
-	@sudo cp nginx/miapp2.conf $(NGINX_SITIOS_DISPONIBLES)
+	@sudo cp nginx/miapp2.conf $(NGINX_SITIOS_DISPONIBLES)  			
 	@sudo ln -sf $(NGINX_SITIOS_DISPONIBLES) $(NGINX_SITIOS_PERMITIDOS)
 	@sudo nginx -t
 	@sudo systemctl reload nginx 
@@ -70,8 +70,8 @@ PY_BOOT := $(shell if command -v py 1>/dev/null 2>/dev/null;then\
 				echo "python3";\
 			else echo "python";fi)
 
-.PHONY: deps
-deps: $(VENV) # segurarse este prerrequisito
+.PHONY: dependencias
+dependencias: $(VENV) # segurarse este prerrequisito
 	@ echo "instalando dependencias necesarias"
 	@ $(PIP) --version
 	@ $(PIP) install --upgrade pip 
@@ -80,3 +80,17 @@ deps: $(VENV) # segurarse este prerrequisito
 $(VENV):
 	@echo "creando VENV $(PY_BOOT) -m venv --prompt $(VENV_PROMPT) $(VENV) ""
 	@$(PY_BOOT) -m venv $(VENV)
+
+#si no se supiera si estamos en windows o linux
+#U_NAME :=
+#IS_WIN :=
+.PHONY: configuracion-hosts
+configuracion-hosts:
+	@if [ -f /etc/hosts ]; then \
+		if ! grep -qE "127\.0\.0\.1\s+$(DOMAIN)" /etc/hosts; then \
+			echo "dominio no estaba en /etc/hosts entonces agregando $(DOMAIN) a /etc/hosts"; \
+			echo "127.0.0.1 $(DOMAIN)" | sudo tee -a /etc/hosts; \
+		else echo "$(DOMAIN) ya estaba en /etc/hosts"; fi; \
+	else echo "/etc/hosts no encontrado , la maquina es un windows"; fi
+
+#ahora un target para 
