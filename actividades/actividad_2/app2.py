@@ -76,9 +76,15 @@ def orden():
     ordenes_cache[idem_llave] = orden
     return jsonify(orden),201
 
-@route("/saludz")
+@app.route("/saludz")
 def salud_z():
+    #devolver un chequeo minimo , no tocando dependencias
     return jsonify({"salud":"z"})
+
+@app.route("/listoz")
+def listoz():
+    #condiciones que debe cumplirse para que sea 200
+    return jsonify({"gaaa":"raaaa"})
 
 if __name__=="__main__":
     app.run(host="0.0.0.0",port=PUERT) 

@@ -83,7 +83,41 @@ logs como flujos: los log no deben grabarse en disco , sino ser almacenadoos en 
 
 **PARTE PRACTICA**
 *parafraseado como apuntes de clase,incompleto*
+**ESTA ACTIVIDAD SE REALIZARA CON EL CODIGO DE ACTIVIDAD_2**
+tengo app2.py que define mi servidor y los endpoints
+
+tengo makefile que automatiza run , tls-cert , nginx 
+
+tengo miapp2.conf que define el proxy_pass y los atributos para health y trazabilidad.
 1. 
+Ahora bien, para la parte practica de actividad_3 es necesario definir algunos otros targets: deps, hosts-setup, cleanup, run ya se tiene y lo que hace es ejecutar el script o que es lo mismo lanzar el servidor, tambieen nginx que comunica a nginx cuales seran el servidor a quien servira de proxy, tambien tls-cert que crea los certificados y llave para tls en https.
+# make deps
+Para *make deps* que es el target que instala las dependencias usaremos el target *prepare* como guia
+
+se necesita el python o python 3, pero siguiendo una de los factores 12-factor app (cual?) declaramos una variable de entorno que sera obtenido desde la ejecucion de un comando en sistema, es decir la salida se asignada a esta variable PY_BOOT = $(shell command -v  "obtener la version de python ")
+y nuestro entorno virtual VENV = nombre
+$(VENV) :
+    @$(PY_BOOT) crear entorno
+luego taget deps : VENV cumplirse prerrequisito
+    @ $(PIP) instalar dependencias
+cabe señalar que PIP := $(PY) -m pip
+                        PY = $(VENV_BIN)/python
+                        VENV_BIN =$(VENV)/bin
+entonces al hacer make deps:
+![make deps](imagenes/actividad3_1_0.png)
+
+# make run 
+ejecuta $(PY) miaplicativo 
+ademas envia los valores desde shell hacia servidor mediante 
+@ NOMBRE_EN_SERVIDOR="$(VARIABLE_DE_ENTORNO)" 
+
+![make run](imagenes/actividad3_1_1.png)
+
+# make host-setup 
+okay , con lo que se tiene de momento, para emular el trabajo de dns se hacia lo siguiente: abirir el archivo de resoluciones ``sudo nano /etc/hosts `` y poner la linea resolucion iplocal miapp2.local.
+eso es lo que se automatizara , pero , con que sentido , para obtener reproducibilidad,la configuracion podra haerse evitando cometer errores tipograficos en cualquier maquina y sin abrir ningun editor, de este modo 
+nuestro servidor sera compatible con entornos CI/CD donde los jobs se ejecutan sin intervencion humana
+
 2. http contrato, inspeccionando cabeceras con etag, hsts, readlmen...
 3. dns y  , getent TLS , permite...
 ruta de resolucion stub recursivo y autoritivo ,comparar TTL 

@@ -1,4 +1,4 @@
-#!/home/esau/desarrolloDeSoftware/actividades/actividad_2/venv_actividad_2/bin/python3
+#!/home/esau/desarrolloDeSoftware/actividades/actividad_2/venv_actividad_2/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

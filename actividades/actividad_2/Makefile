@@ -1,12 +1,17 @@
 APP_NAME ?= miapp2
 DOMAIN ?= miapp2.local
 PORT ?=8081
-VENV := venv_actividad_2
 MESSAGE ?=hoooola
 RELEASE ?=v0
 
+
+VENV := venv_actividad_2
+VENV_PROMPT :=venv_actividad_2
 VENV_BIN := $(VENV)/bin
-PY :=$(VENV_BIN)/python3
+PY :=$(VENV_BIN)/python
+
+PIP := $(PY) -m pip
+
 
 ##------lanzando la applicacion make run
 .PHONY: run
@@ -59,3 +64,19 @@ tls-cert:
 		echo "certificado creado $(CERT_DIR)/"; \
 	else echo "certificado ya existe en $(CERT_DIR)/";fi  
 
+PY_BOOT := $(shell if command -v py 1>/dev/null 2>/dev/null;then\
+				echo "py -3";\
+			elif command -v python3 1>/dev/null 2>/dev/null;then \
+				echo "python3";\
+			else echo "python";fi)
+
+.PHONY: deps
+deps: $(VENV) # segurarse este prerrequisito
+	@ echo "instalando dependencias necesarias"
+	@ $(PIP) --version
+	@ $(PIP) install --upgrade pip 
+	@ $(PIP) install flask
+
+$(VENV):
+	@echo "creando VENV $(PY_BOOT) -m venv --prompt $(VENV_PROMPT) $(VENV) ""
+	@$(PY_BOOT) -m venv $(VENV)
