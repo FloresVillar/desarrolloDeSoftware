@@ -117,6 +117,27 @@ ademas envia los valores desde shell hacia servidor mediante
 okay , con lo que se tiene de momento, para emular el trabajo de dns se hacia lo siguiente: abirir el archivo de resoluciones ``sudo nano /etc/hosts `` y poner la linea resolucion iplocal miapp2.local.
 eso es lo que se automatizara , pero , con que sentido , para obtener reproducibilidad,la configuracion podra haerse evitando cometer errores tipograficos en cualquier maquina y sin abrir ningun editor, de este modo 
 nuestro servidor sera compatible con entornos CI/CD donde los jobs se ejecutan sin intervencion humana
+asumimos(de momento) que trabajamos sobre linux, de hecho eso es lo que hacemos , estamos en wsl .
+por lo que la variable de entorno U_NAME no se usa, ni IS_WIN que de por si son un tanto complicados de leer en cuanto a su sintaxis.
+
+definimos un nuevo target en makefile, .PHONY configuracion-hosts:
+    configuracion-hosts:
+        if  existe /etc/hosts
+            if  nuestro registro de resolucion no esta
+                agregar
+            if - no ya estaba
+        if -no , se trata de un windows
+que en makefile [ <condicion>]:
+                    if grep -qE "ip $$(DOMAIN)"
+                        echo "resolucion" | sudo tee -a /etc/hosts
+![agregando resolucion localhosts miapp2.local](imagenes/actividad3_1_2.png)
+
+# make cleanup 
+
+Ahora tambien necesitamos dejar limpio el sistema una vez que nos desconectemos, pero conservando los logs  y certificados.
+PERO antes seria conveniente implementar :arranque automatico de servicios, esto es systemd, en el labo 1 se detalla ello y vamos a servirnos de el.
+
+
 
 2. http contrato, inspeccionando cabeceras con etag, hsts, readlmen...
 3. dns y  , getent TLS , permite...
