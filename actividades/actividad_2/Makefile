@@ -15,7 +15,7 @@ PIP := $(PY) -m pip
 
 ##------lanzando la applicacion make run
 .PHONY: run
-run:
+run: nginx dependencias 1
 	@echo "iniciando la aplicacion en http://0.0.0.0:$(PORT)"
 	@PUERTO=$(PORT) MENSAJE="$(MESSAGE)" LANZAMIENTO="$(RELEASE)" $(PY) app2.py
 
@@ -39,7 +39,7 @@ KEY_FILE :=$(CERT_DIR)/$(DOMAIN).key
 NGINX_CERT_DIR := /etc/ssl/miapp2
 #el enlace con .conf esta en la linea sudo cp nginx/miapp2.conf
 .PHONY: nginx
-nginx:
+nginx: tls-cert configuracion-hosts
 	@if [ -z "$(NGINX)" ]; then echo "nginx no encontrado (omitiendo)"; exit 1; fi
 	@sudo mkdir -p $(NGINX_CERT_DIR)
 	@if [ -f "$(CRT_FILE)" ] && [ -f "$(KEY_FILE)" ]; then \
@@ -94,3 +94,19 @@ configuracion-hosts:
 	else echo "/etc/hosts no encontrado , la maquina es un windows"; fi
 
 #ahora un target para 
+SYSTEMCTL :=$(shell command -v systemctl 2>/dev/null)
+APP_DIR :=$(shell pwd)
+SED :=$(shell command -v sed 2>/dev/null) 
+.PHONY: systemd
+systemd:
+	@if [ -z "$(SYSTEMCTL)" ]; then 
+	@if [ -z "$(SED)" ]; then 
+.PHONY: clean 
+clean:
+	@echo "Detiendo servicios systemd .."
+	@echo "detener con stop "
+	@echo "disable"
+	@echo "rm -f /etc.."
+	@echo "daemon-reload" 
+	@echo "quitar nginx(.conf) de sitios nginx "
+

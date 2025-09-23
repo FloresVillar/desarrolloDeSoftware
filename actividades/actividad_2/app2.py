@@ -86,5 +86,9 @@ def listoz():
     #condiciones que debe cumplirse para que sea 200
     return jsonify({"gaaa":"raaaa"})
 
+@app.route("/endpoint")
+def endpoint():
+    salida = {"clave":"valor"}
+    return salida
 if __name__=="__main__":
     app.run(host="0.0.0.0",port=PUERT) 
