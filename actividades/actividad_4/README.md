@@ -71,3 +71,24 @@ que hace en el codigo fuente, usamos sed y grep acutando como sanitizadores, red
 ![comando sed completo](imagenes/1_1.png)
 se muestra que compila correctamenteme, aunque de momento solo eso 
 2. oculta las credenciales en cabeceras HTTP (Autothorization Basic/Bearer)
+sed -E 's/\b(Authorization:)[[:space:]]+(Basic|Bearer)[[:space:]]+[]+/\1 \2 [REDACTED]/gI'
+
+como antes -E 's/PATRON A BUSCAR/REEMPLAZO/gI'
+                /\b(PRIMER GRUPO)caracteres(SEGUNDO GRUPO)caracteres caracteres/
+                                  [[:space::]]+    [[:space:]][A-Za-z0-9._~+\/=-] 
+
+REEMPLAZO     \1 \2 [REDACTED]
+              Authorization  Basic [REDACTED]
+
+![sed con 2 grupos de captura](imagenes/2.png)              
+
+3. quitando codigos de color ANSI
+``s/PATRON//g`` 
+  '\x1B\[[0-9;]*[A-Za-z]'
+  \x1B  caracter ESCAPE 
+  \[   escapa del [ , esta buscando 'literalmente' un corchete
+  [0-9;]*   digitos  o punto y coma , 0 o mas veces
+  [A-za-z] una letra
+  Estamos buscando      ESC [ 31m    color rojo m codigo ANSI
+  
+  ![quitando el color ANSI](imagenes/3.png)
