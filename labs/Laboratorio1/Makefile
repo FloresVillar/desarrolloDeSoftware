@@ -83,7 +83,7 @@ debug-venv: ## Mostrar diagnóstico de venv (rutas detectadas)
 
 # Preparación / App
 .PHONY: prepare
-prepare: $(VENV) ## Crear venv 'bdd' e instalar dependencias de la app
+prepare: $(VENV) ## Crear venv 'bdd' e instalar dependencias de la app;
 	@echo "Actualizando pip e instalando Flask..."
 	@$(PIP) --version
 	@$(PIP) install --upgrade pip
@@ -193,7 +193,7 @@ nginx: ## Instalar vhost de Nginx y recargar (Linux)
 	else echo "Faltan certificados. Ejecuta 'make tls-cert' primero."; exit 1; fi
 	@sudo cp nginx/miapp.conf $(NGINX_SITE_AVAIL)
 	@sudo ln -sf $(NGINX_SITE_AVAIL) $(NGINX_SITE_ENABLED)
-	@sudo nginx -t
+	@sudo nginx -t1
 	@sudo systemctl reload nginx
 	@echo "Nginx recargado. Prueba: https://$(DOMAIN)"
 
