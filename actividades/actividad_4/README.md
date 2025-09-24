@@ -136,10 +136,11 @@ entonces el comando sera : journalctl -p err.alert --since "today"              
     find /tmp -mtime -5 -type f -printf '%TY-%Tm-Td%'
 
 ## Seccion 1: Manejo solido de CLI
-*Riesgo & mitigacion en DevSecOps*
+### Riesgo & mitigacion en DevSecOps*
 Riesgo: Errores en navegacion o manipulacion masiva, las consecuencias son perdida de datos o exposicion (borrado accidental en pipelines CI/CD)
 como mitigar ? usar opciones seguras -- para fin de argumentos, -print0/-0 
 Conviene detenernos en este punto para analizar estos puntos.
+
 1. -- como fin de argumentos: "a partir de aqui ya no hay mas opciones lo que venga son nombres de archivos aunque empiecen con -"
 ``rm -rf /tmp/-archivo`` error intentara interpretar -
 ```rm -rf -- /tmp/-archivo``` sabra que el nombre del archivo es -archivo
@@ -170,7 +171,7 @@ si un comando recursivo recorre todo el sistema de archivos
 ``rm / -type f -name "*.log" -delete`` se puso / en lugar de ., no se esta buscando en directorio actual sino en la raiz y se borran todos los logs
 MORALEJA : no poner / a menos que se este 1000% seguro.
 
-#### Marco teorico 
+### Marco teorico 
 la CLI (Command line interface) es la interfaz de texto para interactuar con el sistema operativo
 En DevSecOps es esencial para scripting , automatizacion de pipelines CI/CD (jenkins o git) y tareas de seguridad como escaneo de vulnerabilidades.
 1. navegacion
@@ -199,9 +200,52 @@ esta tambien es un operador poderoso en el entorno CLI
 ![redireccion > ](imagenes/redireccion.png)
 
 5. XARGS
+Procesa salida como argumeto ó que es lo mismo, la salida de un comando se pasa como argumento a un segundo(tercer?) comando
+find en_el_directorio_actual profundidad_directorio_actual | xargs considerar_espacios_en_nombres rm considerar_-_en_nombres_archivos 
+![xargs y rm ](imagenes/xargs_rm.png)
+
+### Ejercicios de reforzamiento
+1. / desde raiz    ~/ home del usuario actual 
+![reforzamiento 1 uso de  > ~/](imagenes/reforzamiento1.png)
+
+2. usando globbing /*.{txt,doc}
+![ls /*.txt /*.doc](imagenes/reforzamiento2.png) 
+un poco de sintaxis de find
+find [ ruta_inicial ] [ opciones ] [ expresiones ][ acciones ]
+``find /tmp -maxdepth 1 -type f \(-name '*.txt' -o -name '*.doc'\)``
+En este caso se usa el operador && para ejecutar dos pipelines , el primero es para que tee escriba en sesion.txt
+![ls y find](imagenes/reforzamiento2_1.png)
+
+3. utilizacion de pritnf
+![printf "FRASE\n" > archivo.txt](imagenes/reforzamiento3.png) 
+
+4. stderr 2 con el opeador de redireccion de salida en modo append
+``ls NO_EXISTE 2>> errores.log``
+``find . -maxdepth 1 -name 'archivo*.txt' | xargs echo rm ``
+![find ... | xargs echo rm ](imagenes/reforzamiento4.png)
+
+*Comprobacion*
+![wc -l    y   nl ](imagenes/comprobacion.png)
 
 cabe señalar que el acceso a las imagenes realizadas con la herramienta de recorte en windows se acceden via cp WINDOWS WSL del siguiente modo:
 `` cp /mnt/c/Users/USUARIO/OneDrive/Desktop/Esau/2025_2/desarollo/actividad_4/redireccion.png ~/desarrolloDeSoftware/actividades/actividad_4/imagenes``
 
 ![thee valuable dev, sed](https://thevaluable.dev/sed-cli-practical-guide-examples/?utm_source)
 ![gnu , grep](https://www.gnu.org/software/grep/manual/grep.html?utm_source)
+
+## Seccion 2: Administracion Basica
+### Riesgo & Mitigacion en DevSecOps
+Riesgo : Over-permission en usuarios/permisos 
+esto como lo indica el nombre puede exponer datos sensibles en contenedores o repos.
+Mitigacion : aplicando umask 027 
+evitar operaciones recursivas con / (la raiz del sistema de archivos ) 
+la guia indica que se debe usar ```--preserve-root`` que es un flag de seguridad en el comando rm y otros comandos que borran recursivamente como chown, chmod (chown/chgrp/rm)
+1. Usuarios/Grupos/Permisos
+2. Procesos/señales
+3. Systemd
+4. journalctl
+
+
+### Marco Teorico 
+
+### Explicaciones Paso a Paso
