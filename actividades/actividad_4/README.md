@@ -180,7 +180,8 @@ En DevSecOps es esencial para scripting , automatizacion de pipelines CI/CD (jen
 4. Redirecciones :  Enviar salida de comandos para logging y auditoria
 5. xargs : stdout de un comando en argumentos para otro.
 
-Explicacion paso a paso :
+### Explicacion paso a paso :
+
 1. Navegacion Basica
   - pwd  directorio actual
   - ls lista archivos y directorios -a para ocultos
@@ -240,12 +241,27 @@ esto como lo indica el nombre puede exponer datos sensibles en contenedores o re
 Mitigacion : aplicando umask 027 
 evitar operaciones recursivas con / (la raiz del sistema de archivos ) 
 la guia indica que se debe usar ```--preserve-root`` que es un flag de seguridad en el comando rm y otros comandos que borran recursivamente como chown, chmod (chown/chgrp/rm)
-1. Usuarios/Grupos/Permisos
-2. Procesos/señales
-3. Systemd
-4. journalctl
-
 
 ### Marco Teorico 
+1. Usuarios/Grupos/Permisos: quien accede
+2. Procesos/señales: monitoreo y control de ejecuciones
+3. Systemd: gestor de servicios para iniciar/parar servicios de forma segura
+4. journalctl: herramientas para auditar eventos
 
 ### Explicaciones Paso a Paso
+1. Usuarios/Grupos/Permisos
+- whoami , id, sudo adduser NEW_USER
+la salida de esos comandos se redirigieron a evidencias/sesion.txt
+![whoami, id, sudo adduser ](imagenes/seccion2_1_123.png)
+
+- grupos , en particular el flag -aG   append grupos no reemplaza , agrega
+![sudo addgroup , sudo usermod -aG GRUPO USUARIO](imagenes/seccion2_1_4.png)
+
+- Permisos ``chmod``
+como se habia visto en el sprint 1 de pc1
+rwx   r-x   r-x       111    101    101    usuario grupos otros
+                      7      5       5
+![chmod](imagenes/seccion2_1_5.png)
+
+
+
