@@ -1,9 +1,9 @@
-### Comandos linux para devsecops
-situar CLI como herramienta para automatizar tareas:
-- marco teorico
-- manejo solido de cli
-- 
-
+# Comandos linux para devsecops
+preparacion para evidencias y evauluacion
+Se crea la carpeta lab-cli pero no se usa script  debido a que wsl2 no responde adecuamente  , wsl lo logra correr la shell dentro de TTy, script simplemente no funciona. 
+se intenta ``bash | tee evidencias/sesion.txt``
+pero tampoco resulta , por lo que se usara 
+``comando | tee -a evidencias/sesion.txt``
 **sanitizador**
 1. 
 introducirnos a la Cli esto es , a la sintaxis  de comandos puede ser abrumador
@@ -92,3 +92,116 @@ REEMPLAZO     \1 \2 [REDACTED]
   Estamos buscando      ESC [ 31m    color rojo m codigo ANSI
   
   ![quitando el color ANSI](imagenes/3.png)
+
+4. Verificando que no queden secretos
+Un poco de la teoria de GREP  global regular expresion print , busca patrones en archivos de texto e imprime las lineas completas que coinciden con el patron 
+
+grep [opciones] PATRON [archivo]
+si no se da el archivo, se leera la entrada estandar stdin
+algunas opciones -i ignora mayusculas o minusculas
+-v mostrar lineas que no coinciden con el patron 
+-n mostrando numero de linea
+-r buscar recursivamente los directorios
+-E usar expresiones regulares extendidas
+
+``grep -E -n -i '(pass(word)?|token|secret|api[-_]?key|autorization)' evidencias/sesion_redactada.txt | head``
+el grupo de captura pass(word) | token | secret| api[-_]? key .....
+de nuevo (TEXTO) captura texto , mientras que [-_]? solo uno de esos caracteres
+se ha visto que * tambien se usa para capturar 0 o mas coincidencias del patron "interno" anterior a * ó ? , se prefire  * para capturar espacios o saltos
+
+![global regular expresion print](imagenes/4.png)
+*JOURNALCTL*
+Algo de teoria de los comandos que se usarn en la entrega minima 
+``journalctl -p err.alert -since "today"``
+journalctl consulta el journal la base de datos binaria de logs que gestiona systemd ,muestra servicis de kernel , procesos y usuarios.Tiene filtros potentes por unidad fecha etc mas que solo leer /var/log/syslog
+filtros:
+- "-p" nivel de severidad (err, warning , info) err.alert
+- "-u" por servicio unidad systemd              ssh.service
+- "--since   --until" especificar fechas        
+- "-f" por seguimiento en tiempo real
+
+*TAIL*
+se ua para para mostrar las ultimas lineas de un archivo  o inspeccionar un arhivo muy grande       
+- ``tail /var/log/syslog`
+algunos flags:
+- -n fijar linea de inicio
+*FIND*
+busca archivos
+- -mtime -5  seleccionar archivos segun su ultima fecha de modificacion , indica dias
+- -printf permite formatear la salida de find
+- '%TY-%Tm-%Td %TT %p\n'
+*SORT*
+Ordena las lineas de acuerdo criterios alfanumerico    
+entonces el comando sera : journalctl -p err.alert --since "today"                                                                                                  sudo tail -n 100 /var/log/syslog | grep -i error
+    find /tmp -mtime -5 -type f -printf '%TY-%Tm-Td%'
+
+## Seccion 1: Manejo solido de CLI
+*Riesgo & mitigacion en DevSecOps*
+Riesgo: Errores en navegacion o manipulacion masiva, las consecuencias son perdida de datos o exposicion (borrado accidental en pipelines CI/CD)
+como mitigar ? usar opciones seguras -- para fin de argumentos, -print0/-0 
+Conviene detenernos en este punto para analizar estos puntos.
+1. -- como fin de argumentos: "a partir de aqui ya no hay mas opciones lo que venga son nombres de archivos aunque empiecen con -"
+``rm -rf /tmp/-archivo`` error intentara interpretar -
+```rm -rf -- /tmp/-archivo``` sabra que el nombre del archivo es -archivo
+Entonces prevenimos borrar de mas por confundir nombres con flags
+
+![uso de -- como fin de argumentos](imagenes/seccion1_1.png)
+2. -print0 -0 para manejar espacios
+cuando se separan archivos por espacios, tendremos un problema si los nombres de los archivos tienen espacios.
+``touch "archivo con espacios.txt"``
+``find . -name "*.txt" | xargs rm `` 
+se crea un archivo suyo nombre tiene espacios, se busca dicho archivo , el stdout de find se pasa como argumentos a rm via xargs
+Pero precisamente tendremos un error
+pero si usamos print0 para indicar que el delimitador es espacio
+y con xargs -0 se lee la lista(de archivos ) y entiende que el delimitador es espacio
+``find . -name "*." -print0 | xargs -0 rm ``
+![manejo de CLI ](imagenes/seccion1_2.png)
+
+3. DRY - RUN 
+En devsecops no se borra directo sin probar, primero se hace un simulacro con echo
+``find . -name "*.txt" -print0 | xargs -0 echo rm ``
+![dry run](imagenes/seccion1_3.png)
+
+4. evitar operaciones recursivas con /
+Y es que / es la raiz del sistema de archivos, todo esta colgado de alli
+/bin /etc /home /usr /var
+si un comando recursivo recorre todo el sistema de archivos
+``rm -rf / `` DESTRUIRA TODO , -r recursivo -f forzar sin preguntar
+``rm / -type f -name "*.log" -delete`` se puso / en lugar de ., no se esta buscando en directorio actual sino en la raiz y se borran todos los logs
+MORALEJA : no poner / a menos que se este 1000% seguro.
+
+#### Marco teorico 
+la CLI (Command line interface) es la interfaz de texto para interactuar con el sistema operativo
+En DevSecOps es esencial para scripting , automatizacion de pipelines CI/CD (jenkins o git) y tareas de seguridad como escaneo de vulnerabilidades.
+1. navegacion
+2. Globbing : usar patrones (wildcards) para seleccionar multiples archivos, util para procesar logs 
+3. Tuberias (pipes): Enlazar comandos para procesar datos en cadena
+4. Redirecciones :  Enviar salida de comandos para logging y auditoria
+5. xargs : stdout de un comando en argumentos para otro.
+
+Explicacion paso a paso :
+1. Navegacion Basica
+  - pwd  directorio actual
+  - ls lista archivos y directorios -a para ocultos
+  - cd cambiar de directorio cd /tmp 
+![navegacion basica](imagenes/navegacion_basica.png)
+2. Globbing 
+  - uso de * para listar archivos terminados en .txt 
+  ![uso de globbing para *.txt](imagenes/globbing.png)
+3. Tuberias (Pipes)
+  okay , el comando | se ha venido usando tanto en actividades como en la pc, es muy practico
+  acerca de ``wc`` va a contar el numero de lineas en un archivo de texto, en este caso contaria las lineas correspondientes al nombre de un archivo cada linea
+como se menciona a inicio se usara ``tee -a evidencias/sesion.txt`` en lugar de script
+![tuberias](imagenes/tuberias.png)
+
+4. Redirecciones
+esta tambien es un operador poderoso en el entorno CLI
+![redireccion > ](imagenes/redireccion.png)
+
+5. XARGS
+
+cabe señalar que el acceso a las imagenes realizadas con la herramienta de recorte en windows se acceden via cp WINDOWS WSL del siguiente modo:
+`` cp /mnt/c/Users/USUARIO/OneDrive/Desktop/Esau/2025_2/desarollo/actividad_4/redireccion.png ~/desarrolloDeSoftware/actividades/actividad_4/imagenes``
+
+![thee valuable dev, sed](https://thevaluable.dev/sed-cli-practical-guide-examples/?utm_source)
+![gnu , grep](https://www.gnu.org/software/grep/manual/grep.html?utm_source)
