@@ -263,5 +263,69 @@ rwx   r-x   r-x       111    101    101    usuario grupos otros
                       7      5       5
 ![chmod](imagenes/seccion2_1_5.png)
 
+- dueño:
+ ``chown  nuevo_user:nuevo_grupo ARCHIVO`` cambiamos dueño y grupo 
+![chown](imagenes/seccion2_1_6.png)
 
+2. Procesos/Señales
+- ``ps aux`` una inspeccion rapida
+![ps aux](imagenes/seccion2_2_1.png)
 
+- ``top`` 
+![monitor interctivo](imagenes/seccion2_2_2.png)
+
+- Señales
+``kill -SIGTERM PID``
+buscamos PID con ps aux
+![kill](imagenes/seccion2_2_3.png)
+
+3. Systemd 
+- ``systemctl status``, mostrando estado de servicio
+ ``systemctl status ssh`` 
+Algo de teoria acerca de systemctl , esta es la herramienta para interactuar con systemd , que es el init system moderno en la mayoria de distribuciones Linux
+systemd es responsable de inicializar el sistema despues del arranque
+y gestionar los servicios
+
+Systemctl es un comando de control que permite :
+iniciar , detener, reiniciar y verificar servicios
+ver estado del sistema y de los units
+en systemd caso todo se organiza en unidades
+.service  .target .socket .mount .timer
+
+luego de iniciar el servicio ssh ``start ssh``
+y habilitarlo ``enable ssh``
+inspeccionamos nuevamente el status de ssh
+![systemctl ](imagenes/seccion2_2_3.png)
+
+4. journalctl 
+Para controlar los LOGS de sytemd , centraliza los registros del sistema, kernel , servicios , demonios, procesos de usuario
+Permite leer , filtrar, analizar los registros que guarda systemd
+muestra los logs en tiempo real o historicos
+puede filtrar por servicio , tiempo,unidad..
+guarda los logs de manera binaria
+Algunas banderas:
+-u para unidad
+-f sigue los logs en tiempo real(follow)
+![-u -f ](imagenes/seccion2_4_1.png)
+
+![--since](imagenes/seccion2_4_3.png)
+
+los logs se almacenan en memoria volatil /var/log/syslog 
+- compatibilidad
+![systemctl tail ](imagenes/seccion2_4_4.png)
+
+### Ejercicios de reforzamiento
+
+1. todos los comandos del punto 1 
+se crea usuario, se crea grupo, se agrega a grupo ,se cambia el dueño , permisos
+![adduser, addgroup,usermod -aG grupo usuario , chown usuario:grupo archivo, chmod 640 archivo](imagenes/reforzamiento1_seccion2.png)
+
+2. usando process status
+![ps ](imagenes/reforzamiento2_seccion2.png)
+
+3. sytemctl journalctl 
+![systemctl journalctl](imagenes/reforzamiento3_seccion2.png)
+
+4. 
+![sleep 100 & ; ps aux | grep sleep , kill ](imagenes/reforzamiento4_seccion2.png)
+![comprobacion](imagenes/comprobacion2.png)
