@@ -329,3 +329,42 @@ se crea usuario, se crea grupo, se agrega a grupo ,se cambia el dueño , permiso
 4. 
 ![sleep 100 & ; ps aux | grep sleep , kill ](imagenes/reforzamiento4_seccion2.png)
 ![comprobacion](imagenes/comprobacion2.png)
+
+## Seccion 3 Utilidades de texto de unix
+### Riesgo & Mitigacion en DevSecOps
+procesamiento de logs puede exponer datos sensibles o causar borrados masivos
+para mitigar se usa filtros como ```journalctl -p err..alert`` para severidades, rotacion de logs y opcione seguras en find/xargs -- para seguridad
+
+### marco teorico 
+Nos valemos de unix utils para procesar texto, analizar logs, parsear outputs de herramientas de seguridad(Nmap)
+grep: busca patrones
+sed: edita streams 
+awk: procesa datos estructurados
+cut: extrae campos
+sort/uniq: ordena  y elimina duplicados
+tr: traduce caracteres
+tee: divide salida a multiples destinos
+
+1. grep error /Var/log/syslog 
+2. sed 's/viejo/nuevo/gI' archivo1.txt
+3. awk '{print $1}' archivo1.txt      aawk -F: '{print $1}' /etc/psswd
+![grep sed awk](imagenes/seccion3_123.png)
+
+4. cut 
+![cut](imagenes/seccion3_4.png)
+
+5. sort(quita duplicados) tr(a mayusculas) tee(muestra y guarda) find(busca archivos)
+![sort tr tee ](imagenes/seccion3_678.png)
+creando archivo de pruebas
+![](imagenes/archivo_de_prueba.png)
+
+### Reforzamiento
+grep sed tr sort uniq
+![reforzamiento 1 2 3](imagenes/reforzamiento4_seccion3_123.png)
+grep 
+![reforzamiento 4 5 6 7](imagenes/reforzamiento4_seccion3_4567.png)
+
+comprobacion
+![file head cat](imagenes/comprobacion3.png)
+
+![entregable](imagenes/entregable.png)
