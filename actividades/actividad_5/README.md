@@ -168,7 +168,7 @@ CC := gcc
 es una variable dde make, visibles solo dentro de Makefile
 Mientras que la palabra clave *clave* hace que la variable definida en Makefile se convierta en *variables de entorno * cuando make ejecuta los targets
 
-una primera tentativa para entener que son las variables de entorno 
+una primera tentativa para entender que son las variables de entorno 
 ```bash
 export VARIABLE_ENTORNO := saludos
 VARIABLE_MAKE := hola
@@ -183,3 +183,40 @@ demo_variable_make:
 al ejecutar con make y pasarle los valores de las variables, ambos tienen el mismo comportamiento , esto es que make les da prioridad
 entonces investigando un poco mas se concluye que la utilidad de las variables de entorno(mucho verbo aparte) es que *las variables de entorno pueden ser referenciadas desde un script python (por ejemplo) actuan como puentes entre make y los programas o scripts que este ejecuta*
 Eso, de momento
+
+CABE PRECISAR , se esta editando con la mayor celeridad, honestamente , los errores de ortografia no son tan relevantes, sin embargo ,se tratara de corregir ello
+
+Las lineas de codigo que continuan en Makefile ya nos son familiares, ergo , obviamos su profundizacion 
+sin embargo ; hay algo relativamente nuevo , a saber : ``$<  >   $@``
+``build : $(OUT_DIR) /hello.txt``
+es un target con un prerrequisito
+se entiende que hello.txt debe existir
+y luego hay otro target que era el prerrequisito o dependencia de build, un poco confuso 
+luego se quiere que archivo.py → archivo.txt.
+entonces declarar ese target
+``$(OUT_DIR)/hello.txt : $(SRC_DIR)/hello.py``
+y luego la recete el cuerpo del target, que debe decodificarse con sumo cuidado por no decir con destreza
+``$@ target actual ,out/hello.txt``
+```$(@D) directorio del target actual, out``
+se asegura que exista la carpeta out
+``$(PYTHON) hello.py > out/hello.txt ``
+```$(PYTHON) $< > $@``
+verdaderamente un trabalenguas programatico!
+
+Okay se desentraño lo anterior, el target clean es maas legible pero el siguiente target.., bueno, interpretemos su significado:
+```'^ [caracteres digitos guiones]+'``
+inicio [] uno o mas veces
+```[a-zA-Z0-9_-]``
+osea por ejemplo se buscaria test-case
+luego ```:``
+luego . cualquier caracter
+```*`` una o mas veces
+? minimo posible
+buscaria build: foo.o
+y finalmente busca el ``##`` 
+y captura toda la linea ..
+
+luego se lo pasa a awk que separa el nombre del target y el comentario usando 
+':|##' como delimitadores, habrian 3 partes , el target, lo demas (dependencias) y el comentario, entonces nos quedamos con $1 y $3 , target y comentarios
+```'{printf " %-12s %s\n",$1,$3}'``
+okay ahora sabemos que hace makefile 
