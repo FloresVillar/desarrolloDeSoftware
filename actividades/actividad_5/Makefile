@@ -1,24 +1,9 @@
-SHELL :=bash 
-OUR_DIR :=out
-DIST_DIR :=dist
+export FOO := saludos
+FO := variable make
+.PHONY:
+demo_variable_entorno:
+	echo $$FOO
 
-.PHONY:build
-build:
-	@echo "build"
-.PHONY:test 
-test:
-	@echo "test"
-.PHONY:package 
-package:
-	@echo "package"
-.PHONY:clean 
-clean:
-	@echo "clean"
-	rm -rf $(OUR_DIR) $(DIST_DIR)
-.PHONY:help 
-help:
-	@echo "help"
-.PHONY:lint 
-lint:
-	@echo "lint"
-
+.PHONY:
+demo_variable_make:
+	echo $$FO

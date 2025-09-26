@@ -64,7 +64,8 @@ en python .tar.gz (paquetes distribuidos)
 Esto facilita CI/CD auditoria y bulids deterministas , como se espera en entornos profesionales
 
 ## Preparacion
-- El entorno es WSl , bueno la guia señala que se deberia trabjar en ~/ en la raiz de mi usuario, se hace eso y luego se copia dicha carpeta a actividad_5
+- El entorno es WSl , bueno la guia señala que se deberia trabjar en ~/ en la raiz de mi usuario.
+Sin embargo se trabaja directamente en actividad_5
 - Dependencias: makee, bash, python3  son conocidos, pero los siguientes son nuevos, ``shellcheck shfmt ruff`` 
 1. shellcheck : es un linter que analiza codigo y muestra errores comunes
 ```bash
@@ -114,4 +115,71 @@ Laboratorio2/
 ├── out/
 └── dist/
 
-Se creara ```src/__init__.py para compatibilidad en entornos antiguos de python 
+Se creara ``src/__init__.py`` para compatibilidad en entornos antiguos de python 
+
+## Parte 1 : Construir - Makefile y Bash desde cero
+Se crea un Makefile y un bash
+src/hello.py
+
+Algunos detalles acerca de la sintaxis de Makefile.
+
+1. .VARIABLE importa las funcones de configuracion de bash,a saber, set -euo pipefail
+entonces si queremos usar esas configuraciones se utiliza .SHELLFLAGS la asignacion al momento de declarar y las opciones de configuracion 
+``.SHELLFLAGS := -eu -o pipefail -c``
+y un detalle mas ``-c`` le dice a bash 'ejecuta el siguiente argumento como un comando/script
+ejemplo :
+```bash
+bash -c "echo Hola; ls"
+```
+2. Lo siguiente es abarcar la sintaxis de ``MAKEFLAGS += --warn-undefined-variables --no-builtin-rules``
+En este punto podria pensarse que cada linea de codigo aporta nueva sintaxis desconocida ,y es que realmente es asi , como sea. Veamos su interpretacion.
+con ```MAKEFLAGS+=`` sumamos banderas a make en el sentido que indicamos como debe ejecutarse un comando ,asi, si se quiere que todos los comandos se ejecuten en modo estricto 
+``MAKEFLAGS += --warn-undefined-variables ``.
+Y desactivando las reglas implicitas (precisamente lo que se menciono) ``--no-builtin-rules`` 
+3. Y una vez mas
+.DELETE_ON_ERROR:
+una bandera global para borrar el archivo target si su receta falla
+ej :
+
+```bash
+.DELETE_ON_ERROR:
+
+broken.txt:
+    echo "mensjae" > broken.txt
+    false
+    echo "no ejecutado"
+
+make broken.txt
+echo "saludo" > broken.txt
+false
+make : *** [Makefile:4:broken.txt] error 1
+rm broken.txt
+```
+make borra el archivo 
+
+4. .DEFAULT_GOAL := help 
+tal como indica su nombre sera el target que corre cuando no se indica a make cual ejecutar.
+entonces para recalcar ``.VARIABLE`` son variables / directivas
+
+5. Ahora bien la sintaxis export VARIABLE  := mezcla conceptos de variables de make con variables de entorno del sistema
+```bash 
+CC := gcc
+```
+es una variable dde make, visibles solo dentro de Makefile
+Mientras que la palabra clave *clave* hace que la variable definida en Makefile se convierta en *variables de entorno * cuando make ejecuta los targets
+
+una primera tentativa para entener que son las variables de entorno 
+```bash
+export VARIABLE_ENTORNO := saludos
+VARIABLE_MAKE := hola
+
+.PHONY:
+demo_variable_entorno:
+    echo $$VARIABLE_ENTORNO
+.PHONY:
+demo_variable_make:
+    echo $$VARIABLE_MAKE
+```
+al ejecutar con make y pasarle los valores de las variables, ambos tienen el mismo comportamiento , esto es que make les da prioridad
+entonces investigando un poco mas se concluye que la utilidad de las variables de entorno(mucho verbo aparte) es que *las variables de entorno pueden ser referenciadas desde un script python (por ejemplo) actuan como puentes entre make y los programas o scripts que este ejecuta*
+Eso, de momento
