@@ -220,3 +220,63 @@ luego se lo pasa a awk que separa el nombre del target y el comentario usando
 ':|##' como delimitadores, habrian 3 partes , el target, lo demas (dependencias) y el comentario, entonces nos quedamos con $1 y $3 , target y comentarios
 ```'{printf " %-12s %s\n",$1,$3}'``
 okay ahora sabemos que hace makefile 
+
+
+Y una vez editado todo el makefile, podemos señalar que este establece un entorno de construccion *estricto y determinista* define un flujo minimo para generar un artefacto desde un script.
+Se fija el interprete de recetas a Bash ``SHELL := bash``
+activamos el modos estricto con ``.SHELLFLAGS := -euo pipefail -c ``
+Refuerza la deteccion de problemas con ``MAKEFLAGD +=--warn-undefined-variables --no-builtin-rules``
+Reforza la deteccion de problemas y desactiva reglas implicitas. Exporta LC_ALL, LANGm TZ a C/UTC para obtener salidas reproducibles(mensajes, ordenamientos y fechas estables). Declara como .PHONY un conjunto de objetivos logicos (all, clean, help) para que no entren en conflicto con archivos reales del mismo nombre
+
+Define las variables de conveniencia: ``PYTHON ?= python3`` (sobreescribible desde el entorno /CI) rutas (SRC_DIR,OUT_DIR). all actua como integrador y cuando el Makefile completo tenga definidas ejecutra ``tools, lint, build,test , package`` en cadena.
+En este fragmento , el objetivo ``build`` produce out/hello.txt a partir de src/hello.py 
+crea el directorio de destino con ``mkdir -p $(@D)`` y ejecuta  $(PYTHON) $< > $@ ,primr prerrequisito y target respectivamente.
+La directiva .DELETE_ON_ERROR asegura que si una receta falla, no quede artefacto parcialmente generado. Finalmente help autodocumenta los objetivos escaneando el propio Makefile con ``grep  awk `` se fija el objetiivo por defecto con ``.DEFAULT_GOAL := help`` de modo que si invocamos make sin argumentos nos muestra la ayuda
+
+### EJERCICIOS  
+1. en el terminal :
+```bash 
+mkdir -p logs evidencia
+make help | tee logs/make-help.txt
+grep -E '^\.(DEFAULT_GOAL|PHONY):' -n Makefile | tee -a logs/make-help.txt
+```
+creamos las carpetas en cuestion, ignorando el comando si ya se han creado
+se ejecuta el targets help , que como se describe en el DESENTRAÑAMIENTO de la sintaxis de este makefile , busca los nombres de los target y los comentarios (##)
+con grep, luego esas lineas las pasamos a awk, quien se queda con esos nombres-comentarios fila a fila a modo de columnas, entoneces ya unicamente usamos tee para copiar esa salida en make-help.txt.
+nuevamente se usa grep para encontrar el patron .DEFAULT o PHONY , esto se ejecuta si usamos make sin argumentos, recordar que (|) es un grupo de ejecucion con varias opciones en este caso 2, el archivo donde buscar es Makefile , y otra vez se usa tee para guardar esa salida en make-help.
+![ejercicio_1](imagenes/1_ejecutando_make_help_2.png)
+
+2. 
+```bash
+rm -rf out dist
+make build | tee logs/build-run1.txt
+cat out/hello.txt | tee evidencias/out-hello-run1.txt
+```
+Se borra las carpetas out y dist
+luego ejecutamos build , recordamos que este target tiene un prerrequisito OUT_DIR/hello.txt, se llama a ese prerrequisito  que tiene a su vez el prerrequisito saludo.py y el cuerpo del target crea out ``@D`` y guarda python salido.py ``$<`` en out/hello.txt ``$@``
+y esa salida es copiado en build-run1.txt via tee.
+luego la salida de cat out/hello.txt (prerrequisto en make y a su vez target) se copia en evidencia/out-hello-run1.txt 
+entonces hasta alli se sigue una ejecucion esperada, sin que haga falta contrastar el concepto de indempotencia ni nada.
+![indempotencia](imagenes/2_indempotencia.png)
+Ahora bien al ejecutar 
+```bash
+make build | tee logs/build-run2.txt 
+make: Nothing to be done for 'build'.
+```
+y que es eso? sencillo aunque no tanto, veamos 
+build : out/hello.txt
+su prerrequisito es out/hello.txt
+entonces se analiza el target out/hello.xtt : saludo.py
+- si src/saludo.py  es mas nuevo osea HA CAMBIADO se ejecuta "rehace " our/hello "target"
+- si out/hello.txt es mas nuevo esto es que src/saludo.py no ha cambiado no se hace nada
+entonces build mismo no hace nada.
+Se deja todo como estaba, esto es indempotencia en acccion. INDEMPOTENCIA que esta en la comparacion automatica de timestamps entre targets y prerrequisitos
+luego se ejecuta 
+
+`` stat -c '%y %n' out/hello.txt | tee -a logs/build-run2.txt``
+
+otra vez algo nuevo, que tiene que analizarse, lo cual se hara, stat = status, muestra atributos,  %y hora %n nombre del objetivo out/hello.txt  lugo con tee en modo de append (no sobreescribiendo) guardamos la salida en logs/build-run2.txt
+
+![indempotencia](imagenes/2_indempotencia_2.png)
+
+

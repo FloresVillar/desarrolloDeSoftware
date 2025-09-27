@@ -1,0 +1,4 @@
+all           ejecuta todas las tareas 
+build         genera el archivo hello.txt 
+clean         limpia los archivos generados
+help          descripcion de los 1targets
