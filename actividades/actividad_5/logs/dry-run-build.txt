@@ -1,0 +1,3 @@
+echo "." out/hello.txt
+mkdir -p out
+python3 src/saludo.py > out/hello.txt

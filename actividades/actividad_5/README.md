@@ -136,6 +136,7 @@ En este punto podria pensarse que cada linea de codigo aporta nueva sintaxis des
 con ```MAKEFLAGS+=`` sumamos banderas a make en el sentido que indicamos como debe ejecutarse un comando ,asi, si se quiere que todos los comandos se ejecuten en modo estricto 
 ``MAKEFLAGS += --warn-undefined-variables ``.
 Y desactivando las reglas implicitas (precisamente lo que se menciono) ``--no-builtin-rules`` 
+
 3. Y una vez mas
 .DELETE_ON_ERROR:
 una bandera global para borrar el archivo target si su receta falla
@@ -280,3 +281,92 @@ otra vez algo nuevo, que tiene que analizarse, lo cual se hara, stat = status, m
 ![indempotencia](imagenes/2_indempotencia_2.png)
 
 
+3. forzando un fallo controlado para observar el modo estricto(-eu- o pipefail)  y .DELETE_ON_ERROR, este borrara cualquier artefacto (archivo generado al ejecutar el codigo fuente) en este caso los targets de Makefile
+```bash 
+rm -rf out/hello.txt
+PYTHON = python4 make build ;echo "exit=$" | tee logs/fallo-python4.txt || echo "fallo(esperado)"
+ls -ls out/hello | tee -a logs/fallo-python4.txt || echo "no existe python4"
+```
+limpiamos el archivo  y pasamos el valor para la variable de make PYTHON que tendra preponderancia respecto al valor por defecto asignado mediante ?= 
+luego como sabemos build tiene out/hello.txt como prerequisito, va al target out/hello.txt , ejecuta el cuerpo pero PYTHON = python4 no existe , entonces tendremos un error, se imprime mediante exit=$ ,codigo de salida del ultimo comando (make build), se pasa esa salida a fallo-python4.txt 
+borrando cualquier artefacto corrupto generado
+![.DELETE_ON_ERROR](imagenes/3_eliminando_artefactos.png)
+
++
+4. 
+```bash
+make -n build | tee logs/dry-run-build.txt
+make -d build | tee logs/make-d.txt 
+grep -n "MENSAJE out/hello.txt objetivo" logs/make-d.txt
+```
+
+
+en make el flag -n activa el modo "dry-run" mostramos los comandos pero sin ejeecutarlos.
+y acerca del flag -d (debug) , se imprime informacion detallada sobre como make decide rehacer targets, timestamps,dependencias ,reglas implicitas etc
+grep -n es conocido 
+
+![dry_run](imagenes/4_dry_run.png)
+
+5. 
+```bash 
+touch src/hello.py
+make build | tee logs/rebuild-after-touch-src.txt
+
+touch out/hello.txt
+make build | tee logs/no-rebuild-after-touch-out.txt
+```
+porque como se vio en indempotencia, si saludo.py es modificado al tener timestamp mas reciente  y ser prerrequisito de out/hello.txt  y este ser prerequisito de build, se rehace el target.
+Caso contrario si solo se modifica el target, el timestamp de saludo.py no cmabio luego no se rehace el target
+Solo se reconstruye lo que necesita ser actualizado
+
+6. Se comento al principio el uso de shellcheck y shfmt
+```bash
+command -v shellcheck >/dev/null && shellcheck scripts/run_tests.sh | tee logs/lint-shellcheck.txt || echo "shellcheck no instalado" | tee logs/lint-shellcheck.txt
+command -v shfmt >/dev/null && shfmt -d scripts/run_tests.sh | tee logs/format-shfmt.txt || echo "shfmt no instalado" | tee logs/format-shfmt.txt
+```
+No instalados
+![shellcheck shfmt](imagenes/6.png)
+
+7. El siguiente bloque de codigo es muy interesante.
+```bash
+mkdir -p dist
+tar --sort=name --mtime='@0' --owner=0 --group=0 --numeric-owner -cf dist/app.tar src/hello.py
+gzip -n -9 -c dist/app.tar > dist/app.tar.gz
+sha256sum dist/app.tar.gz | tee logs/sha256-1.txt
+
+rm -f dist/app.tar.gz
+tar --sort=name --mtime='@0' --owner=0 --group=0 --numeric-owner -cf dist/app.tar src/hello.py
+gzip -n -9 -c dist/app.tar > dist/app.tar.gz
+sha256sum dist/app.tar.gz | tee logs/sha256-2.txt
+
+diff -u logs/sha256-1.txt logs/sha256-2.txt | tee logs/sha256-diff.txt || true
+```
+se crea un .tar y comprime, y se genera un hash de ese comprimido, tocar cada flag y las opciones resulta abrumador
+```bash
+diff -u logs/sha256-1.txt logs/sha256-2.txt | tee logs/sha256-diff.txt || true
+tar: src/hello.py: Cannot stat: No such file or directory
+tar: Exiting with failure status due to previous errors
+b1dd88cdd8bf09af2539d0b345e647129d8fd55c92b6d824b6ecc53efd531028  dist/app.tar.gz
+tar: src/hello.py: Cannot stat: No such file or directory
+tar: Exiting with failure status due to previous errors
+b1dd88cdd8bf09af2539d0b345e647129d8fd55c92b6d824b6ecc53efd531028  dist/app.tar.gz
+```
+- --sort=name ordena los archivos dentro del tar alfabéticamente, eliminando variabilidad por orden de listado.
+
+- --mtime='@0' fija la fecha de modificación de todos los archivos, evitando que el timestamp cambie el hash.
+
+- --owner=0 --group=0 --numeric-owner normaliza propietario y grupo, evitando diferencias entre sistemas o usuarios.
+
+- gzip -n suprime timestamps en el encabezado de compresión, y -9 solo afecta la compresión, no el contenido reproducible.
+
+8. 
+```bash
+cp Makefile Makefile_bad
+# (Edita Makefile_bad: en la línea de la receta de out/hello.txt, reemplaza el TAB inicial por espacios)
+make -f Makefile_bad build |& tee evidencia/missing-separator.txt || echo "error reproducido (correcto)"
+```
+Cuando Make ejecuta un Makefile, las recetas deben comenzar estrictamente con un TAB para diferenciar comandos de dependencias y targets. Si se usan espacios, Make no puede distinguir la receta y produce el error “missing separator”.
+
+El flujo de la actividad reproduce esto: se copia el Makefile original, se reemplaza el TAB de la receta de out/hello.txt por espacios, y al ejecutar make -f Makefile_bad build se obtiene el error, confirmado en missing-separator.txt.
+
+Este comportamiento garantiza que Make interprete correctamente la estructura de dependencias y comandos. Para diagnosticarlo rápido, se puede usar make -n o revisar la línea señalada en el mensaje de error, buscando líneas de receta que no comiencen con TAB.

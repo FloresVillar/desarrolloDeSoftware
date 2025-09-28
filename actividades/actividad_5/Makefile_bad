@@ -17,9 +17,10 @@ SHELLCHECK := shellcheck
 
 
 all: tools lint build test package ## ejecuta todas las tareas 
+
 build: $(OUT_DIR)/hello.txt ## genera el archivo hello.txt 
 
-$(OUT_DIR)/hello.txt: $(SCR_DIR)/saludo.py
+$(OUT_DIR)/hello.txt:$(SCR_DIR)/saludo.py
 	@echo "." $@
 	@mkdir -p $(@D)
 	$(PYTHON) $< > $@
