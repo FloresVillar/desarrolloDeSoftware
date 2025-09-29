@@ -333,7 +333,15 @@ mkdir -p dist
 tar --sort=name --mtime='@0' --owner=0 --group=0 --numeric-owner -cf dist/app.tar src/hello.py
 gzip -n -9 -c dist/app.tar > dist/app.tar.gz
 sha256sum dist/app.tar.gz | tee logs/sha256-1.txt
+```
+con tar estamos empaquetando el archivo src/hello.py
+en dist/app.tar , con opciones "estandar" es que en si cada flags es un mundo
 
+con gzip comprimimos el .tar dist/app.tar  a  dist/app.tar.gz
+
+con sha256sum creamos el hash del comprimido guardando este en logs/sha256-1.txt
+
+```bash
 rm -f dist/app.tar.gz
 tar --sort=name --mtime='@0' --owner=0 --group=0 --numeric-owner -cf dist/app.tar src/hello.py
 gzip -n -9 -c dist/app.tar > dist/app.tar.gz
@@ -341,7 +349,7 @@ sha256sum dist/app.tar.gz | tee logs/sha256-2.txt
 
 diff -u logs/sha256-1.txt logs/sha256-2.txt | tee logs/sha256-diff.txt || true
 ```
-se crea un .tar y comprime, y se genera un hash de ese comprimido, tocar cada flag y las opciones resulta abrumador
+ las 3 lineas sigueintes hacen lo mismo,empaquetamos , comprimimos sin considerar metadatos y comprimimos, se hashea el comprimido y el hash resultante se espera , sea el mismo 
 ```bash
 diff -u logs/sha256-1.txt logs/sha256-2.txt | tee logs/sha256-diff.txt || true
 tar: src/hello.py: Cannot stat: No such file or directory
@@ -363,10 +371,27 @@ b1dd88cdd8bf09af2539d0b345e647129d8fd55c92b6d824b6ecc53efd531028  dist/app.tar.g
 ```bash
 cp Makefile Makefile_bad
 # (Edita Makefile_bad: en la línea de la receta de out/hello.txt, reemplaza el TAB inicial por espacios)
-make -f Makefile_bad build |& tee evidencia/missing-separator.txt || echo "error reproducido (correcto)"
+make --file Makefile_bad build 2>&1 | tee evidencia/missing-separator.txt || echo "error reproducido (correcto)"
 ```
+
 Cuando Make ejecuta un Makefile, las recetas deben comenzar estrictamente con un TAB para diferenciar comandos de dependencias y targets. Si se usan espacios, Make no puede distinguir la receta y produce el error “missing separator”.
 
 El flujo de la actividad reproduce esto: se copia el Makefile original, se reemplaza el TAB de la receta de out/hello.txt por espacios, y al ejecutar make -f Makefile_bad build se obtiene el error, confirmado en missing-separator.txt.
 
 Este comportamiento garantiza que Make interprete correctamente la estructura de dependencias y comandos. Para diagnosticarlo rápido, se puede usar make -n o revisar la línea señalada en el mensaje de error, buscando líneas de receta que no comiencen con TAB.
+*creaditos a gpt la explicacion anterior *
+se puede decir que para codear la linea de comandos hacemos TAB,
+TAB @cmd1
+TAB @cmd2
+asi mientras que para el prerrequisito
+target:ESPACIO prerrequisito
+eso es 
+
+### creando un script bash
+- cleanup
+
+- deps
+    ``local`` palabra clave para determinar un ambito local para una variable, luego declaramos un array via ``-a``  el array es ``deps`` asignandole dos elementos
+    ``=("$PY" grep)``
+    luego recorremos el array ``for dep in ${deps[@]};``
+    y verificamos si python3 y grep estan instalados o no
