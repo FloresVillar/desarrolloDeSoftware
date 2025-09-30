@@ -25,13 +25,12 @@ cleanup(){  #limpieza ordenada y rollback
 trap 'cleanup $?' EXIT INT TERM
 
 check_deps(){ #checkea dependencias[]
-    local -a array_deps=("$PY" grep)
-    for dep in "${array_deps[@]}";do
-        if ! command -v "$dep" > /dev/null 2>&1;then
-            echo "error: $dep no instalado" >&2
-            exit 1
+    local -a dependencias=("$PY" grep)
+    for dep in "${dependencias[@]}";do
+        if ! command -v $dep  >/dev/null   2>&1;then
+            echo " $dep no instalado" >&2
+            exit 1                                                                                          
         fi
-        echo "$dep instalado"
     done
 }
 
@@ -46,6 +45,28 @@ run_tests(){
     echo "Test pasó: $salida"
 }
 
+probando_pipefail(){
+    echo "probando pipefail"
+    set +o pipefail
+    if false | true | false;then
+        echo "pipefail sin deteccion de errores en pipeline status(0)"
+    fi
+    set -o pipefail 
+    if false | false | true;then
+        echo ".."
+    else 
+        echo "pipefail con deteccion de errores en pipeline status (1)"
+    fi
+}   
+ probando_noclobber(){
+    cat <<'EOF' >|"$tmp"
+    linea1 
+    linea2
+    linea3
+    linea4
+EOF
+}
+
 check_deps
 run_tests "${SRC_DIR}/saludo.py"
-
+probando_pipefail
