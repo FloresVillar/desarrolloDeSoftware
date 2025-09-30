@@ -1,20 +1,22 @@
 # Construyendo un pipeline Devops con Make y Bash
-En *CONSTRUIR* en Se contruira un Makefile y probara unos scripts python
-Make decidira si rehacer un target a partir de sus dependencias *esta frase no se profundiza del todo aun* , esto con el uso de variables automaticas
+En *CONSTRUIR*<br>
+Se contruira un Makefile y probara unos scripts python<br>
+Make decidira si rehacer un target a partir de sus dependencias *esta frase no se profundiza del todo aun* , esto con el uso de variables automaticas<br>
+```bash
 $@ nombre del target out/hello.txt 
 $< primera dependencia
+```
 las configuraciones del script bash para el rastreo de errores ya nos son conocidas
-set - eu set -o pipefail 
-y el internal field separator IFS tambien
-pero TRAP si es una herramienta interesantisima, nos permite una finalizacion ordenada, intercepta señales como SIGINT SIGTERM EXIT y permite ejecutar un comando del siguiente modo :
-``trap comando_a_ejecutar`` SEÑAL1 SEÑAL2 ...
-ej:
-``trap exit 1 INT`` INT =2  cuando presionamos CTRL + C se ejecutara el comando exit 1
-En *LEER*
-en tanto que los operadores de asignacion := ?= suenan familiares, la primera se asigna al momento de la declaracion y la segunda es una asignacion condicional 
-En *EXTENDER*
-Acerca de los LINTERS: Un linter es una herramienta que analiza el codigo y avisa posibles problemas , malas practicas  o inconsistencias de estilo
-No ejecuta el codigo solo lee y revisa, este detecta : 
+``set - eu set -o pipefail`` 
+y el internal field separator IFS tambien<br>
+Pero TRAP si es una herramienta interesantisima, nos permite una finalizacion ordenada. Intercepta señales como SIGINT SIGTERM EXIT y permite ejecutar un comando del siguiente modo<br>
+``trap comando_a_ejecutar SEÑAL1 SEÑAL2 ``<br>
+``trap exit 1 INT`` donde INT =2  <br>
+Cuando presionamos CTRL + C se ejecutara el comando exit 1<br>
+<br>
+En *LEER* ,los operadores de asignacion := ?= suenan familiares, la primera se asigna al momento de la declaracion y la segunda es una asignacion condicional.<br>
+<br>
+En *EXTENDER*,acerca de los LINTERS: Un linter es una herramienta que analiza el codigo y avisa posibles problemas , malas practicas  o inconsistencias de estilo,no ejecuta el codigo solo lee y revisa, este detecta : 
 - Errores de sintaxis
 - Variables sin usar
 - Estilo inconsistente (espacios , identacion)
@@ -31,9 +33,10 @@ La guia de la actividad indica que el pipeline resultante compila , prueba y emp
 Es preciso exterdernos un poco en "practicas robustas de shell" como 
 1. here-docs :
 En bash son una forma muy util de redirigir un bloque de texto directamente a un comando o archivo , sin tener que usar muchos ``ècho`` ni archivos temporales
-```comando << DELIMITADOR``
+``comando << DELIMITADOR``<br>
 los delimitadores pueden ser EOF , END , TEXT 
 se prueba en el terminal
+<br>
 ``cat << EOF > archivo.txt ``
 permite ingresar texto hasta el EOF
 y todo esto se redirecciona a un .txt
@@ -101,7 +104,7 @@ def add(a, b):
     return a + b
 ```
 un concepto más, un benchmark es una prueba de rendimiento util para medir tiempos de ejecucion , consum de memoria en general la eficiencia de un programa
-
+```
 La estructura inicial 
 Laboratorio2/
 ├── Makefile
@@ -114,7 +117,7 @@ Laboratorio2/
 │   └── test_hello.py
 ├── out/
 └── dist/
-
+```
 Se creara ``src/__init__.py`` para compatibilidad en entornos antiguos de python 
 
 ## Parte 1 : Construir - Makefile y Bash desde cero
@@ -133,7 +136,7 @@ bash -c "echo Hola; ls"
 ```
 2. Lo siguiente es abarcar la sintaxis de ``MAKEFLAGS += --warn-undefined-variables --no-builtin-rules``
 En este punto podria pensarse que cada linea de codigo aporta nueva sintaxis desconocida ,y es que realmente es asi , como sea. Veamos su interpretacion.
-con ```MAKEFLAGS+=`` sumamos banderas a make en el sentido que indicamos como debe ejecutarse un comando ,asi, si se quiere que todos los comandos se ejecuten en modo estricto 
+con ``MAKEFLAGS+=`` sumamos banderas a make en el sentido que indicamos como debe ejecutarse un comando ,asi, si se quiere que todos los comandos se ejecuten en modo estricto 
 ``MAKEFLAGS += --warn-undefined-variables ``.
 Y desactivando las reglas implicitas (precisamente lo que se menciono) ``--no-builtin-rules`` 
 
@@ -181,58 +184,101 @@ demo_variable_entorno:
 demo_variable_make:
     echo $$VARIABLE_MAKE
 ```
-al ejecutar con make y pasarle los valores de las variables, ambos tienen el mismo comportamiento , esto es que make les da prioridad
-entonces investigando un poco mas se concluye que la utilidad de las variables de entorno(mucho verbo aparte) es que *las variables de entorno pueden ser referenciadas desde un script python (por ejemplo) actuan como puentes entre make y los programas o scripts que este ejecuta*
-Eso, de momento
-
-CABE PRECISAR , se esta editando con la mayor celeridad, honestamente , los errores de ortografia no son tan relevantes, sin embargo ,se tratara de corregir ello
+Al ejecutar con make y pasarle los valores de las variables, ambos tienen el mismo comportamiento , esto es que make les da prioridad
+entonces investigando un poco mas se concluye que la utilidad de las variables de entorno(mucho verbo aparte) es que *las variables de entorno pueden ser referenciadas desde un script python (por ejemplo) actuan como puentes entre make y los programas o scripts que este ejecuta*<br>
+Eso de momento
 
 Las lineas de codigo que continuan en Makefile ya nos son familiares, ergo , obviamos su profundizacion 
-sin embargo ; hay algo relativamente nuevo , a saber : ``$<  >   $@``
-``build : $(OUT_DIR) /hello.txt``
-es un target con un prerrequisito
-se entiende que hello.txt debe existir
-y luego hay otro target que era el prerrequisito o dependencia de build, un poco confuso 
-luego se quiere que archivo.py → archivo.txt.
-entonces declarar ese target
-``$(OUT_DIR)/hello.txt : $(SRC_DIR)/hello.py``
-y luego la recete el cuerpo del target, que debe decodificarse con sumo cuidado por no decir con destreza
-``$@ target actual ,out/hello.txt``
-```$(@D) directorio del target actual, out``
+sin embargo ; hay algo relativamente nuevo.<br>
+```bash
+build : $(OUT_DIR) /hello.txt
+    $<  >  $@
+```
+build es un target con ``$(OUT_DIR)/hello.txt`` como prerrequisito  y este es a su vez un target con ``hello.py`` como prerrequisito<br>
+``$(OUT_DIR)/hello.txt : $(SRC_DIR)/hello.py``<br>
+Y luego la receta osea el cuerpo del target, que debe decodificarse con sumo cuidado y destreza<br>
+```bash
+    $@ es el target actual = out/hello.txt
+    $(@D) es el directorio del target actual = out
+    $< es el primer prerrequisito
+```
 se asegura que exista la carpeta out
-``$(PYTHON) hello.py > out/hello.txt ``
-```$(PYTHON) $< > $@``
-verdaderamente un trabalenguas programatico!
 
-Okay se desentraño lo anterior, el target clean es maas legible pero el siguiente target.., bueno, interpretemos su significado:
-```'^ [caracteres digitos guiones]+'``
-inicio [] uno o mas veces
-```[a-zA-Z0-9_-]``
+```bash
+    $(PYTHON) $< > $@
+    es lo mismo que 
+    $(PYTHON) hello.py > out/hello.txt 
+```
+Hermosas lineas de codigo
+
+Clean es mas legible, aunque nunca esta de más interpretar su significado<br>
+```'^ [caracteres digitos guiones]+'```<br>
+```'inicio [a-zA-Z0-9_-] una o mas veces'```
+<br>
 osea por ejemplo se buscaria test-case
-luego ```:``
-luego . cualquier caracter
-```*`` una o mas veces
-? minimo posible
-buscaria build: foo.o
-y finalmente busca el ``##`` 
-y captura toda la linea ..
+luego ``:``
+luego ``.`` cualquier caracter
+``*`` una o mas veces
+``?`` minimo posible y ``##``<br>
+ej: ``build: $()/hello.txt ## comentario`` 
+ capturando toda la linea.
 
-luego se lo pasa a awk que separa el nombre del target y el comentario usando 
-':|##' como delimitadores, habrian 3 partes , el target, lo demas (dependencias) y el comentario, entonces nos quedamos con $1 y $3 , target y comentarios
-```'{printf " %-12s %s\n",$1,$3}'``
+La salida se pasa a awk que separa el nombre del target y el comentario usando 
+``':|##'`` como delimitadores, habrian 3 partes , el target, lo demas (dependencias) y el comentario, entonces nos quedamos con $1 y $3 , target y comentarios
+``'{printf " %-12s %s\n",$1,$3}'``
+```bash
+
+help:  ## descripcion de los targets
+	@grep -E '^[a-zA-Z0-9_-]+:.*##' $(MAKEFILE_LIST) | awk -F ':|##' '{printf "%-12s %s\n",$$1,$$3}'
+#↑ aqui va bash -eu -o pipefail -c grep -E '^[a-zA-Z0-9_-]+:.*##' $(MAKEFILE_LIST) | awk -F ':|##' '{printf "%-12s %s\n",$$1,$$3}'
+ 
+```
+tal como indica el texto de la actividad <br>
+``
+help autodocumenta los objetivos escaneando el propio Makefile con grep y awk, y se fija como objetivo por defecto con .DEFAULT_GOAL := help
+``<br>
 okay ahora sabemos que hace makefile 
 
 
-Y una vez editado todo el makefile, podemos señalar que este establece un entorno de construccion *estricto y determinista* define un flujo minimo para generar un artefacto desde un script.
-Se fija el interprete de recetas a Bash ``SHELL := bash``
-activamos el modos estricto con ``.SHELLFLAGS := -euo pipefail -c ``
-Refuerza la deteccion de problemas con ``MAKEFLAGD +=--warn-undefined-variables --no-builtin-rules``
-Reforza la deteccion de problemas y desactiva reglas implicitas. Exporta LC_ALL, LANGm TZ a C/UTC para obtener salidas reproducibles(mensajes, ordenamientos y fechas estables). Declara como .PHONY un conjunto de objetivos logicos (all, clean, help) para que no entren en conflicto con archivos reales del mismo nombre
-
-Define las variables de conveniencia: ``PYTHON ?= python3`` (sobreescribible desde el entorno /CI) rutas (SRC_DIR,OUT_DIR). all actua como integrador y cuando el Makefile completo tenga definidas ejecutra ``tools, lint, build,test , package`` en cadena.
-En este fragmento , el objetivo ``build`` produce out/hello.txt a partir de src/hello.py 
-crea el directorio de destino con ``mkdir -p $(@D)`` y ejecuta  $(PYTHON) $< > $@ ,primr prerrequisito y target respectivamente.
-La directiva .DELETE_ON_ERROR asegura que si una receta falla, no quede artefacto parcialmente generado. Finalmente help autodocumenta los objetivos escaneando el propio Makefile con ``grep  awk `` se fija el objetiivo por defecto con ``.DEFAULT_GOAL := help`` de modo que si invocamos make sin argumentos nos muestra la ayuda
+Y una vez editado todo el makefile, podemos señalar que este establece un entorno de construccion *estricto y determinista*.<br>
+Esto define un flujo minimo para generar un artefacto desde un script.
+Se fija el interprete de recetas a Bash ``SHELL := bash``<br>
+Activamos el modos estricto con ``.SHELLFLAGS := -euo pipefail -c ``<br>
+Se refuerza la deteccion de problemas con ``MAKEFLAGD +=--warn-undefined-variables --no-builtin-rules`` y desactiva reglas implícitas. 
+```bash
+mkdir test-make
+cd test-make
+echo "all: a.txt" > Makefile
+make 
+#make ejecuta el unico target 
+touch b.o
+make b.o
+# como no hay un target b.o:  Make intenta usar reglas implicitas para compilar ej gcc
+```
+Exporta ``LC_ALL, LANG TZ a C/UTC`` para obtener salidas reproducibles(mensajes, ordenamientos y fechas estables). 
+```bash
+export SALUDO1 := "saludo1"
+SALUDO2 := "saludo2"
+all:
+    @bash -c 'echo $$SALUDO1'
+    @bash -c 'echo $$SALUDO2'
+```
+Se declara la variable dentro del Makefile y las exporta al entorno de procesos que make ejecute.Osea que cualquier comando que make ejecute en ese target verá a dicha variable con el valor asignado 
+<br>
+Efectivamente al ejcutar make all 
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ make all
+"saludo1"
+```
+Entonces al declarar las variables y exportarlas al entorno de ejecucion 
+```bash
+export LC_ALL := C  #variable de localizacion (controla el idioma)
+export LANG   := C  #los mensajes usaran ASCII basico 
+export TZ     := UTC  #zona horaria
+#Exporta LC_ALL, LANG y TZ a C/UTC para obtener salidas reproducibles (mensajes, ordenamientos y fechas estables). 
+```
+La directiva .DELETE_ON_ERROR asegura que si una receta falla, no quede artefacto parcialmente generado. <br>
+Finalmente help autodocumenta los objetivos escaneando el propio Makefile con ``grep  awk `` se fija el objetiivo por defecto con ``.DEFAULT_GOAL := help`` de modo que si invocamos make sin argumentos nos muestra la ayuda
 
 ### EJERCICIOS  
 1. en el terminal :
@@ -242,11 +288,17 @@ make help | tee logs/make-help.txt
 grep -E '^\.(DEFAULT_GOAL|PHONY):' -n Makefile | tee -a logs/make-help.txt
 ```
 creamos las carpetas en cuestion, ignorando el comando si ya se han creado
-se ejecuta el targets help , que como se describe en el DESENTRAÑAMIENTO de la sintaxis de este makefile , busca los nombres de los target y los comentarios (##)
-con grep, luego esas lineas las pasamos a awk, quien se queda con esos nombres-comentarios fila a fila a modo de columnas, entoneces ya unicamente usamos tee para copiar esa salida en make-help.txt.
-nuevamente se usa grep para encontrar el patron .DEFAULT o PHONY , esto se ejecuta si usamos make sin argumentos, recordar que (|) es un grupo de ejecucion con varias opciones en este caso 2, el archivo donde buscar es Makefile , y otra vez se usa tee para guardar esa salida en make-help.
-![ejercicio_1](imagenes/1_ejecutando_make_help_2.png)
-
+se ejecuta el targets help , que como se describe en el DESENTRAÑAMIENTO de la sintaxis de este makefile<br>
+Busca los nombres de los target y los comentarios (##)
+con grep, luego esas lineas las pasamos a awk, quien se queda con esos nombres-comentarios fila a fila a modo de columnas, entonces ya unicamente usamos tee para copiar esa salida en make-help.txt.<br>
+Nuevamente se usa grep para encontrar el patron .DEFAULT o PHONY , esto se ejecuta si usamos make sin argumentos, recordar que ``( | )`` es un grupo de ejecucion con varias opciones en este caso 2, el archivo donde buscar es Makefile , y otra vez se usa tee para guardar esa salida en make-help.
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ cat logs/make-help.txt
+all           ejecuta todas las tareas 
+build         genera el archivo hello.txt 
+clean         limpia los archivos generados
+help          descripcion de los 1targets
+```
 2. 
 ```bash
 rm -rf out dist
@@ -254,11 +306,22 @@ make build | tee logs/build-run1.txt
 cat out/hello.txt | tee evidencias/out-hello-run1.txt
 ```
 Se borra las carpetas out y dist
-luego ejecutamos build , recordamos que este target tiene un prerrequisito OUT_DIR/hello.txt, se llama a ese prerrequisito  que tiene a su vez el prerrequisito saludo.py y el cuerpo del target crea out ``@D`` y guarda python salido.py ``$<`` en out/hello.txt ``$@``
-y esa salida es copiado en build-run1.txt via tee.
-luego la salida de cat out/hello.txt (prerrequisto en make y a su vez target) se copia en evidencia/out-hello-run1.txt 
-entonces hasta alli se sigue una ejecucion esperada, sin que haga falta contrastar el concepto de indempotencia ni nada.
-![indempotencia](imagenes/2_indempotencia.png)
+luego ejecutamos build , recordamos que este target tiene un prerrequisito OUT_DIR/hello.txt, se llama a ese prerrequisito  que tiene a su vez el prerrequisito saludo.py y el cuerpo del target crea out ``@D`` y guarda python saludo.py ``$<`` en out/hello.txt ``$@``
+y esa salida es copiado en build-run1.txt via tee.<br>
+Luego la salida de cat out/hello.txt (prerrequisto en make y a su vez target) se copia en evidencia/out-hello-run1.txt 
+entonces hasta alli se sigue una ejecucion esperada, sin que haga falta contrastar el concepto de indempotencia usando timestamps.
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ rm -rf out dist
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ make build | tee logs/build-run1.txt
+. out/hello.txt
+python3 src/saludo.py > out/hello.txt
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ cat out/hello.txt
+Saludos,Todos
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ cat out/hello.txt 
+Saludos,Todos
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ cat out/hello.txt | tee evidencias/out-hello-run1.txt
+Saludos,Todos
+```
 Ahora bien al ejecutar 
 ```bash
 make build | tee logs/build-run2.txt 
@@ -267,32 +330,49 @@ make: Nothing to be done for 'build'.
 y que es eso? sencillo aunque no tanto, veamos 
 build : out/hello.txt
 su prerrequisito es out/hello.txt
-entonces se analiza el target out/hello.xtt : saludo.py
+entonces se analiza el target out/hello.txt : saludo.py
 - si src/saludo.py  es mas nuevo osea HA CAMBIADO se ejecuta "rehace " our/hello "target"
-- si out/hello.txt es mas nuevo esto es que src/saludo.py no ha cambiado no se hace nada
-entonces build mismo no hace nada.
-Se deja todo como estaba, esto es indempotencia en acccion. INDEMPOTENCIA que esta en la comparacion automatica de timestamps entre targets y prerrequisitos
+- si out/hello.txt es mas nuevo esto es que src/saludo.py no ha cambiado no se hace nada<br>
+Entonces build es el mismo ,no se hace nada.
+Se deja todo como estaba, esto es indempotencia en acccion. INDEMPOTENCIA, que está en la comparacion automatica de timestamps entre targets y prerrequisitos
 luego se ejecuta 
 
 `` stat -c '%y %n' out/hello.txt | tee -a logs/build-run2.txt``
 
-otra vez algo nuevo, que tiene que analizarse, lo cual se hara, stat = status, muestra atributos,  %y hora %n nombre del objetivo out/hello.txt  lugo con tee en modo de append (no sobreescribiendo) guardamos la salida en logs/build-run2.txt
+Otra vez algo nuevo, que tiene que analizarse, lo cual se hará<br>
+stat = status, muestra atributos,  %y hora %n nombre del objetivo out/hello.txt  luego con tee en modo de append (no sobreescribiendo) guardamos la salida en logs/build-run2.txt
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ cat logs/build-run2.txt
+make: Nothing to be done for 'build'.
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ stat -c '%y %n' out/hello.txt | tee -a logs/build-run2.txt
+2025-09-30 09:57:45.173495647 -0500 out/hello.txt
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ cat logs/build-run2.txt
+make: Nothing to be done for 'build'.
+2025-09-30 09:57:45.173495647 -0500 out/hello.txt
+```
 
-![indempotencia](imagenes/2_indempotencia_2.png)
-
-
-3. forzando un fallo controlado para observar el modo estricto(-eu- o pipefail)  y .DELETE_ON_ERROR, este borrara cualquier artefacto (archivo generado al ejecutar el codigo fuente) en este caso los targets de Makefile
+3. Forzando un fallo controlado para observar el modo estricto(-eu- o pipefail)  y .DELETE_ON_ERROR, este borrara cualquier artefacto (archivo generado al ejecutar el codigo fuente) en este caso los targets de Makefile
 ```bash 
 rm -rf out/hello.txt
 PYTHON = python4 make build ;echo "exit=$" | tee logs/fallo-python4.txt || echo "fallo(esperado)"
 ls -ls out/hello | tee -a logs/fallo-python4.txt || echo "no existe python4"
 ```
-limpiamos el archivo  y pasamos el valor para la variable de make PYTHON que tendra preponderancia respecto al valor por defecto asignado mediante ?= 
-luego como sabemos build tiene out/hello.txt como prerequisito, va al target out/hello.txt , ejecuta el cuerpo pero PYTHON = python4 no existe , entonces tendremos un error, se imprime mediante exit=$ ,codigo de salida del ultimo comando (make build), se pasa esa salida a fallo-python4.txt 
+Limpiamos el archivo  y pasamos el valor para la variable de make PYTHON que tendra preponderancia respecto al valor por defecto asignado mediante ``?=``<<br>
+luego como sabemos build tiene out/hello.txt como prerequisito, va al target out/hello.txt , ejecuta el cuerpo<br> pero PYTHON = python4 no existe , entonces tendremos un error, se imprime mediante exit=$ ,codigo de salida del ultimo comando (make build), se pasa esa salida a fallo-python4.txt 
 borrando cualquier artefacto corrupto generado
-![.DELETE_ON_ERROR](imagenes/3_eliminando_artefactos.png)
-
-+
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ rm -rf out/hello.txt
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ PYTHON = python4 make build ;echo "exit=$" te | logs/fallo-python4.py || echo "fallo(esperado)"
+PYTHON: command not found
+bash: logs/fallo-python4.py: No such file or directory
+fallo(esperado)
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ ls -ls out/hello.txt | tee -a losg/fallo-python4.txt || echo "no existe ppython4"
+tee: losg/fallo-python4.txt: No such file or directory
+ls: cannot access 'out/hello.txt': No such file or directory
+no existe ppython4
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ cat logs/fallo-python4.txt
+exit=2
+```
 4. 
 ```bash
 make -n build | tee logs/dry-run-build.txt
@@ -301,12 +381,23 @@ grep -n "MENSAJE out/hello.txt objetivo" logs/make-d.txt
 ```
 
 
-en make el flag -n activa el modo "dry-run" mostramos los comandos pero sin ejeecutarlos.
+En make el flag -n activa el modo "dry-run" mostramos los comandos pero sin ejeecutarlos.
 y acerca del flag -d (debug) , se imprime informacion detallada sobre como make decide rehacer targets, timestamps,dependencias ,reglas implicitas etc
 grep -n es conocido 
-
-![dry_run](imagenes/4_dry_run.png)
-
+```bash
+    esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ make -n build | tee logs/drry-run-build.txt
+echo "." out/hello.txt
+mkdir -p out
+python3 src/saludo.py > out/hello.txt
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ make -d build | tee logs/make-d.txt
+GNU Make 4.3
+Built for x86_64-pc-linux-gnu
+Copyright (C) 1988-2020 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Reading makefiles...
+```
 5. 
 ```bash 
 touch src/hello.py
@@ -316,7 +407,7 @@ touch out/hello.txt
 make build | tee logs/no-rebuild-after-touch-out.txt
 ```
 porque como se vio en indempotencia, si saludo.py es modificado al tener timestamp mas reciente  y ser prerrequisito de out/hello.txt  y este ser prerequisito de build, se rehace el target.
-Caso contrario si solo se modifica el target, el timestamp de saludo.py no cmabio luego no se rehace el target
+Caso contrario si solo se modifica el target, el timestamp de saludo.py no cambio luego no se rehace el target<br>
 Solo se reconstruye lo que necesita ser actualizado
 
 6. Se comento al principio el uso de shellcheck y shfmt
@@ -395,3 +486,6 @@ eso es
     ``=("$PY" grep)``
     luego recorremos el array ``for dep in ${deps[@]};``
     y verificamos si python3 y grep estan instalados o no
+
+- run_test 
+    dos variables locales , a ``output `` se le asgina la salida del comando de sustitucion ``$(python3 argumento1_pasado_al_invocar_run_test)``  luego if ! si no se encuentra "mensaje en saludo.py" entonces el test se asume como fallido

@@ -11,12 +11,14 @@ SHELLCHECK := shellcheck
 
 .DEFAULT_GOAL: help
 
-
+export SALUDO1 := "saludo1"
+SALUDO2 := "saludo2"
 #todos los targets
 .PHONY: all build tools lint build test package clean lint benchmark check format help
 
-
 all: tools lint build test package ## ejecuta todas las tareas 
+	@bash -c 'echo $$SALUDO1'
+	@bash -c 'echo $$SALUDO2'
 build: $(OUT_DIR)/hello.txt ## genera el archivo hello.txt 
 
 $(OUT_DIR)/hello.txt: $(SCR_DIR)/saludo.py
