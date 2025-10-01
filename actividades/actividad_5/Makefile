@@ -4,7 +4,7 @@ MAKEFLAGS += --warn-undefined-variables --no-builtin-rules
 OUT_DIR :=out
 SCR_DIR :=src
 PYTHON ?=python3
-
+LOGS :=logs
 SHELLCHECK := shellcheck
 
 .DELETE_ON_ERROR:
@@ -27,7 +27,7 @@ $(OUT_DIR)/hello.txt: $(SCR_DIR)/saludo.py
 	$(PYTHON) $< > $@
 
 clean: ## limpia los archivos generados
-	@rm -rf $(OUT_DIR)		
+	@rm -rf $(OUT_DIR)	$(LOGS) 	
 
 help:  ## descripcion de los 1targets
 	@grep -E '^[a-zA-Z0-9_-]+:.*##' $(MAKEFILE_LIST) | awk -F ':|##' '{printf "%-12s %s\n",$$1,$$3}'

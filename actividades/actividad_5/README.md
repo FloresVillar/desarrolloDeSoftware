@@ -415,9 +415,69 @@ Solo se reconstruye lo que necesita ser actualizado
 command -v shellcheck >/dev/null && shellcheck scripts/run_tests.sh | tee logs/lint-shellcheck.txt || echo "shellcheck no instalado" | tee logs/lint-shellcheck.txt
 command -v shfmt >/dev/null && shfmt -d scripts/run_tests.sh | tee logs/format-shfmt.txt || echo "shfmt no instalado" | tee logs/format-shfmt.txt
 ```
-No instalados
-![shellcheck shfmt](imagenes/6.png)
-
+```bash
+@@ -1,10 +1,10 @@
+-#!/usr/bin/env bash 
++#!/usr/bin/env bash
+ set -o errexit
+ set -o nounset
+ set -o pipefail
+ 
+ IFS=$'\n\t'
+-umask 027 
++umask 027
+ set -o noclobber #>
+ 
+ PY = "${PYTHON:-python3}"
+@@ -13,30 +13,27 @@
+ 
+ tmp="$(mktemp)"
+ 
+-cleanup(){  #limpieza ordenada y rollback
+-    error="$1"
+-    rm -rf "$tmp"
+-    if [ -f "${SRC_DIR}/saludo.py.bak" ];then
+-        mv -- "${SRC_DIR}/saludo.py.bak" "${SRC_DIR}/saludo.py"
+-    fi
+-    exit "$error"
++cleanup() { #limpieza ordenada y rollback
++       error="$1"
++       rm -rf "$tmp"
++       if [ -f "${SRC_DIR}/saludo.py.bak" ]; then
++               mv -- "${SRC_DIR}/saludo.py.bak" "${SRC_DIR}/saludo.py"
++       fi
++       exit "$error"
+ }
+ 
+ trap 'cleanup $?' EXIT INT TERM
+ 
+-check_deps(){ #checkea dependencias[]
+-    local -a array_deps=("$PY" grep)
+-    for dep in "${array_deps[@]}";do
+-        if ! command -v "$dep" > /dev/null 2>&1;then
+-            echo "error: $dep no instalado" >&2
+-            exit 1
+-        fi
+-    done
++check_deps() { #checkea dependencias[]
++       local -a array_deps=("$PY" grep)
++       for dep in "${array_deps[@]}"; do
++               if ! command -v "$dep" >/dev/null 2>&1; then
++                       echo "error: $dep no instalado" >&2
++                       exit 1
++               fi
++       done
+ }
+ 
+-run_tests(){
+-    
+-}
++run_tests() {
+ 
+-
+-
++}
+```
 7. El siguiente bloque de codigo es muy interesante.
 ```bash
 mkdir -p dist
@@ -488,4 +548,170 @@ eso es
     y verificamos si python3 y grep estan instalados o no
 
 - run_test 
-    dos variables locales , a ``output `` se le asgina la salida del comando de sustitucion ``$(python3 argumento1_pasado_al_invocar_run_test)``  luego if ! si no se encuentra "mensaje en saludo.py" entonces el test se asume como fallido
+    dos variables locales , a ``output `` se le asgina la salida del comando de sustitucion 
+```bash 
+    $(python3 argumento1_pasado_al_invocar_run_test)    
+```
+luego ``if !`` si no se encuentra "mensaje en saludo.py" entonces el test se asume como fallido
+```bash
+#!/usr/bin/env bash 
+set -o errexit
+set -o nounset
+set -o pipefail
+
+IFS=$'\n\t'
+umask 027 
+set -o noclobber #>
+
+PY="${PYTHON:-python3}"
+
+SRC_DIR="src"
+
+tmp="$(mktemp)"
+
+cleanup(){  #limpieza ordenada y rollback
+    error="$1"
+    rm -rf "$tmp"
+    if [ -f "${SRC_DIR}/saludo.py.bak" ];then
+        mv -- "${SRC_DIR}/saludo.py.bak" "${SRC_DIR}/saludo.py"
+    fi
+    exit "$error"
+}
+
+trap 'cleanup $?' EXIT INT TERM
+
+check_deps(){ #checkea dependencias[]
+    local -a dependencias=("$PY" grep)
+    for dep in "${dependencias[@]}";do
+        if ! command -v $dep  >/dev/null   2>&1;then
+            echo " $dep no instalado" >&2
+            exit 1                                                                                          
+        fi
+    done
+}
+
+run_tests(){
+    local archivo="$1"
+    local salida=$("$PY" "$archivo")
+    if ! echo "$salida" | grep -F -i -q "Saludos,Todos";then 
+        echo "Test fallido, salir!" >&2
+        mv -- "$archivo" "${archivo}.bak" || true
+    exit 2
+    fi
+    echo "Test pasó: $salida"
+}
+
+probando_pipefail(){
+    echo "probando pipefail"
+    set +o pipefail
+    if false | true | false;then
+        echo "pipefail sin deteccion de errores en pipeline status(0)"
+    fi
+    set -o pipefail 
+    if false | false | true;then
+        echo ".."
+    else 
+        echo "pipefail con deteccion de errores en pipeline status (1)"
+    fi
+}   
+ probando_noclobber(){
+    cat <<'EOF' >|"$tmp"
+    linea1 
+    linea2
+    linea3
+    linea4
+EOF
+}
+
+check_deps
+run_tests "${SRC_DIR}/saludo.py"
+probando_pipefail
+
+```
+## ejercios
+- Ejecutando en un entorno limpio
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ make clean
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ bash scripts/run_tests.sh
+Test pasó: Saludos,Todos
+probando pipefail
+pipefail con deteccion de errores en pipeline status (1)
+```
+- Editando saludo.py
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ bash scripts/run_tests.sh
+  File "/home/esau/desarrolloDeSoftware/actividades/actividad_5/src/saludo.py", line 4
+    #print(saludo("Todos"))
+IndentationError: expected an indented block after 'if' statement on line 3
+Test fallido, salir!
+```
+- Ejecutando bash -x scripts/run_test.sh
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ bash -x scripts/run_tests.sh
++ set -o errexit
++ set -o nounset
++ set -o pipefail
++ IFS='
+        '
++ umask 027
++ set -o noclobber
++ PY=python3
++ SRC_DIR=src
+++ mktemp
++ tmp=/tmp/tmp.HNno31JGno
++ trap 'cleanup $?' EXIT INT TERM
++ check_deps
++ dependencias=('python3' 'grep')
++ local -a dependencias
++ for dep in "${dependencias[@]}"
++ command -v python3
++ for dep in "${dependencias[@]}"
++ command -v grep
++ run_tests src/saludo.py
++ local archivo=src/saludo.py
+++ python3 src/saludo.py
+  File "/home/esau/desarrolloDeSoftware/actividades/actividad_5/src/saludo.py", line 4
+    #print(saludo("Todos"))
+IndentationError: expected an indented block after 'if' statement on line 3
++ local salida=
++ echo ''
++ grep -F -i -q Saludos,Todos
++ echo 'Test fallido, salir!'
+Test fallido, salir!
++ mv -- src/saludo.py src/saludo.py.bak
++ exit 2
++ cleanup 2
++ error=2
++ rm -rf /tmp/tmp.HNno31JGno
++ '[' -f src/saludo.py.bak ']'
++ mv -- src/saludo.py.bak src/saludo.py
++ exit 2
+```
+la expansion de PY ``python3``
+de tmp ``tmp=/tmp/tmp.HNno31JGno``
+del array dependencias ``dependencias=('python3' 'grep')``
+de grep ``grep -F -i -q Saludos,Todos``
+
+- Sustituyendo ``salida = $("$PY" "$archivo")`` en ``if ! $("$PY" "$archivo")`` en lugar de ``if ! "$salida"``
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/actividad_5$ bash scripts/run_tests.sh
+scripts/run_tests.sh: line 45: salida: unbound variable
+```
+## Parte 2 Leer y analizar un repositorio completo
+```bash
+import unittest
+from src.hello import greet
+
+class TestGreet(unittest.TestCase):
+    def test_greet(self):
+        self.assertEqual(greet("Paulette"), "Hello, Paulette!")
+
+if __name__ == "__main__":
+    unittest.main() 
+```
+Nos enrumbamos nuevamente en descubrir la sintaxis , esta vez unittest<br>
+Unittest es el framework de pruebas unitarias estandar de la biblioteca estandar de Python.<br>
+Permite escribir clases de prueba con metodos que validan el comportamiento<br>
+El pilar conceptual es que cada prueba que una unidad de codigo haga exactamente lo que se supone debe hacer<br>
+
+
