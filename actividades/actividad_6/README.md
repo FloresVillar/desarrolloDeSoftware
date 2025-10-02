@@ -142,3 +142,42 @@ esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git log --graph --pretty=format:'%x09 %
 *        f0a0096 17 hours ago (FloresVillar) commit inicial con README.md
 ```
 Vemos la informacion del commit en un formato facil leer
+Ejercicio:
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ echo "mi_contribucion" > MI_CONTRIBUCION.md
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ ls
+MI_CONTRIBUCION.md  README.md
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ echo "README\n\nBienvenido la proyecto " > README.md
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ ls
+MI_CONTRIBUCION.md  README.md
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git add .
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git commit -m "configura la documentacion base del repositorio"
+[main 68762c5] configura la documentacion base del repositorio
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+ create mode 100644 MI_CONTRIBUCION.md
+```
+Luego agregmos codigo de ejemplo
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ echo "print(Hola Mundo)" > main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ l
+MI_CONTRIBUCION.md  README.md  main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ cat main.py
+print(Hola Mundo)
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git add .
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git commit -m "Agrega main.py"
+[main 398ff3b] Agrega main.py
+ 1 file changed, 1 insertion(+)
+ create mode 100644 main.py
+```
+Confirmamos en el log que esta correctamente registrado 
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git log --oneline
+398ff3b (HEAD -> main) Agrega main.py
+68762c5 configura la documentacion base del repositorio
+f0a0096 commit inicial con README.md
+```
+Es una herramienta vital para navegar en el historial de nuestro codigo 
+## Trabajar con ramas: La piedra angular de la colaboración
+
+
+
