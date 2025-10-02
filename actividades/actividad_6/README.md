@@ -35,6 +35,51 @@ Reinitialized existing Git repository in /home/esau/Actividad6-CC3S2/.git/
 Otra sería pasar un nombre como argumento de ``git init carpeta`` sin necesidad de usar ``mkdir``<br>
 Una vez creado el directorio .git/ se usará ```git add```, que selecciona conscientemente los archivos a guardar entre los que se han editado, agregado o eliminado  y el comando ``git commit ``
 
+### git add : Preparando nuestro código 
+El comando ``git add`` es el puente entre hacer cambios en nuestro directorio de trabajo y prepararlos para almacenarlo permanentemente en el repositorio Git
+```bash
+    cambios en el directorio ------git add------>repositorio Git
+```
+Cuando modificamos nuestros archivos Git los detecta, pero no están listos automaticamente para convertirse en parte del historial<br>
+Aqui es donde entra ``git add``
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ echo "aaa" > README.md
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ ls
+README.md
+```
+El comando ``git status`` muestra el estado actual del repositorio , muestra que archivos tienen cambios que están siendo rastreados y cuales no.<br>
+``Untracked files`` =  aun hay archivos de los cuales no estoy pendiente
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git status
+On branch main
 
+No commits yet
 
+Changes to be committed:
+  (use "git rm --cached <file>..." to unstage)
+        new file:   README.md
 
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   README.md
+```
+README.md es un archivo nuevo para Git, no esta registrado , por lo tanto , está etiquetado como no rastreado, para moverlos a un estado rastreado usamos ``git add``
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git add README.md
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git status
+On branch main
+
+No commits yet
+
+Changes to be committed:
+  (use "git rm --cached <file>..." to unstage)
+        new file:   README.md
+```
+Ahora Git reconoce a README.md como nuevo archivo y esta siendo rastreado<br>
+Archivo modificado---- ``git add``--------->Staged<br>     
+Espacio de trabajo------``git add``--------->preparado<br> 
+``git add`` tienes otras opciones 
+- git add .
+- git add file1.md file2.md file3.md
+- git *.md
