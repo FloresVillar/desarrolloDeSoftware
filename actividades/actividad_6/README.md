@@ -22,4 +22,19 @@ git config --list
 user.email=efloresv@uni.pe
 user.name=FloresVillar
 ```
-### git init:  
+### git init:  Donde comienza el viaje de nuestro codigo
+Al igual que un gran viajee tiene su origen , en Git el viaje de nuestro codigo comienza con el comando ``git init`` <br>
+Se usa para inicializar un nuevo repositorio de Git y comienza a rastrear directorios existentes.<br>
+Al ejecutar este comando creamos un directorio .git 
+
+Ahora estamos listo para sumergirnos en la gama de comandos de Git y comenzar a rastrear y actualizar el proyecto 
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git init
+Reinitialized existing Git repository in /home/esau/Actividad6-CC3S2/.git/
+```
+Otra sería pasar un nombre como argumento de ``git init carpeta`` sin necesidad de usar ``mkdir``<br>
+Una vez creado el directorio .git/ se usará ```git add```, que selecciona conscientemente los archivos a guardar entre los que se han editado, agregado o eliminado  y el comando ``git commit ``
+
+
+
+
