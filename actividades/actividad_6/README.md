@@ -377,4 +377,99 @@ Date:   Wed Oct 1 21:18:47 2025 -0500
 ```
 ### Ejercicios
 #### Ejercicio 1: Manejo avanzado de ramas y resolución de conflictos
-Objetivo : Practicar 
+Objetivo : Practicar la creacion, fusion  y eliminacion de ramas 
+1. 
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch feature/advanced-feature
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git checkout feature/advanced-feature
+Switched to branch 'feature/advanced-feature'
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
+  develop
+* feature/advanced-feature
+  feature/another-new-feature
+  feature/another-new-feature-switch
+```
+
+2. Modificando archivo main.py en esta nueva rama
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ ls
+MI_CONTRIBUCION.md  README.md  main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ nano main.py
+```
+
+```bash
+  GNU nano 7.2                                main.py                                          
+print(Hola Mundo)
+
+def greet():
+ print("hola como una funcion avanzada")
+
+```
+
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git add main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git commit -m "agrega la funcion greet como una funcion avanzada"
+[feature/advanced-feature 3e03b9b] agrega la funcion greet como una funcion avanzada
+ 1 file changed, 5 insertions(+)
+```
+3. Simulando un desarrollo paralelo a la rama main
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git checkout main
+Switched to branch 'main'
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
+  develop
+  feature/advanced-feature
+  feature/another-new-feature
+  feature/another-new-feature-switch
+  feature/login
+  feature/new-feature_2
+  hotfix/bugfix
+* main
+:
+[7]+  Stopped                 git branch
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ nano main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git add main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git commit -m "Actualiza el mensaje de main.py en la rama main"
+[main 38fd087] Actualiza el mensaje de main.py en la rama main
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+```
+
+4. Intentando fusionar la rama feature/advanced-feature en main 
+
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git merge feature/advanced-feature
+Auto-merging main.py
+CONFLICT (content): Merge conflict in main.py
+Automatic merge failed; fix conflicts and then commit the result.
+```
+5. Resolviendo el conflicto  de fusión 
+- Git genera un conflicto, se abre el archivo y se resuelve manualmente
+```bash
+print("Saludo actualizado desde la rama  main !!")
+print(Hola Mundo)
+
+def greet():
+ print("hola como una funcion avanzada")
+
+greet()
+
+
+
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git add main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git commit -m "Resuelve conflicto de fusion entre main y feature/advanced-feature"
+[main e65981b] Resuelve conflicto de fusion entre main y feature/advanced-feature
+```
+
+6. Elimando la rama fusionada
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch -d feature/advanced-feature
+Deleted branch feature/advanced-feature (was 3e03b9b).
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
+  develop
+  feature/another-new-feature
+  feature/another-new-feature-switch
+  feature/login
+  feature/new-feature_2
+  hotfix/bugfix
+* main
+```
