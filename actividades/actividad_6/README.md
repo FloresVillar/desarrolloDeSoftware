@@ -178,6 +178,53 @@ f0a0096 commit inicial con README.md
 ```
 Es una herramienta vital para navegar en el historial de nuestro codigo 
 ## Trabajar con ramas: La piedra angular de la colaboración
+``git branch `` se puede usar para crear un historial del entorno paralelo <br>
+Luego podemos fusionar esos múltiples entornos en uno, lo que permite que varias personas trabajen en ellos, dandole la flexibilidad para experimentar nuevas caracteristicas,correcciones de errores o incluso ideas totalmente vanguardistas sin afectar la base del código principal.
 
+### git branch: Entendiendo los conceptos basicos de Git branch
+Mostrando la lista de las ramas
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
+* main
+```
+creando una nueva rama
+```bash
+git branch feature/new-feature
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
+  feature/new-feature
+* main
+```
+Las convenciones para los nombres de las ramas son importante para la comunicacion <br>
+Un estandar comun es usar :
+- feature/ 
+- bugfix/
+- hotix/
 
+Seguido de una descripción, lo cual facilita que se entienda el proposito de la rama.<br>
+Tambien se puede crear una rama a partir de una rama  o commit especifico, esto es util cuando se pretende crear una rama de caracteristicas(feature) o correción de errores(bugfix) que deba originarse desde una rama de desarrollo o stagging en lugar de desde nuestro branch  de trabajo actual.
+
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch feature/new-feature_2 f0a00966a0156667c7184f2e0d1638bf1f9a41a6
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
+  feature/new-feature
+  feature/new-feature_2
+* main
+```
+### git checkout switch: Cambiar entre ramas
+En nuestro flujo de trabajo a menudo necesitamos cambiar de una rama a otra, en especial cuando se trabaja en multiples caracteristicas  o corrigiendo errores <br>
+Cuando se trabaja en multiples ramas, volverse consciente del branch en la que se *está ACTIVAMENTE* es fundamental.<br>
+En git, el termino HEAD se refire a la punta de la rama con la que se está trabajando activamente
+
+Cambiar de la rama de trabajo actual es conoce como *cambiar de rama* el comando ``git checkout `` facilita ello
+
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git checkout feature/new-feature
+Switched to branch 'feature/new-feature'
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
+* feature/new-feature
+  feature/new-feature_2
+  main
+ ```
+Cambiamos la posicion de HEAD , la punta de la rama a una rama llamada ``feature/new-feature``<br>
+Con el comando ``git checkout `` cambia la posicion de HEAD (la punta de la rama) a una rama llamada ``feature/new-feature``<br>
 
