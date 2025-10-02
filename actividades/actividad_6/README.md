@@ -83,3 +83,31 @@ Espacio de trabajo------``git add``--------->preparado<br>
 - git add .
 - git add file1.md file2.md file3.md
 - git *.md
+### git commit: Registro de cambios
+El comando ``git commit`` registra los cambios que has preparado con ``git add`` en el historial del repositorio. Esto nos permite rastrear los cambios
+
+Una muy buena analogia *Imagina que estás jugando un videojuego desafiante. A medida que avanzas, a menudo guardarás tu juego para bloquear tus logros. Del mismo modo, cuando desarrollas software, guardarás tu trabajo usando git commit*
+
+Cada commits es un punto de guardado al que se puede regresar mas tarde si se necesita.
+
+Para cometer los cambios 
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git commit -m "commit inicial con README.md"
+[main (root-commit) f0a0096] commit inicial con README.md
+ 1 file changed, 1 insertion(+)
+ create mode 100644 README.md
+```
+La bandera -m es seguida de un mensaje CORTO Y DESCRIPTIVO que captura la esencia de lo que se ha hecho.Escribir buenos mensajes de *commits* , ayuda a entender el historial  y la intencion de los cambios
+
+Con ``git status `` vemos si todos los cambios en el directorio de trabajo han sido guardados<br>
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git status
+On branch main
+nothing to commit, working tree clean 
+```
+El flujo de edicion, preparacion y commit sigue siendo el mismo sin importar cuan complejo sea nuestro proyecto
+```bash
+(1)Editar cambios-->(2)Preparar cambios--->(3)commits de cambios
+                    staged
+```
+Cada commit genera una ID de commit unica.
