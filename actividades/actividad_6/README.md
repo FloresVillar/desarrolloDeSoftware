@@ -274,7 +274,7 @@ esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
 * hotfix/bugfix
   main
 ```
-Cambiando entre ramas con ``git switch`` una forma mas intuitiva<br>
+Cambiando entre ramas con ``git switch`` una forma mas intuitiva.<br>
 ```bash
 esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git switch feature/new-feature
 Switched to branch 'feature/new-feature'
@@ -286,7 +286,7 @@ esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
   hotfix/bugfix
   main
 ```
-Para crear una nueva rama y cambiar a ella en un solo paso se puede usar ``git checkout -b``
+Para crear una nueva rama y cambiar a ella en un solo paso se puede usar ``git checkout -b``.
 ```bash
 esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git checkout -b feature/another-new-feature
 Switched to a new branch 'feature/another-new-feature'
@@ -300,5 +300,81 @@ esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
   main  
 ```
 ``git switch -c `` es equivalente a ``git checkout -b``
+ ```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
+  develop
+* feature/another-new-feature
+  feature/login
+  feature/new-feature
+  feature/new-feature_2
+  hotfix/bugfix
+  main
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git switch -c feature/another-new-feature-switch
+Switched to a new branch 'feature/another-new-feature-switch'
+ ```
+### git merge : Fusionando ramas
+Una vez realizado los cambios y se hayan probado a fondo es posible poder integrar esos cambios nuevamente en el branch ``main`` u otra rama.<br>
+Esta operacion se conoce como ```merge``.
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git checkout main
+Switched to branch 'main'
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git merge feature/new-feature
+Already up to date.
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
+  develop
+  feature/another-new-feature
+  feature/another-new-feature-switch
+  feature/login
+  feature/new-feature
+  feature/new-feature_2
+  hotfix/bugfix
+* main
+```
+Se fusiona lineas con diferentes historiales.La fusión puede ser una operación sencilla ,pero esto puede complicarse si hay conflictos entre ramas.<br>
+En tales casos se requerirá la intervención manual para resolver conflictos.
 
+### git branch -d : Eliminando una rama 
+Una vez que una rama ha sido fusionado  con éxito y ya no es necesaria, se  puede eliminar
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch -d feature/new-feature
+Deleted branch feature/new-feature (was 398ff3b).
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
+  develop
+  feature/another-new-feature
+  feature/another-new-feature-switch
+  feature/login
+  feature/new-feature_2
+  hotfix/bugfix
+* main
+```
+### Preguntas
+- Con los comandos de los cuales se dispone git add para preparar y git commit para ser rastreado y por supuesto git log, todos estos otorgan una organización clara
+- Las ramas permiten crear entornos paralelos donde se puede desarrollar caracteristicas o "casos de usos" particulares
+- 
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git log
+commit 398ff3b968d1351000999f2dd569e1ac90ba5cb3 (HEAD -> main, feature/login, feature/another-new-feature-switch, feature/another-new-feature, develop)
+Author: FloresVillar <efloresv@uni.pe>
+Date:   Thu Oct 2 14:10:34 2025 -0500
 
+    Agrega main.py
+
+commit 68762c50a2f9a90262333d83ba8964406360d9aa (hotfix/bugfix)
+Author: FloresVillar <efloresv@uni.pe>
+Date:   Thu Oct 2 14:03:46 2025 -0500
+
+    configura la documentacion base del repositorio
+
+commit f0a00966a0156667c7184f2e0d1638bf1f9a41a6 (feature/new-feature_2)
+Author: FloresVillar <efloresv@uni.pe>
+Date:   Wed Oct 1 21:18:47 2025 -0500
+
+    commit inicial con README.md
+```
+- 
+```bash
+``git branch new--git checkout new-->git checkout main-->git merge new
+```
+### Ejercicios
+#### Ejercicio 1: Manejo avanzado de ramas y resolución de conflictos
+Objetivo : Practicar 
