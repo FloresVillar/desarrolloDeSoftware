@@ -111,3 +111,34 @@ El flujo de edicion, preparacion y commit sigue siendo el mismo sin importar cua
                     staged
 ```
 Cada commit genera una ID de commit unica.
+
+### git log: Recorrer el arbol de commits
+Una que se hemos realizado algunos commits para ver el historial de cambios<br>
+El comando ``git log`` muestra una lista de commits realizados en un repositorio en orden cronologico inverso
+El ultimo se muestra primero
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git log
+commit f0a00966a0156667c7184f2e0d1638bf1f9a41a6 (HEAD -> main)
+Author: FloresVillar <efloresv@uni.pe>
+Date:   Wed Oct 1 21:18:47 2025 -0500
+
+    commit inicial con README.md 
+```
+Muestra una lista de commit, cada commit tiene:
+- Identificador SHA-1 unico 
+- Detalles del committer 
+- Marca de tiempo 
+- Mensajes del commit 
+
+Opciones 
+- ``git log -p`` 
+- ``git log --stat``
+- ``git log --oneline``
+- ``git log -graph``
+- ``git log --author=""``
+
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git log --graph --pretty=format:'%x09 %h %ar (%an) %s'
+*        f0a0096 17 hours ago (FloresVillar) commit inicial con README.md
+```
+Vemos la informacion del commit en un formato facil leer
