@@ -228,3 +228,77 @@ esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
 Cambiamos la posicion de HEAD , la punta de la rama a una rama llamada ``feature/new-feature``<br>
 Con el comando ``git checkout `` cambia la posicion de HEAD (la punta de la rama) a una rama llamada ``feature/new-feature``<br>
 
+### Ejercicios adicionales
+#### Creando una rama desde una rama específica
+Creamos el branch develop y movemos el HEAD a esa rama<br>
+Creamos una nueva rama a partir de develop
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch develop
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
+  develop
+* feature/new-feature
+  feature/new-feature_2
+  main
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git checkout develop
+Switched to branch 'develop'
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
+* develop
+  feature/new-feature
+  feature/new-feature_2
+  main
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch feature/login develop
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git checkout feature/login
+Switched to branch 'feature/login'
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
+  develop
+* feature/login
+  feature/new-feature
+  feature/new-feature_2
+  main
+```
+#### Creando una rama desde un commit específico
+
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git log --oneline
+398ff3b (HEAD -> feature/login, main, feature/new-feature, develop) Agrega main.py
+68762c5 configura la documentacion base del repositorio
+f0a0096 (feature/new-feature_2) commit inicial con README.md
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch hotfix/bugfix 68762c5
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git checkout hotfix/bugfix
+Switched to branch 'hotfix/bugfix'
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
+  develop
+  feature/login
+  feature/new-feature
+  feature/new-feature_2
+* hotfix/bugfix
+  main
+```
+Cambiando entre ramas con ``git switch`` una forma mas intuitiva<br>
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git switch feature/new-feature
+Switched to branch 'feature/new-feature'
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
+  develop
+  feature/login
+* feature/new-feature
+  feature/new-feature_2
+  hotfix/bugfix
+  main
+```
+Para crear una nueva rama y cambiar a ella en un solo paso se puede usar ``git checkout -b``
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git checkout -b feature/another-new-feature
+Switched to a new branch 'feature/another-new-feature'
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
+  develop
+* feature/another-new-feature
+  feature/login
+  feature/new-feature
+  feature/new-feature_2
+  hotfix/bugfix
+  main  
+```
+``git switch -c `` es equivalente a ``git checkout -b``
+
+
