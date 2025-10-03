@@ -586,3 +586,63 @@ esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git log --graph --oneline --all
 | * 4d7f44d modifica main.py
 |/  
 ```
+#### Ejercicio 3: Creación y gestión de ramas desde commits específicos
+
+1. Creando una rama desde un commit específico
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git log --oneline
+f288c91 (HEAD -> main) crea archivos de prueba
+529710f agrega la funcion greet como una funcion avanzada
+38fd087 Actualiza el mensaje de main.py en la rama main
+398ff3b (feature/login, feature/another-new-feature-switch, feature/another-new-feature) Agrega main.py
+68762c5 (hotfix/bugfix) configura la documentacion base del repositorio
+f0a0096 (feature/new-feature_2, bugfix/rollback-feature) commit inicial con README.md
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch bugfix/rollback-feature-2 f0a0096
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git checkout bugfix/rollback-feature-2 
+Switched to branch 'bugfix/rollback-feature-2'
+```
+
+2. Modificando main.py  
+
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ nano main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git add main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git commit -m "corregir error en la funcionalidad de rollback"
+[bug-fix/rollback-feature 5a5ee99] corregir error en la funcionalidad de rollback
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+```
+
+3. Fusionando los cambios en la rama principal
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git checkout main
+Switched to branch 'main'
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git merge bug-fix/rollback-feature
+Updating f288c91..5a5ee99
+Fast-forward
+ main.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+```
+4. Explorar  el historial despues de la fusion 
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git log --graph --oneline
+* 5a5ee99 (HEAD -> main, bug-fix/rollback-feature) corregir error en la funcionalidad de rollback
+* f288c91 crea archivos de prueba
+* 529710f agrega la funcion greet como una funcion avanzada
+* 38fd087 Actualiza el mensaje de main.py en la rama main
+* 398ff3b (feature/login, feature/another-new-feature-switch, feature/another-new-feature) Agrega main.py
+* 68762c5 (hotfix/bugfix) configura la documentacion base del repositorio
+* f0a0096 (feature/new-feature_2) commit inicial con README.md
+```
+5. Eliminando la rama bugfix/rollback-feature
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch -d bug-fix/rollback-feature
+Deleted branch bug-fix/rollback-feature (was 5a5ee99).
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
+  develop
+  feature/another-new-feature
+  feature/another-new-feature-switch
+  feature/login
+  feature/new-feature_2
+  hotfix/bugfix
+* main
+```
