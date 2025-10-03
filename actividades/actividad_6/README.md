@@ -646,3 +646,47 @@ esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
   hotfix/bugfix
 * main
 ```
+#### Ejercicio 4 :  Manipulación y restauración con git reset y git restore
+1. Usando git reset
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ nano main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git add main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git commit -m "Introduce un cambio para reestablecer"
+[main 4bd1934] Introduce un cambio para reestablecer
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+```
+2. 
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git reset --hard HEAD~1
+HEAD is now at 5a5ee99 corregir error en la funcionalidad de rollback
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git log 
+commit 5a5ee99654b5021b73ec7fe71c44de9a8ec1b4ed (HEAD -> main)
+Author: FloresVillar <efloresv@uni.pe>
+Date:   Thu Oct 2 21:41:49 2025 -0500
+
+    corregir error en la funcionalidad de rollback
+
+commit f288c91637ef35c6648beeeb64da03355d0ccf8b
+Author: FloresVillar <efloresv@uni.pe>
+Date:   Thu Oct 2 19:38:38 2025 -0500
+
+    crea archivos de prueba
+```
+3. Usando git restore para deshacer cambios no confirmados
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ echo "Agregando linea en README" >>README.md
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git status
+On branch main
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   README.md
+
+no changes added to commit (use "git add" and/or "git commit -a")
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git restore README.md
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git status
+On branch main
+nothing to commit, working tree clean
+```
+#### Ejercicio 5 : Trabajo colaborativo  y manejo de Pull Requests
+Simulando un flujo de trabajo colaborativo usando ramas y pull requests 
