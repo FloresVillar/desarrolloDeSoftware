@@ -690,3 +690,182 @@ nothing to commit, working tree clean
 ```
 #### Ejercicio 5 : Trabajo colaborativo  y manejo de Pull Requests
 Simulando un flujo de trabajo colaborativo usando ramas y pull requests 
+1. Creando un nuevo repositorio remoto 
+```bash
+https://github.com/FloresVillar/Mate_computacional_pc3.git
+```
+2. 
+```bash
+esau@DESKTOP-A3RPEKP:~/Mate_computacional_pc3$ git branch feature/team-feature
+esau@DESKTOP-A3RPEKP:~/Mate_computacional_pc3$ git checkout feature/team-feature
+Switched to branch 'feature/team-feature'
+```
+3. Realizar cambios y enviar  la rama al repositorio principal
+```bash
+esau@DESKTOP-A3RPEKP:~/Mate_computacional_pc3$ git branch
+* feature/team-feature
+  master
+esau@DESKTOP-A3RPEKP:~/Mate_computacional_pc3$ echo "print('Colaboracion es CLAVe')" > colaboracion.py
+esau@DESKTOP-A3RPEKP:~/Mate_computacional_pc3$ ls
+colaboracion.py
+esau@DESKTOP-A3RPEKP:~/Mate_computacional_pc3$ git add . 
+esau@DESKTOP-A3RPEKP:~/Mate_computacional_pc3$ git commit -m "Agrega script de colaboracion"
+[feature/team-feature e91207e] Agrega script de colaboracion
+ 1 file changed, 1 insertion(+)
+ create mode 100644 colaboracion.py
+```
+Enviando la rama al repositorio remoto
+```bash
+esau@DESKTOP-A3RPEKP:~/Mate_computacional_pc3$ git push origin feature/team-feature
+Enumerating objects: 4, done.
+Counting objects: 100% (4/4), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (2/2), done.
+Writing objects: 100% (3/3), 317 bytes | 317.00 KiB/s, done.
+Total 3 (delta 1), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (1/1), completed with 1 local object.
+remote: 
+remote: Create a pull request for 'feature/team-feature' on GitHub by visiting:
+remote:      https://github.com/FloresVillar/Mate_computacional_pc3/pull/new/feature/team-feature
+remote: 
+To https://github.com/FloresVillar/Mate_computacional_pc3.git
+ * [new branch]      feature/team-feature -> feature/team-feature
+```
+4. Abriendo un Pull Requests 
+```bash
+Agrega script de colaboracion #1
+Jump to bottom
+ Open
+FloresVillar wants to merge 1 commit into master from feature/team-feature  
+Conversation 0
+Commits 1
+Checks 0
+Files changed 1
+Conversation
+FloresVillar
+Owner
+@FloresVillar FloresVillar commented now
+Ejercicio 5: trabajo colaborativo y manejo de pull requests
+```
+5. 
+```bash
+No conflicts with base branch
+Merging can be performed automatically.
+
+You can also merge this with the command line. 
+
+
+Add a comment
+Comment
+
+```
+6. Eliminando la rama remota  y local
+```bash
+esau@DESKTOP-A3RPEKP:~/Mate_computacional_pc3$ git branch -d feature/team-feature
+error: the branch 'feature/team-feature' is not fully merged.
+If you are sure you want to delete it, run 'git branch -D feature/team-feature'
+esau@DESKTOP-A3RPEKP:~/Mate_computacional_pc3$ git branch -D feature/team-feature
+Deleted branch feature/team-feature (was e91207e).
+esau@DESKTOP-A3RPEKP:~/Mate_computacional_pc3$ git branch
+* master
+esau@DESKTOP-A3RPEKP:~/Mate_computacional_pc3$ git push origin --delete feature/team-feature
+To https://github.com/FloresVillar/Mate_computacional_pc3.git
+ - [deleted]         feature/team-feature
+```
+
+#### Cherry-picking y git Stash
+
+1. Haciendo cambios en main.py  y confirmarlos
+```bash 
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ echo "print("aaa")" >> main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git add main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git commit -m "aaaaa"
+[main 03617a3] aaaaa
+ 1 file changed, 1 insertion(+)
+ esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git log --oneline
+03617a3 (HEAD -> main) aaaaa
+c0c89c3 (feature/cherry-íck3) aaa
+5c7c65b aaaa
+556dbac Agrega ejemplo de cherry
+13f32c7 commit main
+
+```
+se crea la rama a partir del commit 5c7c65b , luego ya dentro de esta rama se hace el chery-pick al commit 03617a3
+2. Creando una nueva rama  y aplicando el commit esperado
+```bash
+git checkout 5c7c65b
+Note: switching to '5c7c65b'.
+
+You are in 'detached HEAD' state. Yo
+
+git checkout -b feature/cherry-pick-4
+Switched to a new branch 'feature/cherry-pick-4'
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git cherry-pick 03617a3
+Auto-merging main.py
+CONFLICT (content): Merge conflict in main.py
+error: could not apply 03617a3... aaaaa
+hint: After resolving the conflicts, mark them with
+hint: "git add/rm <pathspec>", then run
+```
+3. 
+```bash
+ nano main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git cherry-pick 03617a3
+error: Cherry-picking is not possible because you have unmerged files.
+hint: Fix them up in the work tree, and then use 'git add/rm <file>'
+hint: as appropriate to mark resolution and make a commit.
+fatal: cherry-pick failed
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git status
+On branch feature/cherry-pick-4
+You are currently cherry-picking commit 03617a3.
+  (fix conflicts and run "git cherry-pick --continue")
+  (use "git cherry-pick --skip" to skip this patch)
+  (use "git cherry-pick --abort" to cancel the cherry-pick operation)
+
+Unmerged paths:
+  (use "git add <file>..." to mark resolution)
+        both modified:   main.py
+ nano main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git add main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git cherry-pick --continue
+[feature/cherry-pick-4 8eb8ed8] aaaaa
+ Date: Fri Oct 3 00:51:45 2025 -0500
+ 1 file changed, 2 insertions(+)
+
+```
+4. 
+5. 
+```bash
+git stash
+No local changes to save
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ echo "rrr" >> main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git status
+On branch feature/cherry-pick-4
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   main.py
+
+no changes added to commit (use "git add" and/or "git commit -a")
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git stash
+Saved working directory and index state WIP on feature/cherry-pick-4: 8eb8ed8 aaaaa
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git stash list
+stash@{0}: WIP on feature/cherry-pick-4: 8eb8ed8 aaaaa
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ echo "ttttt" >> main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git add main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git commit -m "agrega cambio a main.oy"
+[feature/cherry-pick-4 6e50970] agrega cambio a main.oy
+ 1 file changed, 1 insertion(+)
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git stash pop
+Auto-merging main.py
+CONFLICT (content): Merge conflict in main.py
+On branch feature/cherry-pick-4
+Unmerged paths:
+  (use "git restore --staged <file>..." to unstage)
+  (use "git add <file>..." to mark resolution)
+        both modified:   main.py
+
+no changes added to commit (use "git add" and/or "git commit -a")
+The stash entry is kept in case you need it again.
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ 
+```
