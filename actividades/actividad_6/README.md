@@ -473,3 +473,116 @@ esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git branch
   hotfix/bugfix
 * main
 ```
+#### Ejercicio 2 : Exploración y manipulacion del historial de commits
+1. viendo el historial de cambios
+```bash
+
+commit 38fd087cce25194df9a82d9266f5e2bbccdef718
+Author: FloresVillar <efloresv@uni.pe>
+Date:   Thu Oct 2 17:00:10 2025 -0500
+
+    Actualiza el mensaje de main.py en la rama main
+
+diff --git a/main.py b/main.py
+index 9f7e444..cba5dfc 100644
+--- a/main.py
++++ b/main.py
+@@ -1 +1,3 @@
+-print(Hola Mundo)
++print("Saludo actualizado desde la rama  main !!")
++
++
+```
+Los mensajes fueron considerados en el main.py final 
+Eso se detalla segun su propia sintaxis, se entiende.
+2. Usando ``git log --author="nombre"`` 
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git log --author="FloresVillar"
+commit e65981b3865226f447c904de2bf3ac5f2a48959b (HEAD -> main)
+Merge: 38fd087 3e03b9b
+Author: FloresVillar <efloresv@uni.pe>
+Date:   Thu Oct 2 17:09:03 2025 -0500
+
+    Resuelve conflicto de fusion entre main y feature/advanced-feature
+
+commit 38fd087cce25194df9a82d9266f5e2bbccdef718
+Author: FloresVillar <efloresv@uni.pe>
+Date:   Thu Oct 2 17:00:10 2025 -0500
+
+    Actualiza el mensaje de main.py en la rama main
+```
+3. Revertir un commit 
+- Imagina que el commit mas reciente en ``main.py`` no deberia haberse hecho. Usa ``git revert`` para revertir ese commit 
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git add main.py
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git commit -m "modifica main.py"
+[develop 4d7f44d] modifica main.py
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git revert HEAD
+[develop 81b4793] Revert "modifica main.py"
+ 1 file changed, 1 insertion(+), 5 deletions(-)
+```
+y el commit de reversion ha sido añadido
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git log
+commit 81b47938708c1559077d440419bdabbc2696b827 (HEAD -> develop)
+Author: FloresVillar <efloresv@uni.pe>
+Date:   Thu Oct 2 19:30:25 2025 -0500
+
+    Revert "modifica main.py"
+    
+    This reverts commit 4d7f44d0d4e09dc980b2e1bd6b4bbb20909b7abf.
+
+commit 4d7f44d0d4e09dc980b2e1bd6b4bbb20909b7abf
+Author: FloresVillar <efloresv@uni.pe>
+Date:   Thu Oct 2 19:30:17 2025 -0500
+
+    modifica main.py
+```
+
+4. Rebase interactivo:
+- Realizando un rebase interactivo para combinar varios commits en uno solo , util para limpiar el historial antes de una fusión 
+
+```git rebase -i HEAD~3``
+Se abre el editor, combina los tres ultimos commits en uno solo mediante la opcion ``squash``
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ cat  /home/esau/Actividad6-CC3S2/.git/rebase-merge/git
+-rebase-todo *
+pick 528f00a4d35adbcb0dcd3817a32424a22755088c crea archivos de prueba
+mi_contribucion
+README\n\nBienvenido la proyecto 
+<<<<<<< HEAD
+print("Saludo actualizado desde la rama  main !!")
+
+
+=======
+print(Hola Mundo)
+
+def greet():
+ print("hola como una funcion avanzada")
+
+greet()
+>>>>>>> 3e03b9b (agrega la funcion greet como una funcion avanzada)
+```
+5. Visualización grafica del historial
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad6-CC3S2$ git log --graph --oneline --all 
+* 528f00a (main) crea archivos de prueba
+*   e65981b Resuelve conflicto de fusion entre main y feature/advanced-feature
+|\  
+| * 3e03b9b agrega la funcion greet como una funcion avanzada
+* | 38fd087 (HEAD) Actualiza el mensaje de main.py en la rama main
+|/  
+| * 81b4793 (develop) Revert "modifica main.py"
+| * 4d7f44d modifica main.py
+:...skipping...
+* 528f00a (main) crea archivos de prueba
+*   e65981b Resuelve conflicto de fusion entre main y feature/advanced-feature
+|\  
+| * 3e03b9b agrega la funcion greet como una funcion avanzada
+* | 38fd087 (HEAD) Actualiza el mensaje de main.py en la rama main
+|/  
+| * 81b4793 (develop) Revert "modifica main.py"
+| * 4d7f44d modifica main.py
+|/  
+```
