@@ -307,3 +307,94 @@ esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git log --oneline --graph --all --decor
 * c8a9900 (add-feature) commit inicial
 ```
 Como se puede apreciar en el DAG , con --squash se pierde información intermedia.
+
+## Conflictos reales  con no-fast-forward
+En main modificamos index.html
+```bash
+git checkout -b feature-update
+Switched to a new branch 'feature-update'
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ echo "<h1>Proyecto CC3S2 (feature)</h1>" > index.html
+```
+En feature-update 
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ echo "<h1>Proyecto CC3S2 (feature)</h1>" > index.html
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git add index.html
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git commit -m "agrega index.html"
+[feature-update 9d471d8] agrega index.html
+ 1 file changed, 1 insertion(+)
+ create mode 100644 index.html
+```
+y nuevamente en main
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git checkout main
+Switched to branch 'main'
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ echo "<h1>Proyecto CC3S2 (main)</h1>" > index.html
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git add index.html
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git commit -m "modifica index.html"
+[main d273f71] modifica index.html
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+```
+Viendo el conflicto
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git status
+On branch main
+You have unmerged paths.
+  (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
+
+Unmerged paths:
+  (use "git add <file>..." to mark resolution)
+        both added:      index.html
+
+no changes added to commit (use "git add" and/or "git commit -a")
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git diff
+diff --cc index.html
+index 2a547e2,e9f19fe..0000000
+--- a/index.html
++++ b/index.html
+@@@ -1,1 -1,1 +1,5 @@@
+++<<<<<<< HEAD
+ +<h1>Proyecto CC3S2 (main)</h1>
+++=======
++ <h1>Proyecto CC3S2 (feature)</h1>
+++>>>>>>> feature-update
+```
+evidencias
+```graph
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ cat evidencias/04-conflic
+tos.log
+*   0eabc23 (HEAD -> main) resuelve conflicto en index.html
+|\  
+| * 9d471d8 (feature-update) agrega index.html
+* | d273f71 modifica index.html
+* | 0418736 agregfa index.html
+* | 7ec60c7 cread index.html
+|/  
+*   3d6b0b6 Merge branch 'feature-3'
+|\  
+| * fbb6476 modifica nuevamente README
+| * fa11e58 crea arhivoCsquash.txt
+| * a201cdd modifica READE.md
+* | b77387c prepara el merge --squash
+* | 3507be5 modifica README en main
+* |   2acc929 Merge branch 'feature-2'
+|\ \  
+| * | 1782ad2 modifica REAMDE.md
+* | | 7c050af modifica README
+|/ /  
+* |   b9e9684 guarda README en main
+|\ \  
+| |/  
+|/|   
+| * 9421c0f modifica README.md
+* | 046b6cc mofica README.md
+|/  
+* c8a9900 commit inicial
+```
+- Pasos adicionales : usamos el comando echo INFO > ARCHIVO <br>
+Luego de cada cambio se realiza el staging y 
+el seguimiento<br>
+con git diff y git diff se revisa el conflicto<br> 
+Luego de la resolución del conflicto no hubo problemas adicionales<br>
+- Pull requests pequños hacia origen , uso de ramas que especifiquen las responsabilidades
+
