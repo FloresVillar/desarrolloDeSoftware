@@ -1,24 +1,27 @@
 # Comandos linux para devsecops
-preparacion para evidencias y evauluacion
-Se crea la carpeta lab-cli pero no se usa script  debido a que wsl2 no responde adecuamente  , wsl lo logra correr la shell dentro de TTy, script simplemente no funciona. 
-se intenta ``bash | tee evidencias/sesion.txt``
-pero tampoco resulta , por lo que se usara 
-``comando | tee -a evidencias/sesion.txt``
-**sanitizador**
-1. 
-introducirnos a la Cli esto es , a la sintaxis  de comandos puede ser abrumador
-``sed -E -e 'PATRON' -e 'PATRON' archivo_objetivo > archivo_resultado``
-luego dentro del patron se usara el comando de sustituccion
+Se crea la carpeta lab-cli pero no se usa script  debido a que wsl2 no responde adecuamente <br>
+Wsl lo logra correr la shell dentro de TTy<br>
+Script simplemente no funciona. <br>
+Se intenta ``bash | tee evidencias/sesion.txt``
+pero tampoco resulta , por lo que se usará ``comando | tee -a evidencias sesion.txt`` para cada salida de comando que se pueda guardar
+## Sanitizador
+1. Introducirnos a la Cli ,,,esto es , a la sintaxis  de comandos puede ser abrumador
+```bash
+sed -E -e 'PATRON' -e 'PATRON' archivo_objetivo > archivo_resultado
+```
+Luego dentro del patron se usara el comando de sustitucción
+```bash
 's/../gI' que es el comando en cuestion
-``s/REGEX/REEMPLAZO/flags``
+s/REGEX/REEMPLAZO/flags``
+```
 
-``sed -E \
-  -e 's/(password|token|secret)/[REDACTED]/gI' \
-  -e 's/\b(pass(word)?|token|secret|api[-_]?key)\b[[:space:]]*[:=][[:space:]]*[^[:space:]]+/\1: [REDACTED]/gI' \
-  
-  evidencias/sesion.txt > evidencias/sesion_redactada.txt
-
-  clave - valor, -E activa expesiones regalres, gI aplica a todos las ocurrencias en modo case-inensitive(mayusculas y minuscuclas)
+```bash 
+sed -E \
+-e 's/(password|token|secret)/[REDACTED]/gI' \
+-e 's/\b(pass(word)?|token|secret|api[-_]?key)\b[[:space:]]*[:=][[:space:]]*[^[:space:]]+/\1: [REDACTED]/gI' \
+evidencias/sesion.txt > evidencias/sesion_redactada.txt
+```
+  clave - valor, -E activa expesiones regulares, gI aplica a todos las ocurrencias en modo case-inensitive(mayusculas y minuscuclas)
   primera regla:``s/(password|token|secret)/[REDACTED]/gI`` 
   
   la profundidad del ccodigo fuente va mas alla de escribir un simple script, la parte de configuraciones , contenedores ,se trabajan de esta forma, usamos sed para ocultar datos sensibles
