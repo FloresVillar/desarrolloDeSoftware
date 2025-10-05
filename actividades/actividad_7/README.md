@@ -159,3 +159,151 @@ esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ cat evidencias/03-squash.log
 * 046b6cc (HEAD -> main, feature-3) mofica README.md
 * c8a9900 (feature-1, add-feature) commit inicial
 ```
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ tree -L 2 ~/Actividad7-CC3S2
+/home/esau/Actividad7-CC3S2
+├── README.md
+├── archivo.txt
+├── e.log
+├── evidencias
+│   ├── 01-ff.log
+│   ├── 02-no-ff.log
+│   └── 03-squash.log
+└── main.py
+
+2 directories, 7 files
+```
+## Ejercicios guiados 
+1. (A) Desde main se cambia de rama a feature-1 , una vez allí se modifica README.md realizando la preparacion y rastreo, cambiamos a main y  realizamos el merge previo resolucion de conflictos
+```bash
+
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git checkout feature-1
+Switched to branch 'feature-1'
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ ls
+README.md  archivo.txt  e.log  evidencias  main.py
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ echo "A) ejercicio guiado --ff " >> README.md
+ git add README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git commit -m "modifica README.md"
+[feature-1 9421c0f] modifica README.md
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+ esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git merge --ff feature-1
+error: Merging is not possible because you have unmerged files.
+hint: Fix them up in the work tree, and then use 'git add/rm <file>'
+hint: as appropriate to mark resolution and make a commit.
+fatal: Exiting because of an unresolved conflict.
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git add README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git commit -m "guarda README en main"
+[main b9e9684] guarda README en main
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ cat README.md
+
+# Actividad7-CC3S2fusion No-fast-foward
+# Actividad7-CC3S2A) ejercicip guiado --ff 
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git merge --ff feature-1
+Already up to date.
+```
+- merge --ff realiza un merge lineal , main no deberia haber sido modificado, luego si lo fuera entonces seria un escenario no idela para merge --ff 
+
+2. (B) Creamos una nueva rama feature-2, modificamos README.md, realizamos luego e stanging  y el seguimiento , luego en main modificamos tambien README.md ,luego git add y git commit. entonces tenemos este escenario
+```bash
+A --- B -- D (main)
+       \
+        C   (feature)
+
+A --- B --- D-------- M
+           \         /
+            \-- C - /   (main)
+```
+Luego realizando merge --no--f
+```bash
+ git branch
+  add-feature
+  feature-1
+  feature-2
+  feature-3
+* main
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git merge --no-f feature-2
+Merge made by the 'ort' strategy.
+ README.md | 2 ++
+ 1 file changed, 2 insertions(+)
+```
+
+3. (C)  Squash 
+En main se modifica README (add y commit) movemos el HEAD a feature-3 modificamos README(add y commit 1) , nuvemante en main modificamos README(add y commit) 
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git add README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git commit -m "modifica README en main"
+[main 3507be5] modifica README en main
+ 1 file changed, 1 insertion(+)
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git branch
+  add-feature
+  feature-1
+  feature-2
+  feature-3
+* main
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git checkout feature-3
+Switched to branch 'feature-3'
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ echo "mofica nuevamente rREADME" >> README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git add README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git commit -m "modifica nuevamente README"
+[feature-3 fbb6476] modifica nuevamente README
+ 1 file changed, 1 insertion(+)
+```
+Al intentar git merge --squash
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git merge --squash feature-3
+Auto-merging README.md
+CONFLICT (content): Merge conflict in README.md
+Squash commit -- not updating HEAD
+Automatic merge failed; fix conflicts and then commit the result.
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ nano README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ cat README.md
+
+# Actividad7-CC3S2fusion No-fast-foward
+<<<<<<< HEAD
+# Actividad7-CC3S2A) ejercicip guiado --ff 
+B) --no-ff 
+B) --no-f en main
+modifica README en ejercicio C) squash
+=======
+git merge --squash
+C)squash 
+mofica nuevamente rREADME
+>>>>>>> feature-3
+```
+
+luego de corregir conflictos
+
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git add README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git commit -m "prepara el merge --squash"
+[main b77387c] prepara el merge --squash
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+ create mode 100644 archivoCsquash.txt
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git merge --squash feature-3
+Auto-merging README.md
+Squash commit -- not updating HEAD
+Automatic merge went well; stopped before committing as requested
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2
+```
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git log --oneline --graph --all --decorate
+* b77387c (HEAD -> main) prepara el merge --squash
+* 3507be5 modifica README en main
+*   2acc929 Merge branch 'feature-2'
+|\  
+| * 1782ad2 (feature-2) modifica REAMDE.md
+* | 7c050af modifica README
+|/  
+*   b9e9684 guarda README en main
+|\  
+| * 9421c0f (feature-1) modifica README.md
+| | * fbb6476 (feature-3) modifica nuevamente README
+| | * fa11e58 crea arhivoCsquash.txt
+| | * a201cdd modifica READE.md
+| |/  
+|/|   
+* | 046b6cc mofica README.md
+|/  
+* c8a9900 (add-feature) commit inicial
+```
+Como se puede apreciar en el DAG , con --squash se pierde información intermedia.
