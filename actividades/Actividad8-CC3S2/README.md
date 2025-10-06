@@ -228,3 +228,36 @@ def test_process_payment_failure():
     cart.add_item("apple", 2, 0.5)
     cart.apply_discount(10) 
 ```
+## Ejercicios
+### Reglas generales
+- No cambiamos *src/carrito.py* .. ni *Makefile*
+```bash
+class Producto :
+    def constructor():
+        nombre,precio
+    def info():
+        return info
+class ItemCarrito:
+    def constructor():
+        producto;cantidad
+    def total(): 
+        producto.precio*cantidad
+    def info():
+        return info
+
+class Carrito:
+    def constructor():
+        item = []
+    def agregar_producto(producto,cantidad):
+        for item in items
+            item.cantidad+=cantidad
+        items.append(ItemCarrito(producto,cantidad))
+    def remover_producto():
+        ...
+
+    def actualizar_cantidad():
+        ..
+    def calcular_total():
+        ..
+    ...  
+```
