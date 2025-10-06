@@ -398,3 +398,350 @@ con git diff y git diff se revisa el conflicto<br>
 Luego de la resolución del conflicto no hubo problemas adicionales<br>
 - Pull requests pequños hacia origen , uso de ramas que especifiquen las responsabilidades
 
+## Variantes utiles DevOps/DevSecOps
+1. (A) Fast-Forward Only (merge seguro)
+Se pretende evitar merges implícitos , si no es FF , falla<br>
+- 
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git branch
+* feature-ffonly
+  main
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ echo "titulo archivo prueba" > archivo.txt
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git add archivo.txt
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git commit -m "agrega archivo.txt"
+[feature-ffonly 2500464] agrega archivo.txt
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git merge --ff-only feature-ffonly
+Already up to date.
+```
+evidencias
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git log --oneline --graph --decorate --all --first-parent > evidencias/09-ff-only.log
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ cat evidencias/09-ff-only
+.log
+* 2500464 (HEAD -> feature-ffonly) agrega archivo.txt
+* 4b2c244 (main) agrega 04-confictos
+* 0eabc23 resuelve conflicto en index.html
+* d273f71 modifica index.html
+* 0418736 agregfa index.html
+* 7ec60c7 cread index.html
+* 3d6b0b6 Merge branch 'feature-3'
+* b77387c prepara el merge --squash
+* 3507be5 modifica README en main
+* 2acc929 Merge branch 'feature-2'
+* 7c050af modifica README
+* b9e9684 guarda README en main
+* 046b6cc mofica README.md
+* c8a9900 commit inicial
+```
+2. (B) Rebase + FF (historial lineal con PRs)
+Linealidad sin merge commits
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git add archivo2.txt
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ echo "archivo 3" > archivo3.txt
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git commit -m "agregando archivo2"
+[feature-rebase 501f5f5] agregando archivo2
+ 1 file changed, 1 insertion(+)
+ create mode 100644 archivo2.txt
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git add archivo3.txt
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git commit -m "agrega archivo3"
+[feature-rebase c1868f9] agrega archivo3
+ 1 file changed, 1 insertion(+)
+ create mode 100644 archivo3.txt
+```
+fetch y rebase
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git fetch origin 
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git rebase origin/main
+Current branch feature-rebase is up to date.
+```
+fetch trae los cambios del repo remoto origin y descarga la info, pero no toca las ramas actuales<br>
+Luego con rebase aplicamos los commit de feature-rebase en main
+- integrando
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$  git merge feature-rebase
+Updating 4b2c244..56a9a48
+Fast-forward
+ archivo.txt               |  2 +-
+ archivo1.txt              |  1 +
+ archivo2.txt              |  2 ++
+ archivo3.txt              |  1 +
+ evidencias/09-ff-only.log | 14 ++++++++++++++
+ 5 files changed, 19 insertions(+), 1 deletion(-)
+ create mode 100644 archivo1.txt
+ create mode 100644 archivo2.txt
+ create mode 100644 archivo3.txt
+ create mode 100644 evidencias/09-ff-only.log
+```
+- evidencias
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git log --graph --oneline --decorate --all --first-parent > evidencias/10-rebase-ff.log
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ ls
+README.md     archivo2.txt        e.log       main.py
+archivo.txt   archivo3.txt        evidencias
+archivo1.txt  archivoCsquash.txt  index.html
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ cd evidencias
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2/evidencias$ ls
+01-ff.log     03-squash.log      09-ff-only.log
+02-no-ff.log  04-conflictos.log  10-rebase-ff.log
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2/evidencias$ tree -L 3 ~/Actividad7-CC3S2
+/home/esau/Actividad7-CC3S2
+├── README.md
+├── archivo.txt
+├── archivo1.txt
+├── archivo2.txt
+├── archivo3.txt
+├── archivoCsquash.txt
+├── e.log
+├── evidencias
+│   ├── 01-ff.log
+│   ├── 02-no-ff.log
+│   ├── 03-squash.log
+│   ├── 04-conflictos.log
+│   ├── 09-ff-only.log
+│   └── 10-rebase-ff.log
+├── index.html
+└── main.py
+
+2 directories, 15 files
+```
+3. (C) Merge con validacón previa(sin comitear)<br>
+Se pretende correr linters, tests, escaneres antes de sellar el merge<br>
+
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git checkout -b feature-validate
+Switched to a new branch 'feature-validate'
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ echo "merge con validacion" >> README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git add README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git branch
+  feature-ffonly
+  feature-rebase
+* feature-validate
+  main
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git checkout main 
+M       README.md
+Switched to branch 'main'
+Your branch is ahead of 'origin/main' by 5 commits.
+  (use "git push" to publish your local commits)
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ echo "merge con validacion" >> README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git add README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git merge --no-commit --no-ff feature-validate
+Already up to date.
+```
+4. 
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ ls
+README.md     archivo2.txt        e.log       main.py
+archivo.txt   archivo3.txt        evidencias  scripts.sh
+archivo1.txt  archivoCsquash.txt  index.html
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ bash -n scripts.sh
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git log --graph --oneline --decorate --all > evidencias/11-pre-commit-merge.log
+```
+
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ cat evidencias/11-pre-comm
+it-merge.log
+* bfbff88 (HEAD -> main) agrega evidencias
+* 56a9a48 (feature-validate, feature-rebase) modifica archivo1
+* 3f55485 modifica archivo2
+* c1868f9 agrega archivo3
+* 501f5f5 agregando archivo2
+* 2500464 (feature-ffonly) agrega archivo.txt
+* 4b2c244 (origin/main) agrega 04-confictos
+*   0eabc23 resuelve conflicto en index.html
+|\  
+| * 9d471d8 agrega index.html
+* | d273f71 modifica index.html
+* | 0418736 agregfa index.html
+* | 7ec60c7 cread index.html
+|/  
+*   3d6b0b6 Merge branch 'feature-3'
+|\  
+| * fbb6476 modifica nuevamente README
+| * fa11e58 crea arhivoCsquash.txt
+| * a201cdd modifica READE.md
+* | b77387c prepara el merge --squash
+* | 3507be5 modifica README en main
+* |   2acc929 Merge branch 'feature-2'
+```
+evidencias
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ tree -L 3 ~/Actividad7-CC3S2
+/home/esau/Actividad7-CC3S2
+├── README.md
+├── archivo.txt
+├── archivo1.txt
+├── archivo2.txt
+├── archivo3.txt
+├── archivoCsquash.txt
+├── e.log
+├── evidencias
+│   ├── 01-ff.log
+│   ├── 02-no-ff.log
+│   ├── 03-squash.log
+│   ├── 04-conflictos.log
+│   ├── 09-ff-only.log
+│   ├── 10-rebase-ff.log
+│   └── 11-pre-commit-merge.log
+├── index.html
+├── main.py
+└── scripts.sh
+```
+4. (D) Octupus Merge (varias ramas a la vez)  
+
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git checkout -b feat-b
+Switched to a new branch 'feat-b'
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ echo "feat-b" >> README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git add README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git commit -m "modifica feat-b"
+[feat-b f929a76] modifica feat-b
+ 1 file changed, 1 insertion(+)
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git checkout main
+Switched to branch 'main'
+Your branch is ahead of 'origin/main' by 7 commits.
+  (use "git push" to publish your local commits)
+```
+```bash
+  (use "git push" to publish your local commits)
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git log --graph --oneline --decorate --all > evidencias/12-octupus.log
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ cat evidencias/12-octupus.
+log
+* f929a76 (feat-b) modifica feat-b
+* bd1c9ae (HEAD -> main) agrega evidencias
+* bfbff88 (feat-a) agrega evidencias
+* 56a9a48 (feature-validate, feature-rebase) modifica archivo1
+* 3f55485 modifica archivo2
+```
+5. (E) Subtree (Integrar subproyectos conservando historial)<br>
+Vendorizar /incrustar un repo externo en un subdirectorio 
+
+- Opción liviana
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git remote -v
+origin  https://github.com/FloresVillar/Actividad7-CC3S2.git (fetch)
+origin  https://github.com/FloresVillar/Actividad7-CC3S2.git (push)
+```
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git subtree add --prefix=vendor/demo  https://github.com/FloresVillar/Actividad7-CC3S2.git main
+git fetch https://github.com/FloresVillar/Actividad7-CC3S2.git main
+From https://github.com/FloresVillar/Actividad7-CC3S2
+ * branch            main       -> FETCH_HEAD
+Added dir 'vendor/demo'
+```
+
+- sincronizando 
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git subtree pull --prefix=
+vendor/demo  https://github.com/FloresVillar/Actividad7-CC3S2.git m
+ain
+From https://github.com/FloresVillar/Actividad7-CC3S2
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ 
+
+````
+evidencias
+```bash
+sau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git log --graph --oneline --decorate --all > evidencias/13-subtree.log
+```
+
+6. (F) Sesgos de resolucion y normalizacion(algoritmo ORT)
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git checkout -b feature-1
+Switched to a new branch 'feature-1'
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ echo "sesgos de resolucion" >> README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git add .
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git commit -m "sesgos de resolucion"
+[feature-1 eb4b133] sesgos de resolucion
+ 3 files changed, 78 insertions(+)
+ create mode 100644 evidencias/12-octupus.log
+ create mode 100644 evidencias/13-subtree.log
+
+
+ esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git checkout -b feature-2
+Switched to a new branch 'feature-2'
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ echo "sesgo de resolucion"
+ >> README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git add README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git commit -m "sesgo de resolucion en feature-2"
+[feature-2 785d409] sesgo de resolucion en feature-2
+ 1 file changed, 1 insertion(+)
+
+```
+- solo conflictos
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git merge -X ours feature-1
+Updating f322e73..eb4b133
+Fast-forward
+ README.md                 |  1 +
+ evidencias/12-octupus.log | 36 +++++++++++++++++++++++++++++
+ evidencias/13-subtree.log | 41 ++++++++++++++++++++++++++++++++++
+ 3 files changed, 78 insertions(+)
+ create mode 100644 evidencias/12-octupus.log
+ create mode 100644 evidencias/13-subtree.log
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git merge -X ours feature-
+2
+Auto-merging README.md
+Merge made by the 'ort' strategy.
+```
+
+- sensibilidad
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git merge -X find-renames=90% feature-1
+Already up to date.
+esau@DESKTOP-A3RPEK
+```
+Se uso el comando merge -X<br>
+Evidencias
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git log --graph --oneline --decorate --all > evidencias/14-x-strategy.log
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ cat  evidencias/14-x-strat
+egy.log
+*   5fea6ed (HEAD -> main) Merge branch 'feature-2'
+|\  
+| * 785d409 (feature-2) sesgo de resolucion en feature-2
+* | eb4b133 (feature-1) sesgos de resolucion
+|/  
+*   f322e73 Add 'vendor/demo/' from commit '4b2c2444ce16fbdd3ae29a10aa5cae1098381738'
+|\  
+| | * f929a76 (feat-b) modifica feat-b
+| |/  
+|/|   
+* | bd1c9ae agrega evidencias
+* | bfbff88 (feat-a) agrega evidencias
+* | 56a9a48 (feature-validate, feature-rebase) modifica archivo1
+* | 3f55485 modifica archivo2
+* | c1868f9 agrega archivo3
+* | 501f5f5 agregando archivo2
+* | 2500464 (feature-ffonly) agrega archivo.txt
+|/  
+* 4b2c244 (origin/main) agrega 04-confictos
+*   0eabc23 resuelve conflicto en index.html
+|\  
+| * 9d471d8 agrega index.html
+* | d273f71 modifica index.html
+* | 0418736 agregfa index.html
+* | 7ec60c7 cread index.html
+|/  
+*   3d6b0b6 Merge branch 'feature-3'
+|\  
+| * fbb6476 modifica nuevamente README
+| * fa11e58 crea arhivoCsquash.txt
+| * a201cdd modifica READE.md
+* | b77387c prepara el merge --squash
+* | 3507be5 modifica README en main
+* |   2acc929 Merge branch 'feature-2'
+|\ \  
+| * | 1782ad2 modifica REAMDE.md
+* | | 7c050af modifica README
+|/ /  
+* |   b9e9684 guarda README en main
+|\ \  
+| |/  
+|/|   
+| * 9421c0f modifica README.md
+* | 046b6cc mofica README.md
+|/  
+* c8a9900 commit inicial
+```
