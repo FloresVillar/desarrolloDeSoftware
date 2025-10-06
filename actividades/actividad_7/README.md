@@ -745,3 +745,73 @@ egy.log
 |/  
 * c8a9900 commit inicial
 ```
+7. (G) Firmar merges/commits 
+- Merge firmado
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git checkout -b feature-signed
+Switched to a new branch 'feature-signed'
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git branch
+  feat-a
+  feat-b
+  feature-1
+  feature-2
+  feature-ffonly
+  feature-rebase
+* feature-signed
+  feature-validate
+  main
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ echo "firmar merges" >> README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git add .
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git commit -m "modifica README"
+[feature-signed 530c2d4] modifica README
+ 2 files changed, 47 insertions(+)
+ create mode 100644 evidencias/14-x-strategy.log
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git checkout main
+Switched to branch 'main'
+Your branch is ahead of 'origin/main' by 11 commits.
+  (use "git push" to publish your local commits)
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ nano README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git add .
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git commit -m "modifica readme"
+[main fa77b85] modifica readme
+ 1 file changed, 2 insertions(+)
+```
+Merge firmado
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git merge --no-ff --gpg-sign feature-signed
+Auto-merging README.md
+CONFLICT (content): Merge conflict in README.md
+Automatic merge failed; fix conflicts and then commit the result.
+```
+resolviendo 
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ nano README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git add README.md
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git status
+On branch main
+Your branch is ahead of 'origin/main' by 12 commits.
+  (use "git push" to publish your local commits)
+
+All conflicts fixed but you are still merging.
+  (use "git commit" to conclude merge)
+
+Changes to be committed:
+        modified:   README.md
+        new file:   evidencias/14-x-strategy.log
+
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git commit -m "resuelve conflicto"
+[main 47f9a2f] resuelve conflict
+```
+Evidencias
+```bash
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ git log --show-signature -1 > evidencias/15-signed-merge.log
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ cat evidencias/15-signed-m
+erge.log
+commit 47f9a2f502e9b1d386ca1251645b2bebca63a0fa
+Merge: fa77b85 530c2d4
+Author: FloresVillar <efloresv@uni.pe>
+Date:   Sun Oct 5 22:48:37 2025 -0500
+
+    resuelve conflicto
+esau@DESKTOP-A3RPEKP:~/Actividad7-CC3S2$ 
+```

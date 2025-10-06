@@ -1,0 +1,46 @@
+*   5fea6ed (HEAD -> main) Merge branch 'feature-2'
+|\  
+| * 785d409 (feature-2) sesgo de resolucion en feature-2
+* | eb4b133 (feature-1) sesgos de resolucion
+|/  
+*   f322e73 Add 'vendor/demo/' from commit '4b2c2444ce16fbdd3ae29a10aa5cae1098381738'
+|\  
+| | * f929a76 (feat-b) modifica feat-b
+| |/  
+|/|   
+* | bd1c9ae agrega evidencias
+* | bfbff88 (feat-a) agrega evidencias
+* | 56a9a48 (feature-validate, feature-rebase) modifica archivo1
+* | 3f55485 modifica archivo2
+* | c1868f9 agrega archivo3
+* | 501f5f5 agregando archivo2
+* | 2500464 (feature-ffonly) agrega archivo.txt
+|/  
+* 4b2c244 (origin/main) agrega 04-confictos
+*   0eabc23 resuelve conflicto en index.html
+|\  
+| * 9d471d8 agrega index.html
+* | d273f71 modifica index.html
+* | 0418736 agregfa index.html
+* | 7ec60c7 cread index.html
+|/  
+*   3d6b0b6 Merge branch 'feature-3'
+|\  
+| * fbb6476 modifica nuevamente README
+| * fa11e58 crea arhivoCsquash.txt
+| * a201cdd modifica READE.md
+* | b77387c prepara el merge --squash
+* | 3507be5 modifica README en main
+* |   2acc929 Merge branch 'feature-2'
+|\ \  
+| * | 1782ad2 modifica REAMDE.md
+* | | 7c050af modifica README
+|/ /  
+* |   b9e9684 guarda README en main
+|\ \  
+| |/  
+|/|   
+| * 9421c0f modifica README.md
+* | 046b6cc mofica README.md
+|/  
+* c8a9900 commit inicial

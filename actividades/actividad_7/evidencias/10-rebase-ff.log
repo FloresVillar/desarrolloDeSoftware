@@ -1,0 +1,18 @@
+* 56a9a48 (HEAD -> main, feature-rebase) modifica archivo1
+* 3f55485 modifica archivo2
+* c1868f9 agrega archivo3
+* 501f5f5 agregando archivo2
+* 2500464 (feature-ffonly) agrega archivo.txt
+* 4b2c244 (origin/main) agrega 04-confictos
+* 0eabc23 resuelve conflicto en index.html
+* d273f71 modifica index.html
+* 0418736 agregfa index.html
+* 7ec60c7 cread index.html
+* 3d6b0b6 Merge branch 'feature-3'
+* b77387c prepara el merge --squash
+* 3507be5 modifica README en main
+* 2acc929 Merge branch 'feature-2'
+* 7c050af modifica README
+* b9e9684 guarda README en main
+* 046b6cc mofica README.md
+* c8a9900 commit inicial
