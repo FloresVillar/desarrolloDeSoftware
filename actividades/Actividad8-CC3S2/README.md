@@ -16,8 +16,8 @@ Aplicar los principios FIRST: <br>
 
 ## Introducción a Red-Green-Refactor
 1. Red (Fallo): Escribir una prueba que falle porque la funcionalidad no está implementada aún
-2. Green (Verde): Implementar la funcionalidad mínima necesaria
-3. Refactor (Refactorizar): Mejorar el código existente sin cambiar su comportamiento
+2. Green (Verde): Implementar la funcionalidad mínima necesaria que pase la preba
+3. Refactor (Refactorizar): Mejorar el código existente sin cambiar su comportamiento, manteniendo todas las pruebas pasando
 
 Este ciclo se repite iterativamente
 
@@ -161,3 +161,70 @@ make test<br>
 Todas las pruebas deberían pasar confirmando que la funcionalidad *ShopingCart* funciona correctamente despues de las cinco iteraciones del proceso RGR
 
 ## Uso de mocks y stubs
+Hemos incorporado el uso de mocks para simular el comportamiento de un servicio externo de procesamiento de pagos(payment_gateway)<br>
+```bash
+ def process_payment(self, amount):
+        if not self.payment_gateway:
+            raise ValueError("No se proporciona pasarela de pago.")
+        try:
+            success = self.payment_gateway.process_payment(amount)  
+            return success
+        except Exception as e: 
+            raise e
+```
+Esto se logra mediante la inyección de dependencias, donde payment_gateway se pasa como parametro 
+```bash
+payment_gateway = Mock()
+payment_gateway.process_payment.return_value = True
+cart = ShoppingCart(payment_gateway=payment_gateway)
+```
+Esto permite que durante las pruebas, podamos sustituir el gateway real por un mock , evitando llamadas reales a servicios externos y permitiendo controlar sus comportamientos(como simular pagos exitosos o fallidos)
+
+- Mock : un objeto que simula el comportamiento de objetos reales  de manera controlada. En este caso , *payment_gateway* es un mock que simula el metodo *process_payment*
+- Stub : Un objeto que proporciona respuestas predefinidas a llamadas realizadas durante las pruebas, sin lógica adicional, en este caso <br>
+*payment_gateway.process_payment.return_value = True*
+
+### Inyección de dependencia
+clase   ←  dependencias desde el exterior
+```bash
+cart = ShoppingCart(payment_gateway=payment_gateway)
+```
+Esto es una inyección por metodo, asi se puede pasar mocks/stubs en pruebas. Esto facilita el uso de mocks durante las pruebas y mejorar la modularidad y flexibilidad
+
+### Manejo de excepciones
+En el método process_payment se agrega manejo de excepciones
+```bash
+except Exception as e:
+            # Maneja excepciones según sea necesario
+            raise e
+```
+### Refactorización
+Cada iteración del proceso RGR  se basa en la anterior, permitiendo construir la clase ShoppingCart robusta y funcional <br>
+Al integrar caracteristicas avanzadas como la inyección de dependencias y el uso de mocks, asegurando que el código sea testeable y mantenible
+
+### Pruebas prácticas en pruebas
+- Pruebas unitarias  : cada prueba se ocupa de una funcionalidad especifica de ShoppingCart
+- Aislamiento : Al usar mocks para  el payment_gateway aislamos las pruebas de la clase ShoppingCart de dependencias externas
+- Cobertura de casos de uso : se cubren escenarios exitosos   
+```bash
+def test_process_payment():
+    payment_gateway = Mock()#sin importar si en produccion es un sericio interno, vamos reducireno acoplamineto , evitamos ...que?
+    payment_gateway.process_payment.return_value = True
+    cart = ShoppingCart(payment_gateway=payment_gateway)
+    cart.add_item("apple", 2, 0.5)
+    cart.add_item("banana", 3, 0.75) #hasta aqui es arrange
+    cart.apply_discount(10)
+    total = cart.calculate_total() #act
+    result = cart.process_payment(total) #act
+    payment_gateway.process_payment.assert_called_once_with(total) #assert
+    assert result is True #assert
+```
+Y el escenario de fallos
+```bash
+def test_process_payment_failure():
+    payment_gateway = Mock()  
+    payment_gateway.process_payment.side_effect = Exception("Pago fallado")
+    cart = ShoppingCart(payment_gateway=payment_gateway)
+    cart.add_item("apple", 2, 0.5)
+    cart.apply_discount(10) 
+```
