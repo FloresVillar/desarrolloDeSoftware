@@ -2,7 +2,7 @@ from unittest.mock import Mock
 import pytest
 from src.shopping_cart import ShoppingCart
 #elcarrito no toca la pasarela de pago, solo conoce el contrato minimo, el metodo process payment
-#el as preibsa inyecto un mock 
+#el ... inyecto un mock 
 def test_add_item():
     cart = ShoppingCart()
     cart.add_item("apple", 2, 0.5)  # nombre, cantidad, precio unitario
