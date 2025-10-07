@@ -1,0 +1,7 @@
+pytest-cov
+pytest
+ruff
+bandit
+semgrep
+requests
+pre-commit
