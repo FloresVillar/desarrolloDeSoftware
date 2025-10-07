@@ -228,8 +228,8 @@ def test_process_payment_failure():
     cart.add_item("apple", 2, 0.5)
     cart.apply_discount(10) 
 ```
-## Ejercicios
-### Reglas generales
+### Ejercicios
+#### Reglas generales
 - No cambiamos *src/carrito.py* .. ni *Makefile*
 ```bash
 class Producto :
@@ -261,3 +261,66 @@ class Carrito:
         ..
     ...  
 ```
+#### Ejecucion base
+```bash
+pytest -q --maxfail=1 --disable-warnings --cov=src --cov-report=term-missing --cov-fail-under=90 --junitxml=out/junit.xml
+```
+
+```bash
+(venv_labo3) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio3$ pytest -q --maxfail=1 --disable-warnings --cov=src --cov-report=term-missing --cov-fail-under=90 --junitxml=out/junit.xml
+...............                                                             [100%]
+- generated xml file: /home/esau/desarrolloDeSoftware/labs/Laboratorio3/out/junit.xml -
+
+---------- coverage: platform linux, python 3.12.3-final-0 -----------
+Name                   Stmts   Miss  Cover   Missing
+----------------------------------------------------
+src/__init__.py            0      0   100%
+src/carrito.py            55      7    87%   9, 21, 50, 52, 60, 68, 91
+src/factories.py           7      0   100%
+src/shopping_cart.py      29      3    90%   9, 27, 31
+----------------------------------------------------
+TOTAL                     91     10    89%
+
+FAIL Required test coverage of 90% not reached. Total coverage: 89.01%
+15 passed, 1 warning in 0.32s
+```
+```bash
+(venv_labo3) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio3$ pytest --cov=src --cov-report=term-missing > out/coverage.txt
+(venv_labo3)
+```
+
+### El patrón AAA
+#### A1 Descuestos parametrizados
+En el bloque de parametrizacion se modifica este bloque para que los descuentos sean porcentajes y no numeros decimales<br>
+```bash
+@pytest.mark.parametrize(
+    "precio,cantidad,descuento,esperado",
+    [
+        (10.00, 1, 0, 10.00),
+        (10.00, 1, 1, 9.9),
+        (10.01, 1, 33, 6.71),  # ajusta 'esperado' si el contrato indica otro redondeo
+        (100.00, 1, 50, 50.00),
+        (1.00, 1, 100, 0.00),
+        (50.00, 1, 100, 0.00),
+    ],
+)
+```
+mientras que en la funci+on de prueba unitaria<br>
+```bash
+
+def test_descuento_total(precio,cantidad,descuento,esperado):
+    carro = Carrito()
+    producto = Producto("x",precio)
+    item = ItemCarrito(producto,cantidad)    
+    carro.agregar_producto(producto,cantidad)
+    total_final = carro.aplicar_descuento(descuento)
+    assert round(total_final,2) == pytest.approx(esperado,abs=0.01)
+    
+```
+#### A2 Idempotencia de actualización de cantidades
+Verifica que establecer varias veces la misma cantidad no cambia el total ni el numero de items<br>
+
+
+
+
+
