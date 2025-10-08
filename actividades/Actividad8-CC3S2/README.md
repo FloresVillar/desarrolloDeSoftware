@@ -320,7 +320,17 @@ def test_descuento_total(precio,cantidad,descuento,esperado):
 #### A2 Idempotencia de actualización de cantidades
 Verifica que establecer varias veces la misma cantidad no cambia el total ni el numero de items<br>
 
-
+```bash
+ for item in self.items:
+            if item.producto.nombre == producto.nombre:
+                if nueva_cantidad == 0:
+                    self.items.remove(item)
+                else:
+                    item.cantidad = nueva_cantidad
+                return
+        raise ValueError
+```
+Se asegura que siempre se actualiza la nueva cantidad para un mismo producto
 
 
 
