@@ -78,7 +78,7 @@ class Carrito:
         Aplica un descuento al total del carrito y retorna el total descontado.
         El porcentaje debe estar entre 0 y 100.
         """
-        if porcentaje < 0 or porcentaje > 100:
+        if porcentaje < 0 or porcentaje > 100:  
             raise ValueError("El porcentaje debe estar entre 0 y 100")
         total = self.calcular_total()
         descuento = total * (porcentaje / 100)
