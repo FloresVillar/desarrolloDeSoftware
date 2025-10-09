@@ -1,6 +1,6 @@
 ## Ejemplo de prueba
 # tests/test_carrito.py
-
+    
 import pytest
 from src.carrito import Carrito
 from src.factories import ProductoFactory
