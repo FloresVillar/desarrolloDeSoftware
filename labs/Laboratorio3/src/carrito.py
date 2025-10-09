@@ -14,7 +14,7 @@ class ItemCarrito:
         self.producto = producto
         self.cantidad = cantidad
 
-    def total(self):
+    def precio_total(self):
         return self.producto.precio * self.cantidad
 
     def __repr__(self):
@@ -68,10 +68,11 @@ class Carrito:
         raise ValueError("Producto no encontrado en el carrito")
 
     def calcular_total(self):
-        """
-        Calcula el total del carrito sin descuento.
-        """
-        return sum(item.total() for item in self.items)
+        """ Calcula el total del carrito sin descuento."""
+        total = 0
+        for item in self.items:
+            total += item.precio_total()
+        return total 
 
     def aplicar_descuento(self, porcentaje):
         """
