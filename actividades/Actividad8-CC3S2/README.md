@@ -424,3 +424,157 @@ tests/test_redondeo_acumulado.py ..              [100%]
 ================== 2 passed in 0.06s ===================
 (venv_labo3)
 ```
+
+### RGR sin tocar el SUT
+
+#### B1 Rojo  (falla esperada) - precisión financiera
+Escribimos un test que xfail con precision binaria float.
+En el metodo calculate_total() de ShoppingCart
+```bash
+
+    def calculate_total(self):
+        total = sum(item["quantity"] * item["unit_price"] for item in self.items.values())
+        if self.discount > 0:
+            total *= (1 - self.discount / 100)
+        return total  # Redondea a 2 decimales
+```
+Ejecutando test etapa R siguiendo el ciclo TDD rgr 
+```bash
+
+@pytest.mark.xfail(reason="Float puede introducir error en dinero")
+def test_total_precision_decimal():
+    shopping = ShoppingCart()
+    shopping.add_item("x",1,0.1)  
+    shopping.add_item("y",1,0.2)
+    print(shopping.calculate_total())
+    assert shopping.calculate_total() == 0.3
+```
+
+se tiene que la salida es
+```bash
+================== test session starts ==================
+platform linux -- Python 3.12.3, pytest-8.3.3, pluggy-1.6.0
+rootdir: /home/esau/desarrolloDeSoftware/labs/Laboratorio3
+configfile: pytest.ini
+plugins: Faker-37.8.0, cov-5.0.0, mock-3.15.1
+collected 1 item                                        
+
+tests/test_rgr_precision_rojo.py 0.30000000000000004
+x
+
+================== 1 xfailed in 0.07s =
+```
+
+tal como se aprecia el total es 0.30000...4 y no exactamente 0.3<br>
+
+#### B2 Verde (exclusión docuementada)
+Convierte el test anterior a *skip* con una razon explicita(no se corrige..). <br>
+De la lectura 14 
+```bash
+9. Marcas de pytest: xfail y skip
+En pipelines orientados a gates, xfail documenta deudas técnicas conocidas o comportamientos no soportados en determinados entornos, mientras que skip evita ruido cuando una precondición externa no se cumple.
+```
+Bueno, skip evita ruido , osea omitir el test por una razon externa
+
+```bash
+@pytest.mark.skip(reason = "Contrato:precision binaria no se corrige")
+def test_total_precision_decimal_skip():
+    shopping = ShoppingCart()
+    shopping.add_item("x",1,0.1)
+    shopping.add_item("y",1,0.2)
+    print(shopping.calculate_total())
+    assert shopping.calculate_total() == 0.3
+```
+Ejecutando
+```bash
+collected 1 item                           
+
+tests/test_rgr_precision_verde.py s
+
+============ 1 skipped in 0.01s ============
+(venv_labo3)
+```
+A ver , la salida indica las version de linux, python ,pytest. la ruta donde pytest busca para ejecutar, luego el resultado esperado del test, que se omite en este caso<br> 
+#### B3 Refactor de suites
+Reorganizamos casos en 2 clases para legibilidad sin duplicar logica<br>
+Para entender el codigo *Pista* se requiere chequear la lectura11.md
+```bash
+Stubs devuelven respuestas prefabricadas sin verificar interacciones.
+Mocks permiten inspeccionar llamadas, argumentos y orden. Mocks ayuda a afirmar que el codigo cumple contrato de uso(headers)
+Stub basta si solo importa el payload(informacion que se transmite)
+Mock es necesario si se necesita asegurar el como se invoca una dependencia
+```
+Para la clase TestPrecisionMonetaria y su funcion test_suma_pequenias_cantidades los conceptos no son nuevos <br>
+De modo que se implementa sin contratiempos
+```bash
+def test_suma_pequenias_cantidades():
+        shop = ShoppingCart()
+        shop.add_item("x",1,0.05)
+        shop.add_item("y",1,0.05)
+        total = shop.calculate_total()
+        assert round(total,2) == 0.1
+
+```
+Mientras que para TestPasarelaDePagos, revisamos en que consiste la inyeccion de dependencias  y como esto es mas favorable que le acoplamiento fuerte<br>
+```bash
+sin inyeccion
+def __init__(self):
+    self.gateway = Gateway() #
+    
+def process_payment(self,monto):
+    self.gateway.process_payment(monto)
+
+```
+Se ve que gateway depende de una funcion interna entonces se necesitaria modificar la clase , en contraposición con la inyeccion de dependencia
+```bash
+def __init__(self,payment_gateway):
+    self.payment_gateway = payment_gateway
+def process_payment(self,monto):
+    payment_gateway.process_payment(monto)
+```
+Más flexible, y luego en el script del test,se puede trabajar con Mock
+
+```bash
+import pytest 
+from src.shopping_cart import *
+from unittest.mock import Mock
+
+class TestPrecisionMonetaria:
+    def test_suma_pequenias_cantidades(self):
+        shop = ShoppingCart()
+        shop.add_item("x",1,0.05)
+        shop.add_item("y",1,0.05)
+        total = shop.calculate_total()
+        assert round(total,2) == 0.1
+
+class TestPasarelaDePagos:
+    def test_pago_exitoso(self):
+        pgm = Mock()
+        pgm.process_payment.return_value = True
+        shop = ShoppingCart(payment_gateway=pgm)
+        shop.add_item("x",1,10.0)
+        resultado_pago = shop.process_payment(10.0)        
+        assert resultado_pago is True
+        pgm.process_payment.assert_called_once() 
+
+if __name__=='__main__':
+    test1 = TestPrecisionMonetaria()
+    test1.test_suma_pequenias_cantidades()
+    test2 = TestPasarelaDePagos()
+    test2.test_pago_exitoso()
+```
+ejecutando 
+```bash
+ pytest tests/test_refactor_suites.py
+============== test session starts ==============
+platform linux -- Python 3.12.3, pytest-8.3.3, pluggy-1.6.0
+rootdir: /home/esau/desarrolloDeSoftware/labs/Laboratorio3
+configfile: pytest.ini
+plugins: Faker-37.8.0, cov-5.0.0, mock-3.15.1
+collected 2 items                               
+
+tests/test_refactor_suites.py ..          [100%]
+
+=============== 2 passed in 0.05s ===============
+(venv_labo3) esau@DESKTOP-A3RPEKP:
+```
