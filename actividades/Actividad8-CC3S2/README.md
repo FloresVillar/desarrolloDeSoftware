@@ -331,6 +331,96 @@ Verifica que establecer varias veces la misma cantidad no cambia el total ni el 
         raise ValueError
 ```
 Se asegura que siempre se actualiza la nueva cantidad para un mismo producto
+```bash
+def test_indempotencia_cantidades():
+ c = Carrito()
+ p = Producto("x",3.25)
+ c.agregar_producto(p,2)
+ total1 = c.calcular_total()
+ for _ in range(5):
+  c.actualizar_cantidad(p,2)
+ total2 = c.calcular_total()
+ assert total1 == total2
+ total = 0
+ for item in c.items:
+    total +=item.cantidad    #items.append(ItemCarrito(producto, cantidad))
+ assert total == 2
+```
+#### A3 Fronteras de precio y valores inválidos
+Cubre precios fronteraa 0.01 0.005 ..<br>
+y precios no validos 0, negativos. Si el comportamiento no esta definido en SUT(componente que se esta probando Carrito) usa *xfail* con razon.<br>
 
+En ItemCarrito 
+```bash
+def precio_total(self):
+        return self.producto.precio * self.cantidad
+```
+Y en Carrito
+```bash
+def calcular_total(self):
+        """ Calcula el total del carrito sin descuento."""
+        total = 0
+        for item in self.items:
+            total += item.precio_total()
+        return total
+```
 
+y al ejecutar la prueba
+```bash
+tware/labs/Laboratorio3$ pytest tests/test_precios_fronteras.py
+=============== test session starts ===============
+platform linux -- Python 3.12.3, pytest-8.3.3, pluggy-1.6.0
+rootdir: /home/esau/desarrolloDeSoftware/labs/Laboratorio3
+configfile: pytest.ini
+plugins: Faker-37.8.0, cov-5.0.0, mock-3.15.1
+collected 6 items                                 
 
+tests/test_precios_fronteras.py ....xX      [100%]
+
+===== 4 passed, 1 xfailed, 1 xpassed in 0.08s =====
+(venv_labo3) esau@DESKTOP-A3RPEKP
+```
+#### A4 Redondeos acumulados vs final
+Crea casos donde redondear por item difiere de redondear al final.<br>
+```bash
+def test_redondeo_acumulado_vs_final():
+    carro = Carrito()
+    p1 = Producto("a",.333)
+    p2 = Producto("b",.6667)
+    carro.agregar_producto(p1,3)
+    carro.agregar_producto(p2,3)
+    total = carro.calcular_total()
+    suma_por_item = 0
+    for item in carro.items:
+        c = item.producto.precio*item.cantidad
+        suma_por_item +=c
+    assert round(total,2) == round(suma_por_item,2)
+
+def test_redondeo_acumulado_diferente():
+    carro = Carrito()
+    p1 = Producto("a",0.335)
+    p2 = Producto("b",0.335)
+    carro.agregar_producto(p1,3)
+    carro.agregar_producto(p2,3)
+    total = carro.calcular_total()
+    suma_por_item = 0
+    for item in carro.items:
+        suma_por_item +=round(item.producto.precio * item.cantidad,2)
+    print(f"total={round(total,2)} , total-item = {suma_por_item}")
+    assert round(total,2) != suma_por_item
+```
+y la ejecucion de la prueba
+```bash
+(venv_labo3) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio3$ pytest tests/test_redondeo_acumulado.py
+================= test session starts ==================
+platform linux -- Python 3.12.3, pytest-8.3.3, pluggy-1.6.0
+rootdir: /home/esau/desarrolloDeSoftware/labs/Laboratorio3
+configfile: pytest.ini
+plugins: Faker-37.8.0, cov-5.0.0, mock-3.15.1
+collected 2 items                                      
+
+tests/test_redondeo_acumulado.py ..              [100%]
+
+================== 2 passed in 0.06s ===================
+(venv_labo3)
+```
