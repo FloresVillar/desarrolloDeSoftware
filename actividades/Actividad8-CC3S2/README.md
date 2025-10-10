@@ -578,3 +578,97 @@ tests/test_refactor_suites.py ..          [100%]
 =============== 2 passed in 0.05s ===============
 (venv_labo3) esau@DESKTOP-A3RPEKP:
 ```
+
+### TDD y DevOps
+#### C1 Contratos de pasarela de pago con Mock
+
+Cubriremos :
+- El pago exitoso (True)
+- Excepción transitoria (timeout) sin reintento automatica del SUT
+- Rechazo definitivo (False)
+
+Antes de implementar los tests en cuestión, veamos que sentido tiene 
+
+```bash
+ def process_payment(self, amount):
+        if not self.payment_gateway:
+            raise ValueError("No se proporciona pasarela de pago.")
+        try:
+            success = self.payment_gateway.process_payment(amount) 
+            return success
+        except Exception as e: 
+            raise e
+```
+La linea de código 
+
+```bash
+    ... = self.payment_gateway.process_payment(monto)
+```
+
+No se tiene nada definido por parte de ningun objeto que forme parte de ShoppingCart(), y es natural que asi sea<br>
+pues payment_gateway es un objeto externo que se inyecta<br>
+Lo que si se espera es que el objeto payment_gateway tenga un metodo process_payment.<br>
+Para test_pago_exitoso, las lineas son casi las mismas que los que se han estado viendo <br>
+
+```bash
+def test_pago_exitoso():
+     mock = Mock()
+    mock.process_payment.return_value = True
+    shop = ShoppingCart(payment_gateway  = mock)
+    shop.add_item("x",1,0.05)
+    resultado = shop.process_payment(5)
+    assert resultado is True 
+    mock.process_payment.assert_called_once_with(5)
+```
+Ejecutando el test
+```bash
+ pytest tests/test_pasarela_pago_contratos.py
+========================================= test session starts ==========================================
+platform linux -- Python 3.12.3, pytest-8.3.3, pluggy-1.6.0
+rootdir: /home/esau/desarrolloDeSoftware/labs/Laboratorio3
+configfile: pytest.ini
+plugins: Faker-37.8.0, cov-5.0.0, mock-3.15.1
+collected 3 items                                                                                      
+
+tests/test_pasarela_pago_contratos.py ...                                                        [100%]
+
+========================================== 3 passed in 0.04s ===========================================
+```
+Para la excepcion transitoria se usará *pg.charge.side_effect = TimeoutError("timeout")* pg es un mock, charge es el metodo de interés y al igual que con retur_value, se usa ahora la funcion TimeoutError('timeout') <br>
+en el modulo unittest.mock el atributo side_effect sirve para simular errores  o comportamientos especiales<br>
+Se quiere probar que la pasarela de pagos falla por timeout.<br>
+
+```bash
+creamos el mock
+fijamos el TimeoutError
+hacemos la inyeccion
+add_item
+with se espera un timeout
+    hacer la prueba de la operacion
+assert para reintento 
+```
+```bash
+def test_pago_timeout_sin_reintento_automatico():
+    pgm = Mock()
+    pgm.process_payment.side_effect = TimeoutError("timeout")
+    shop = ShoppingCart(payment_gateway = pgm)
+    shop.add_item("x",1,0.05)
+    with pytest.raises(TimeoutError):
+        shop.process_payment(0.05)
+    assert pgm.process_payment.call_count == 1 
+```
+```bash
+Laboratorio3$ pytest tests/test_pasarela_pago_contratos.py
+==================== test session starts =====================
+platform linux -- Python 3.12.3, pytest-8.3.3, pluggy-1.6.0
+rootdir: /home/esau/desarrolloDeSoftware/labs/Laboratorio3
+configfile: pytest.ini
+plugins: Faker-37.8.0, cov-5.0.0, mock-3.15.1
+collected 3 items                                            
+
+tests/test_pasarela_pago_contratos.py ...              [100%]
+
+===================== 3 passed in 0.05s ======================
+(venv_labo3) esau@DESKTOP-A3RPEKP:~
+```
+
