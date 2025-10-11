@@ -18,7 +18,7 @@ class ShoppingCart:
         total = sum(item["quantity"] * item["unit_price"] for item in self.items.values())
         if self.discount > 0:
             total *= (1 - self.discount / 100)
-        return round(total, 2)  # Redondea a 2 decimales
+        return total  # Redondea a 2 decimales
 
     def apply_discount(self, discount_percentage):
         if 0 <= discount_percentage <= 100:

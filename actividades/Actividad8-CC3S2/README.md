@@ -671,4 +671,63 @@ tests/test_pasarela_pago_contratos.py ...              [100%]
 ===================== 3 passed in 0.05s ======================
 (venv_labo3) esau@DESKTOP-A3RPEKP:~
 ```
+Para el caso de Rechazo definitivo
+```bash
+mock = Mock()
+    mock.process_payment.return_value = False
+    shop = ShoppingCart(payment_gateway = mock)
+    shop.add_item("x",1,10.0)
+    resultado = shop.process_payment(5)
+    assert resultado is False
+    mock.process_payment.assert_called_once()
+```
+
+#### C2 Marcadores de humo y regresión 
+Marcando 3 pruebas criticas como *@pytest.mark.smoke* y la batería extendida como *@pytest.mark.regression* <br>
+```bash
+@pytest.mark.smoke
+def test_smoke_agregar_y_total():
+    carro = Carrito()
+    p = Producto("x",0.05)
+    carro.agregar_producto(p,1)
+    assert carro.calcular_total() == 0.05
+
+@pytest.mark.regression
+def test_regression_descuento_redondeo():
+    carro = Carrito()
+    p = Producto("y",10.0)
+    carro.agregar_producto(p,1)
+    total = carro.aplicar_descuento(15)
+    assert round(total,2) == 8.50
+```
+y al ejecutar
+```bash
+$ pytest tests/test_markers.py
+=================================================== test session starts ===================================================
+platform win32 -- Python 3.8.10, pytest-8.3.3, pluggy-1.5.0
+rootdir: \\wsl.localhost\Ubuntu\home\esau\desarrolloDeSoftware\labs\Laboratorio3
+configfile: pytest.ini
+plugins: Faker-35.2.2, cov-5.0.0, typeguard-2.13.3
+collected 2 items                                                                                                          
+
+tests\test_markers.py ..                                                                                             [100%]
+
+==================================================== 2 passed in 0.48s ====================================================
+(venv_labo3) 
+```
+Ejecucion selectiva
+```bash
+(venv_labo3) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio3$ pytest -m smoke -q  
+.                                                                                        [100%]
+======================================= warnings summary =======================================
+venv_labo3/lib/python3.12/site-packages/_pytest/config/__init__.py:1500
+  /home/esau/desarrolloDeSoftware/labs/Laboratorio3/venv_labo3/lib/python3.12/site-packages/_pytest/config/__init__.py:1500: PytestConfigWarning: No files were found in testpaths; consider removing or adjusting your testpaths configuration. Searching recursively from the current directory instead.
+    self.args, self.args_source = self._decide_args(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 38 deselected, 1 warning in 0.05s
+```
+se rastreó pytest.mark.smoke
+
+#### C3 Umbral d cobertura como quality gate 
 
