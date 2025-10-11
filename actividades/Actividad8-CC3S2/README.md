@@ -855,3 +855,149 @@ tests/test_mre_precision.py .                                                   
 ========================================== 1 passed in 0.05s ==========================================
 (venv_labo3) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio3$
 ```
+### Observabilidad y estabilidad
+
+#### D1 Estabilidad con datos aleatorios controlados
+Fijando semillas para random y faker , dos ejecuciones producen el mismo total
+
+```bash
+def test_estabilidad_semillas(capsys):
+    random.seed(123)
+    faker = Faker()
+    faker.seed_instance(123)
+    p1 = ProductoFactory()
+    carro1 = Carrito()
+    carro1.agregar_producto(p1,1)
+    print(carro1.calcular_total())
+    salida1 = capsys.readouterr().out
+    
+    random.seed(123)
+    faker.seed_instance(123)
+    p2 = ProductoFactory()
+    carro2 = Carrito()
+    carro2.agregar_producto(p2,2)
+    print(carro2.calcular_total())
+    salida2 = capsys.readouterr().out
+
+    assert salida1 == salida2
+    
+```
+
+```bash
+(venv_labo3) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio3$ pytest tests/test_estabilidad_semillas.py
+============================================== test session starts ===============================================
+platform linux -- Python 3.12.3, pytest-8.3.3, pluggy-1.6.0
+rootdir: /home/esau/desarrolloDeSoftware/labs/Laboratorio3
+configfile: pytest.ini
+plugins: Faker-37.8.0, cov-5.0.0, mock-3.15.1
+collected 1 item                                                                                                 
+
+tests/test_estabilidad_semillas.py F                                                                       [100%]
+
+==================================================== FAILURES ====================================================
+___________________________________________ test_estabilidad_semillas ____________________________________________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7e8101ac9040>
+
+    def test_estabilidad_semillas(capsys):
+        random.seed(123)
+        faker = Faker()
+        faker.seed_instance(123)
+        p1 = ProductoFactory()
+        carro1 = Carrito()
+        carro1.agregar_producto(p1,1)
+        print(carro1.calcular_total())
+        salida1 = capsys.readouterr().out
+
+        random.seed(123)
+        faker.seed_instance(123)
+        p2 = ProductoFactory()
+        carro2 = Carrito()
+        carro2.agregar_producto(p2,2)
+        print(carro2.calcular_total())
+        salida2 = capsys.readouterr().out
+
+>       assert salida1 == salida2
+E       AssertionError: assert '73.64\n' == '99.3\n'
+E
+E         - 99.3
+E         + 73.64
+
+tests/test_estabilidad_semillas.py:25: AssertionError
+============================================ short test summary info =============================================
+FAILED tests/test_estabilidad_semillas.py::test_estabilidad_semillas - AssertionError: assert '73.64\n' == '99.3\n'
+=============================================== 1 failed in 0.07s ================================================
+(venv_labo3) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio3$ 
+```
+#### D2 Invariante de inventario
+```bash
+
+def test_invariante_agregar_remover_y_actualizar():
+    c = Carrito()
+    p = Producto("x", 5.0)
+
+    c.agregar_producto(p, 3)
+    t1 = c.calcular_total()
+
+    c.remover_producto(p, 3)
+    c.agregar_producto(p, 3)
+    c.actualizar_cantidad(p, 0)
+
+    total_final = c.calcular_total()
+    if total_final != 0.0:
+        raise AssertionError("El total del carrito debería ser 0.0 después de remover o actualizar a 0")
+    
+```
+
+```bash
+(venv_labo3) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio3$ pytest tests/test_invariantes_inventario.py
+============================================== test session starts ===============================================
+platform linux -- Python 3.12.3, pytest-8.3.3, pluggy-1.6.0
+rootdir: /home/esau/desarrolloDeSoftware/labs/Laboratorio3
+configfile: pytest.ini
+plugins: Faker-37.8.0, cov-5.0.0, mock-3.15.1
+collected 1 item                                                                                                  
+
+tests/test_invariantes_inventario.py .                                                                     [100%]
+
+=============================================== 1 passed in 0.04s ================================================
+(venv_labo3) esau@DESKTOP-A3RPEKP
+```
+#### D3 contrato de mensaje error
+Haciendo que los mensajes sean lo mas explicitos posibles
+```bash
+import pytest
+from src.carrito import Carrito
+@pytest.mark.xfail(reason="Esperamos mensaje con pista accionable (nombre de producto o cantidad inválida)")
+def test_mensaje_error_contiene_contexto():
+    c = Carrito()
+    try:
+        c.actualizar_cantidad("inexistente", 1)
+    except ValueError as error:
+        mensaje = str(error)
+    else:
+        raise AssertionError("Se esperaba una excepción ValueError, pero no fue lanzada")
+    contiene_nombre = False
+    if "inexistente" in mensaje:
+        contiene_nombre = True
+    if contiene_nombre is False:
+        raise AssertionError("El mensaje de error debería incluir el nombre del producto ('inexistente')")
+
+```
+
+ejecutando 
+```bash
+(venv_labo3) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio3$ pytest tes
+ts/test_mensajes_error.py
+================================ test session starts =================================
+platform linux -- Python 3.12.3, pytest-8.3.3, pluggy-1.6.0
+rootdir: /home/esau/desarrolloDeSoftware/labs/Laboratorio3
+configfile: pytest.ini
+plugins: Faker-37.8.0, cov-5.0.0, mock-3.15.1
+collected 1 item                                                                      
+
+tests/test_mensajes_error.py x                                                 [100%]
+
+================================= 1 xfailed in 0.05s =================================
+(venv_labo3) esau@DESKTOP-A3RPEKP:~
+```
