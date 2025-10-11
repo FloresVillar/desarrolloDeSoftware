@@ -730,4 +730,128 @@ venv_labo3/lib/python3.12/site-packages/_pytest/config/__init__.py:1500
 se rastreó pytest.mark.smoke
 
 #### C3 Umbral d cobertura como quality gate 
+Ejcutamos *--cov-fail-under=90*. Si falla,listamos en evidencias/analisis.md, pegamos ademas term-missing en out/coverage.txt
 
+Hubo un error pero que no debio haber sucedido
+```bash
+ cart.add_item("apple", 2, 0.5)
+        cart.add_item("banana", 3, 0.75)
+        cart.apply_discount(10)  # Descuento del 10%
+        total = cart.calculate_total() #act
+        expected_total = (2*0.5 + 3*0.75) * 0.9  # Aplicando 10% de descuento asserr
+>       assert total == round(expected_total, 2)  # Redondear a 2 decimales aseer
+E       assert 2.9250000000000003 == 2.93
+E        +  where 2.93 = round(2.9250000000000003, 2)
+
+tests/test_shopping_cart.py:31: AssertionError
+==================================================
+```
+
+Luego se corrige en test_shopping_cart
+```bash
+def test_apply_discount():
+    cart = ShoppingCart()
+    cart.add_item("apple", 2, 0.5)
+    cart.add_item("banana", 3, 0.75)
+    cart.apply_discount(10)  # Descuento del 10%
+    total = cart.calculate_total() #act
+    expected_total = (2*0.5 + 3*0.75) * 0.9  # Aplicando 10% de descuento asserr
+    assert round(total,2) == round(expected_total, 2)
+```
+la covertura si falla, no llega al 90%
+```bash
+(venv_labo3) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio3$ pytest --cov=src --cov-report=term-missing --cov-fail-under=90 || true >> evidencias/run.txt
+========================================================= test session starts =========================================================
+platform linux -- Python 3.12.3, pytest-8.3.3, pluggy-1.6.0
+rootdir: /home/esau/desarrolloDeSoftware/labs/Laboratorio3
+configfile: pytest.ini
+plugins: Faker-37.8.0, cov-5.0.0, mock-3.15.1
+collected 39 items                                                                                                                    
+
+tests/test_carrito.py .........                                                                                                 [ 23%]
+tests/test_descuentos _parametrizados.py ......                                                                                 [ 38%]
+tests/test_indempotencia_cantidades.py .                                                                                        [ 41%]
+tests/test_markers.py ..                                                                                                        [ 46%] 
+tests/test_pasarela_pago_contratos.py ...                                                                                       [ 53%]
+tests/test_precios_fronteras.py ....xX                                                                                          [ 69%]
+tests/test_redondeo_acumulado.py ..                                                                                             [ 74%] 
+tests/test_refactor_suites.py ..                                                                                                [ 79%] 
+tests/test_rgr_precision_rojo.py x                                                                                              [ 82%]
+tests/test_rgr_precision_verde.py s                                                                                             [ 84%] 
+tests/test_shopping_cart.py ......                                                                                              [100%]
+
+========================================================== warnings summary ===========================================================
+venv_labo3/lib/python3.12/site-packages/_pytest/config/__init__.py:1500
+  /home/esau/desarrolloDeSoftware/labs/Laboratorio3/venv_labo3/lib/python3.12/site-packages/_pytest/config/__init__.py:1500: PytestConfigWarning: No files were found in testpaths; consider removing or adjusting your testpaths configuration. Searching recursively from the current directory instead.
+    self.args, self.args_source = self._decide_args(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+---------- coverage: platform linux, python 3.12.3-final-0 -----------
+Name                   Stmts   Miss  Cover   Missing
+----------------------------------------------------
+src/__init__.py            0      0   100%
+src/carrito.py            58      7    88%   9, 21, 50, 52, 60, 68, 93
+src/factories.py           7      0   100%
+src/shopping_cart.py      29      3    90%   9, 27, 31
+----------------------------------------------------
+TOTAL                     94     10    89%
+
+FAIL Required test coverage of 90% not reached. Total coverage: 89.36%
+=================================== 35 passed, 1 skipped, 2 xfailed, 1 xpassed, 1 warning in 0.27s ====================================
+(venv_labo3) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio3$ pytest --cov=src --cov-report=term-missing --cov-fail-under=90 || true >> evidencias/run.txt
+```
+como sabe pytest cuales lineas ejecutasbles se testearon?
+```bash
+pytest --cov=src --cov-report=term-missing
+```
+con esto los rastrea en src, lineas como 
+```bash
+def agregar_producto(self, p, cantidad):
+    self.items.append((p, cantidad))  # línea ejecutable
+    return len(self.items)
+```
+y entonces usamos --cov-report=term-missing 
+```bash
+---------- coverage: platform linux, python 3.12.3-final-0 -----------
+Name                   Stmts   Miss  Cover   Missing
+----------------------------------------------------
+src/__init__.py            0      0   100%
+src/carrito.py            58      7    88%   9, 21, 50, 52, 60, 68, 93
+src/factories.py           7      0   100%
+src/shopping_cart.py      29      3    90%   9, 27, 31
+----------------------------------------------------
+TOTAL                     94     10    89%
+```
+
+#### C4. MRES para defectos
+
+Como el MRE es un ejemplo minimo de codigo que reproduce un defecto o fallo.
+Esto no seria tan diferente a lo que se viene haciendo<br>
+```bash
+import pytest
+from src.shopping_cart import *
+
+def test_mre_precision():
+    shop = ShoppingCart()
+    shop.add_item("x",1,0.5)
+    shop.add_item("y",1,0.8)
+    assert round(shop.calculate_total(),2) ==1.3
+
+```
+y ejecutando 
+```bash
+(venv_labo3) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio3$ pytest tests/test_mre_precision.py
+========================================= test session starts =========================================
+=================                                                                     
+platform linux -- Python 3.12.3, pytest-8.3.3, pluggy-1.6.0
+rootdir: /home/esau/desarrolloDeSoftware/labs/Laboratorio3
+configfile: pytest.ini
+plugins: Faker-37.8.0, cov-5.0.0, mock-3.15.1
+collected 1 item                                                                      
+
+tests/test_mre_precision.py .                                                                   [100%]
+
+========================================== 1 passed in 0.05s ==========================================
+(venv_labo3) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio3$
+```

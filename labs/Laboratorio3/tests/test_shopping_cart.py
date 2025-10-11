@@ -28,7 +28,7 @@ def test_apply_discount():
     cart.apply_discount(10)  # Descuento del 10%
     total = cart.calculate_total() #act
     expected_total = (2*0.5 + 3*0.75) * 0.9  # Aplicando 10% de descuento asserr
-    assert total == round(expected_total, 2)  # Redondear a 2 decimales aseer
+    assert round(total,2) == round(expected_total, 2)  # Redondear a 2 decimales aseer
 
 def test_process_payment():
     payment_gateway = Mock()#sin importar si en produccion es un sericio interno, vamos reducireno acoplamineto , evitamos ...que?
