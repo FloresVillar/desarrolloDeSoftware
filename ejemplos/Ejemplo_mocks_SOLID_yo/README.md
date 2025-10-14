@@ -244,21 +244,237 @@ class RepositorioDB(Repositorio):
 El ISP implica que cada fixture debe tener una responsabilidad unica y proporcionar solo que un test especifico necesita<br>
 Se debe evitar un mega-fixture que cree BD+ usuario + Cliente<br>
 ```bash
-@pytest.fixture def conexion_bd(): ...
-@pytest.fixture def usuario_autenticado(conexion_bd):...
-@pytest.fixture def cliente_http(app):...
+@pytest.fixture def conexion_bd(): 
+    db = SessionLocal()
+    yield db
+    db.close()
+
+@pytest.fixture def usuario_autenticado(conexion_bd):
+    #crea usuario
+    user = Usuario()
+    conexion_bd.add(usser) , commit
+    return user 
+@pytest.fixture def cliente_http(app):
+    #monta flask FastAPI TestCL
+    from fastapi.testclient import TestClient 
+    return TestClient(app)
 ```
+
+1. conexion_db , proporciona solo sesion de bd, interfaz minima
+2. usuario_auntenticado, depende del anterior y crea usuario autenticado
+3. cliente_http, proporciona cliente http para interactuar con FastApi,sin base de datos o usuarios
+
+## beneficios de aplicar ISP en fixtures 
+1. Modularidad
+2. Reduccion de acoplamientos
+3. MAntenibilidad
+4. Eficiencia
+5. Claridad
+
+## ejemplo 
+```bash
+    def test_leer_datos():
+        resultado = conexion_db.query(Usuario).all()
+        assert len(resultado) == 0
+
+    def test_endpoint_con_autenticacion():
+        headers = 
+        respuesta = 
+        assert respuesta.status_code == 200 
+```
+
+Antipatron a evitar
+1. 
+```bash
+    @pytest.fixture
+    def entorno_completo():
+        db = SessionLocal()
+        user = 
+        db.add(user)
+        db.commit()
+        client = TestClient(app)
+        client.headers.update({})
+        yield db,usr,client
+        db.close()
+```
+Esto obliga a los test a desempaquetar  incluso si solo necesitan uno de los elementos,aunmentando acoplamiento
+2. 
+Dependencias implicitas
+si un fixture asume que otra estara presente sin declararla explicitamente , puede generar errores dificiles de depurar
+
+3. Nombres genericos setup o test_env en lugar de conexion_db  usuario_autenticado reduce claridad
 
 # DIP dependency inversion Principle
 El servicio depende de abstracciones , no de implementaciones concretas<br>
-```bash
-class IRepositorioMensajes(Protocol):
-    def guardar():
+Las abstracciones no deben depender de detalles,los detalles deben depender de abstracciones<br>
 
+```bash
+#dominio/puertos.py
+class IRepo(Protocol):
+    @abstractmethod
+    def guardar():
+    @abstractmethod
     def obtener_todos():
 
+
+#infra/repos_sqlite.py
+from dominio.puertos import IRepo
+class RepoSQL(IRepo)
+
+#servicio.py
+from dominio.puertos import IRepo
+class Servicio:
+    def __init__(repo = IRepo):
+    def publicar(msg):
+        guardar(msg.)
+
+# test/test_servicio..
+from servicio
+from dominio.puerto
+
+class RepoEnMemoria(IRepo):
+    def __init__
+    def guardar
+    def obtener_todos
+def test_publicar_mayusculas():
+    repo = RepoEnMemoria
+    svc = ServicioMensajeria(repo)
+    svc.publicar()
+    assert repo.obtener_todos()
 ```
+En el contexto de pruebas unitarias DIP facilita el aislamiento de dependencias.<br>
+Recapitulando
+```bash
+# dominio/puertos.py
+from abc import ABC, abstractmethod
+from typing import Protocol
+
+class IRepositorioMensajes(Protocol):
+    @abstractmethod
+    def guardar(self, mensaje: str) -> None: ...
+    @abstractmethod
+    def obtener_todos(self) -> list[str]: ...
+
+# infraestructura/repos_sqlite.py
+import sqlite3
+from dominio.puertos import IRepositorioMensajes
+
+class RepoSQLite(IRepositorioMensajes):
+    ...
+
+# servicio.py
+from dominio.puertos import IRepositorioMensajes
+
+class ServicioMensajeria:
+    def __init__(self, repo: IRepositorioMensajes):
+        self._repo = repo
+
+    def publicar(self, msg: str) -> None:
+        self._repo.guardar(msg.upper())
+
+# tests/test_servicio_mensajeria.py
+from dominio.puertos import IRepositorioMensajes
+from servicio import ServicioMensajeria
+
+class RepoEnMemoria(IRepositorioMensajes):
+    def __init__(self):
+        self._datos: list[str] = []
+    def guardar(self, mensaje: str) -> None:
+        self._datos.append(mensaje)
+    def obtener_todos(self):
+        return self._datos
+
+def test_publicar_mayusculas():
+    repo = RepoEnMemoria()
+    svc  = ServicioMensajeria(repo)
+
+    svc.publicar("hola devops")
+    assert repo.obtener_todos() == ["HOLA DEVOPS"]
+```         
+![DIP](imagenes/dip_yo.png)
+no pude subir mi imagen asi que gpt hizo lo que pudo
+```bash
+                 ┌──────────────────────────┐
+                 │         IREPO            │
+                 │  (funciones abstractas)  │
+                 └───┬─────────┬────────┬───┘
+                     │         │        │
+    ┌────────────────▼┐   ┌────▼────┐  ┌▼─────────────────┐
+    │     REPOSQL     │   │ Servicio│  │ RepoEnMemoria(IREPO) │
+    │ (implementación)│   │ Mensajería ││  (fake para tests)  │
+    └─────────────────┘   │ def __init__(repo: IREPO) │  └─────────────────┘
+                          └───────┬────────────┘
+                                  │
+                                  ▼
+                           ┌──────────────┐
+                           │    Test      │
+                           │ repo = RepoEnMemoria()  │
+                           │ ServicioMensajeria(repo)│
+                           └──────────────┘
+
+```
+en el test , se inyecta repo , el servicioMensajeria publica el mensaje, luego el assert verifica que el fake RepoEnMemoria tenga [MENSAJE] confirmndo que el servicio transforma el mensaje sin escribir en disco.
+## beneficios de dip en pruebas
+- Aislamiento de dependencias externas; sin dip se necesita Sql real, una conexion a bd o archivos en disco, lo que hace la prueba lenta;con ip se inyecta fake,RepoEnMemoria simula el comportamiento sin side-effects
+
+- velocidad y eficiencia
+- Control total sobre el comportamiento , simular escenarios edge-case facilmente, facilita mocks y stubs
+-mejora cobertura y mantenibilidad
+
+## Alternativas  y extensiones
+- sin dip, self._repo = RepoSQLite()
+- dependency_injector
+- pruebas de integracion, dip no elimina las pruebas de integracion , dip se usa para pruebas rapidas, valida implementacion concreta
+- en otros lenguajes, en java se usan interfaces y spring para di
+
+
 # Metricas y disciplinas DevOps
+En un entorno DevOps , las metricas son esenciales para garantizar la calidad del software y la estabilidad del pipeline<br>
+
+
+Herramientas como pytets-cov, pytest-benchmark permiten establecer umbrales que actuan como gates<br>
+
+## cobertura de codigo 
+la cobertura mide el porcentaje de codigo ejecutado durante las pruebas , pero ha de evitarse los falsos positivos
+- cobertura por ramas, --cov-branch se prueba todo , bucles etc
+
+- Exclusion selectiva, 
+```bash
+[tool.coverage.run]
+omit =[ "*/config/*","",""]
+```
+- integracion CI/CD , githubs o gitactions ci, 
+
+## flakiness (pruebas inestables)
+las pruebas inestables son un problema comun que afecta la confianza en el pipeline<br>
+Una prueba es flaky si pasa o falla de forma no esperada(determinista)<br>
+
+formas de mitigarlo:
+- Aislamiento de pruebas, 
+- Reintentos controlados,
+- Deteccion de flakiness,
+- Trazabilidad, 
+
+## benchmarks de rendimiento
+Los benchmark miden el redimiento de funciones criticas.
+- umbrales de rendimiento
+```bash
+def test(benchmark):
+    resultado = benchmark.pedantic()
+    assert resultado > 0
+    assert benchmark < 0.5
+```
+- comparacion historica, 
+```bash
+pytest --benchmark-save= --benchmark-compare=
+```
+
+## automatizacion en pipeline
+el pipeline debe ser el guardian de la calidad , configura gates automaticos:
+- cobertura
+- flakiness
+- rendimiento 
+
 - Cobertura usar pytest-cov con umbral --fail-under=80
 - Flakiness aislar entorno, usar pytest-rerunfailures ó pytest-flakefinder
 - Benchmark pytest-benchmark para controlar performance y detectar degradaciones
@@ -267,16 +483,20 @@ class IRepositorioMensajes(Protocol):
   - alerta si prueba es flaky
   - si benchmark empeora >10% falla
 
-# Refactor progresivo(Boy -Scout rule)
-- Refactoriza poco a poco
-1. Divide tests monoliticas(SRP)
-2. Parametriza(OCP)
-3. Usa autospec(LSP)
-4. Extrae fixtures pequeñas(ISP)
-5. Inyecta dependencias(DIP)
+## Refactor progresivo(Boy -Scout rule)
+Refactorizar un suites de pruebas es un desafio, en la estrategia BOY-SCOUT(dejar el codigo mejor de lo que se encontro)<br>
+Permite modernizarla incrementalmente sin interrumpir el desarrollo
+
+1. Identificar y mapear pruebas
+v   
+2. dividir en funciones independientes(SRP)
+3. Parametrizar pruebas(OCP)
+4. Sustituir dobles con Autospec (LSP)
+5. Extraer fixtures granulados
+6. Ineyectar dependencias con protocolos(DIP)
 
 # DevSecOps + DIP
 fixtures pueden inyectar componentes seguros
 - DB solo de lectura 
 - Scanner de seguridad (OWASP ZAP, Trivy)
-- Proxies para detectar vulneerabilidades
+- Proxies para detectar vulnerabilidades
