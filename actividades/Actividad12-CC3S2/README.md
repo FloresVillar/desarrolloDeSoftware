@@ -1,0 +1,2 @@
+La actividad 11 se completó , de forma resumida se crearon nuevos issues y se agregaron a las columnas de  kanban board, junto con algunas etiquetas, los issues se editan con la plantilla propuesta la cual sigue BDD.
+  
