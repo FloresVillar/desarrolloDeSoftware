@@ -36,6 +36,21 @@ Ejecutar *configuracion.sh* sin los principios de IaC
         (entornos identicos)     (no cambio innecesario de estado )
         Idempotencia            Envolvibilidad
 ```
+## Indempotencia
+Luego del primer apply el estado local (.terraform.tfestate) guarda el estado del recurso, si volvemos a ejecutar terraform apply ,terraform detecta que no hay cambios entre el JSON, luego no se volvera a ejecutar local-exec<br>
+Bueno, entonces para esto presentamos a YAML (YAML ain't markup language)<br>
+Describe info estructurada(listas , objetos, valores)
+```bash
+persona:
+  nombre: "P1"
+  edad: 25
+  habilidades: 
+    - Terraform
+    - Ansible
+```
+Ahora es ANSIBLE es la herramienta de automatizacion que usará YAML, de modo que se describa que tareas ejecutar en que servidores<br>
+![indempotencia](imagenes/indempotencia.png)
+Mientras hosts, become, tasks son palabras reservadas de YAML; apt , service, copy.. son modulos de ansible, como se ve cada modulo tiene sus parametros y hace una tarea especifica<br>
 Mientras Reproducibilidad e Idempotencias nos nos de alguna manera ya conocidas; veamos las dos propiedades nuevas<br>
 Para ello revisemos la sintaxis de HCL(Hashicorp..) que es precisamente el lenguaje declarativo de configuracion que usaremos<br>
 ```bash
@@ -165,9 +180,66 @@ sin intervencion manual
 
 **Principio de menor privilegio** al versionar los aws_iam_policy o sus equivalentes, se documenta que permisos necesita cada componente, si una funcion lambda reclama permisos excesivos, el diff muestra que se añadio, evitando por ejemplo que un servicio tenga mas privilegios de los necesarios
 ## Herramientas
-- Aprovisionamiento
-- Gestion de configuracion 
+
+- **Aprovisionamiento** , nos provisionamos de infraestructura una nube privada virtual, red, balanceador , base de datos.
+![aprovisionamiento](imagenes/provisionamiento.png)
+luego 
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+- **Gestion de configuracion** 
+Dejarla en el estado deseado: intalar  paquetes, copiar archivos de configuracion , gestionar servicios<br>
+Estado deseado : cada playbook decribe el estado final<br>
+Agentes vs agentless: Ansible suele funcionar por SSH<br>
+Indempotencia: Aplicada en la maquina recien creada como en aquellas recreadas tras un provisionioning<br>
+```bash
+# playbook.yml
+- hosts: all
+  become: true
+  vars:
+    app_user: deploy
+  tasks:
+    - name: Crear usuario de la aplicación
+      user:
+        name: "{{ app_user }}"
+        shell: /bin/bash
+
+    - name: Instalar dependencias
+      apt:
+        name:
+          - nginx
+          - git
+        state: present
+
+    - name: Desplegar código
+      git:
+        repo: "https://github.com/mi-org/mi-app.git"
+        dest: "/home/{{ app_user }}/app"
+        version: "main"
+
+    - name: Configurar servicio systemd
+      template:
+        src: service.j2
+        dest: /etc/systemd/system/mi-app.service
+
+    - name: Habilitar y arrancar servicio
+      systemd:
+        name: mi-app
+        enabled: yes
+        state: started
+```
+Como se ve tenemos un play que se aplica a todos los hosts **all** , y con become : true ejecutamos como **root** mediante sudo<br>
+Mientras que la palabra reservada **vars** define variables locales al play , app_user será accesible desde las tareas <br>
+mediante {{ app_user }}, las tareas cumplen codigo como documentacion, asi que son suficientemente explicitas<br>
+![configuracion](imagenes/configuracion.png)
+Aun asi veamos algunos detalles, la tarea desplegar
+
+
+
 - Construccion de imagenes
+
 ### como encajan estas capas en un pipeline 
 - Desarrollo  y pruebas locales
 - Control de calidad
