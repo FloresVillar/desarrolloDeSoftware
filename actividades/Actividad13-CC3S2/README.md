@@ -69,25 +69,101 @@ Ahora bien la COMPOSABILIDAD  se veria del siguiente modo
 En cuanto a la EVOLVIBILIDAD ,se diria que es similar a export una variable en bash para que los procesos hijos lo usen , o parecido a la iyeccion de dependencias .
 Entonces esto facilita la extension y adaptacion de la configuracion 
 ![evolvibilidad](imagenes/lectura15_evolvibilidad.png)
-
+```bash
+name = "hello-world"
+network = "local-network"
+ó
+name = "staging-server"
+network = "staging-network"
+y 
+terraform apply -var-file=staging.tfvars
+```
 ### versionado de cambios
+### Aplicacion de los principios
+
 - Separacion de responsabilidades:<br>
     *Variables (network.tf.json)*<br>
     cómputo (main.tf.json)<br> 
     lógica de generación (main.py)
 - Parametrizacion : <br>
-    *hello_server_local(name="app1", network="net1")*<br>
-    hello_server_local(name="app2", network="net2")
-- Portabilidad con Docker:<br>
+    ```bash 
+      hello_server_local(name="app1", network="net1")
+      hello_server_local(name="app2", network="net2")
+    ```
+- Portabilidad con Docker: el Dockerfile y docker-compose.yml, garantiza que cualquieer maquina reproduzca e el flujo<br>
     *docker-compose up --build*
 
 ## Por qué usar IaC
 Porque da control, velocidad ,  colaboracion y seguridad
-- Gestion de cambios
-- Retorno de inversion
-- Compartir conocimiento 
-- Seguridad 
+- ### Gestion de cambios <br>
+ **Rastro de auditoria**
+ si se cambia el instance_type 
+```bash
+  t2.micro  a  t3.small en main.tf.json 
+```
+git diff  <commit1> <commit2>
+```bash
+diff --git a/app.py b/app.py
+index 83db48d..7c5a7b3 100644
+--- a/app.py
++++ b/app.py
+@@ -10,7 +10,7 @@ def main():
+     print("Hello world!")
+-    print("Version 1")
++    print("Version 2")
+     return True
+```
+**Revision por pares**
+En el pr se incluye un terraform plan
+```bash
+terraform init    #inicializa el entorno
+terraform plan    #genera un plan de ejecucion
+Plan: 1 to add, 0 to change, 0 to destroy.
+se aprueba (en main)
+terraform apply -var-file=staging.tfvars -auto-approve
 
+```
+**Rollback instantaneo**
+Si un despliegue automatico introduce un error , basta con revertir el commit 
+```bash
+git revert <SHA del commit> 
+terraform vuelve a la version anterior y esto toma algunos minutos en comparacion con horas de reconstruccion manual
+```
+- ### Retorno de inversion (ROI)
+**Despliegue expres** un entorno completo , una red local simulada con null_resource , servidor de prueba se crea en segundos
+```bash
+terraform apply -auto-approve
+``` 
+hacerlo manualmente implicaria decenas de clicks en consolas web ssh y validaciones de estado
+**Pipelines automatizados**
+Integrar Iac en GitHub Actions , GitLab CI o Jenkins  permite que , al hacer merge a main se ejecute automaticamente 
+
+terraform fmt && tflint 
+terraform plan 
+terraform apply -auto-approve
+
+Con esto se dedica menos tiempo en tareas repetitivas
+
+**escalado horizontal**
+si se necesita 5 instancias nuevas para un pico de trafico solo modificamos count=5 y reaplicamos. Terraform crea exactamente las instancias adicionales
+sin intervencion manual
+
+- ### Compartir conocimiento
+**documentacion viva**
+ las variables con nombre claros var.network_name , var.server_name, comentarios en modulos y ejemplos en README.md actuan como guias para miembros nuevos
+
+ **onboarding acelerado** al clonar y ejecutar docker-compose up --build un desarrollador novato levanta un entorno de pruebas indentico al de produccion local 
+
+ **Bibliotecas de modulos reutilizables** almacenados en modulos genericos ej security_group el equipo crea catalogo interno de bloques IaC , fomentando la consistencia entre proyectos
+- ### Seguridad
+**gestion centralizada de secretos** nunca harcodeamos credenciales, en cambio se integra Vault , AWS SSM o Azure Key Vault, ej el pipeline podria inyectar un token con :
+```bash
+- name: Login to Vault
+  run: vault login -method=github token=${{ secrets.VAULT_TOKEN }}
+```
+**Revision de politicas** Al difinir roles y permisos de IAM como codigo ,se puede usar herramientas como terraform terraform-compliance para escanear malas configuraciones ej 0.0.0.0/0 no deberia estar en reglas de ssh
+
+**Principio de menor privilegio** al versionar los aws_iam_policy o sus equivalentes, se documenta que permisos necesita cada componente, si una funcion lambda reclama permisos excesivos, el diff muestra que se añadio, evitando por ejemplo que un servicio tenga mas privilegios de los necesarios
 ## Herramientas
 - Aprovisionamiento
 - Gestion de configuracion 
