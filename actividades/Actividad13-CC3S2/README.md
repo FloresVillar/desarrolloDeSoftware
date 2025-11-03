@@ -380,31 +380,206 @@ resource "aws_instance" "web" {
 
 ```
 ### como encajan estas capas en un pipeline 
-- Desarrollo  y pruebas locales
-- Control de calidad
-- Despliegue
-- Monitoreo y feedback 
+- Desarrollo  y pruebas locales: Construyes el contenedor Docker o Packer , ejecutamos el playbook de ansible  sobre el nuestro entorno local(Docker compose)
 
-## Escribiendo IaC 
-### Expresando cambios en infraestructura
-- Edicion declarativa de archivos
-- Flujo clasico  init → plan → apply
-- Plan como contrato 
+- Control de calidad , en CI  cada pull request dispara : <br>
+      - Linting / formato terraform (terraform fmt)<br>
+      - Validacion de playbook Ansible (Ansible-lint)<br>
+      - Build de imagenes Docker (docker build --no-cache)<br>
+      - Pruebas de integracion "entorno Staging" provisionado con terraform local (null_resource)<br>
+
+- Despliegue : Terraform crea y redimensiona infraestructura en la nube , ansible aplica configuraciones de ultimo milla , el orquestador (kubernetes) arranca contenedores basados en la imagen 
+- Monitoreo y feedback : Herramientas de observabilidad(Grafana) validan que todo este en verde, cualquier cambio manual dispara drift , detecatado por terraform plan o inventarios ansible <br>
+## Escribiendo la IaC
+En Iac plasmamos nuestra insfraestructura en un archivo , de modo que se pueda rastrear su ciclo de vida<br>
+Las siguiente pautas permiten trabajar en entornos inmutables y mantener el codigo limpio y sostenible<br>
+
+### Expresando cambios
+1. Edicion declarativa cada vez que queremos cambiar algo , por ejemplo el tipo de instancia o el numero de servidores, modificaremos **.tf** o **.tf.json** , no se ejecuta comandos imperativos sino que se declara lo que se quiere
+```bash
+#si se tenía
+resource "tipo" "name_local"{
+  tiggeres  ={
+      count = "1"  
+  }
+}
+#luego
+resource "tipo" "name_local"{
+  tiggeres = {
+    count = "3"
+  }
+}
+
+```
+2. Flujo clasico : init, plan , apply <br>
+    - terraform init , decarga proveedores , inicializa el modulo local y prepara el estado 
+    - terraform plan , muestra el reporte linea a linea de lo que se va a crear, modificar o destruir 
+    - terraform apply ejecuta esos cambios solos si has validado el plan 
+
+3. Plan como contrato, piensa en terraform plan como un contrato entre tu equipo y la infraestructura , una vez aceptado apply cumple lo pactado , si alguien cambia manualmente  un recurso por fuera (un drift ) el siguiente plan lo detectara 
+```bash
+# terraform detecta un cambio "out-of-band"
+~ null_resource.app
+  triggers.count "3" => "1"
+```
+
 ### Comprendiendo la inmutabilidad
-- Nunca parchear en caliente evitar ssh 
-- Construccion de imagenes como paso previo
-- Despliegue de blue /green o rolling 
-- Remeditacion de drifts
-- Migracion desde entornos legados
+La inmutabilidad es un paradigma clave para entornos de produccion robusto 
+
+1. Nunca parchear en caliente evitar ssh para instalar parches ,en lugar de eso consolida los cambios en una nueva imagen 
+
+2.  Construccion de imagenes como paso previo con Docker o Packer
+```bash
+FROM ubuntu:20.04 
+RUN apt-get update && apt-get install -y nginx=1.18.*
+COPY ./app /srv/app
+CMD ["nginx","-g","daemon off;"]
+```
+Entonces cada vez que cambiemos la version de nginx o la aplicacion ,se produ
+ce una nueva etiqueta de imagen , por ejemplo registry/myapp:...
+
+3.  Despliegue de blue /green o rolling
+    - BLUE/GREEN : despliega la version nueva (green) pruebas de salud, rediges el trafico , luego se descarta la antigua vesrsion (blue)
+    - Rolling  ,reemplaza los nodos uno a uno , manteniendo siempre capacidad de servir
+4. Remeditacion de drifts(out-of-band) cualquier cambio manual queda fuera del control de IaC , al detectar drift con terraform plan , se puede :
+      - Revertir el cambio manual en consola
+      - Actualizar el codifgo para que refleje la nueva configuracion deseada 
+5.  Migracion desde entornos legados
+    - Importacion , usamos terraform import null_resource.app<id> para traer recursos existentes
+    - Definicion , codifica en .tf cada recurso importado , por ejemplo 
+    ```bash
+    resource "nombre_aws" "local" {
+      palabra_reservada_aws = "mi-bucket-aws"
+      acl = "private"
+    }
+    ```
+    - Verificacion , terraform plan debe reportar "no changes " cuando ya coincida el estado con el codigo
+    
 ### Escribiendo codigo limpio de IaC
-- Control de versiones como fuente de verdad
-- Linting y formateo automatico
-- Convenciones de nombrados
-- Variables bien estructurados
-- Parametrizar dependencias con codigo 
-- Manejo seguro de secretos
+1. **Control de versiones** como fuente de verdad: 
+    - Se escribe n README.md que explique el flujo completo (init, plan, apply)<br>
+    - Trabajamos con ramas de feature y usamos pull request para revisar los cambios
+    - Etiquetas (tags) versiones estables de la infraestructura , por ejemplo v1.0.0
+2. **Linting y formateo automatico**:
+    - Ejecuta en tu CI y local:
+      ```bash
+        terraform fmt -recursive
+        tflint 
+      ```
+      - configura un hook de Git (pre-commit) que bloquee commits que no pasen estos chequeos
+3. **Convenciones de nombrados**, seguir un patron uniforme que refleje proyecto , entorno y tipo de recurso
+```bash
+projects-env-type-name 
+└─ myapp-prod-sg-web
+└─ myapp-dev-mullserver
+```
+De modo que al listar sabremos a que entorno y componente pertenecen
+
+4. **Variables bien estructurados**
+    - variables.network.tf.json para red
+    - variables.compute.tf.json  para computo
+    - Definir descripciones claras y valores por defecto 
+    ```bash
+    {
+      ""variable" :[
+        {
+         "name" : [
+              {
+                "type" : "tipo"
+                "default" : "nombre"
+                "description" : "descripcion ,nombre del servidor principal "
+              }
+          ]
+         },
+         {
+            "network " : [
+              {
+                "type" : "string"
+                "default" : "local-network"
+                "description" : "identificador de la red local"
+              }
+            ]
+         }
+      ]
+
+    }
+    ```
+5. **Parametrizar dependencias con codigo** , si tenemos un script Python (main.py) o un modulo terraform , hacerlo generico! 
+```bash
+def hello_server(nombre, red, contador = 1):
+  #Generar un bloque json que terraform pueda consumir
+```
+Al cambiar nombre o red ,no se replica plantillas , solo llamamos a la funcion con distintos argumentos<br>
+
+6. **Manejo seguro de secretos**
+    - No codificar credenciales en un texto plano
+    - En Docker compose o en el pipeline,monta secretos
+    ```bash
+    services :
+     infra:
+      enviroment:
+       VAULT_ADDR: https://.....
+      secrets:
+       - vault_token
+    secrets:
+     vault_token
+      file: ./vault_token.txt
+    ```
+Aqui precisemos que es docker-compose.yml ,  Dockerfile define una sola imagen, crea una sola imagen ej miapp:latest pero en el sistema se tienen mas servicios (base de datos, proxy ,etc) cada servicio necesita su propia imagen , eso se define en archivos separados no con varios FROM <br>
+Entonces es docker-compose.yml levanta multiples contenedores a la vez, cada uno con su propia imagen que puede provenir de un Dockerfile distinto<br>
+```bash
+version : "3.9"
+ services:
+  web:
+   build: . #el Dockerfile de la app
+   ports: 
+    - "5000:5000"
+
+  db:
+   image: postgres:15
+   enviroment:
+    POSTGRESS_PASSWORD: example
+```
+se levantan ambos contenedores con **docker compose up**<br>
+En lugar de usar
+```bash
+docker run -p 5000:5000 miapp
+docker run -e POSTGRES_PASSWORD=example postgres:15
+
+```
+Ademas esta estructura de proyecto es posible
+```bash
+.
+├── web/
+│   ├── app.py
+│   └── Dockerfile
+├── worker/
+│   ├── worker.py
+│   └── Dockerfile
+└── docker-compose.yml
+
+```
+El docker-compose.yml puede usar varios Dockerfile tambien
+```bash
+version: "3.9"
+services:
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile.web
+    ports:
+      - "8000:8000"
+
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile.worker
+```
 ## Anexos
-A. Consistencia entre modulos 
+Se agregan practicas recomendables y artefactos listos para ser usados<br>
+
+A. Consistencia entre modulos , si nuestro modulo network define var.network_name , se exponen con output para que otros modulos los consuman con coherencia<br>
+
 ```bash
 # modules/network/variables.tf
 variable "network_name" {
