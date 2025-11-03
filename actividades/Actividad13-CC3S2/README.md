@@ -234,12 +234,151 @@ Como se ve tenemos un play que se aplica a todos los hosts **all** , y con becom
 Mientras que la palabra reservada **vars** define variables locales al play , app_user será accesible desde las tareas <br>
 mediante {{ app_user }}, las tareas cumplen codigo como documentacion, asi que son suficientemente explicitas<br>
 ![configuracion](imagenes/configuracion.png)
-Aun asi veamos algunos detalles, la tarea desplegar
+Aun asi veamos algunos detalles, la tarea desplegar codigo 
+```bash
+- name: Desplegar código
+  git:
+    repo: "https://github.com/mi-org/mi-app.git"
+    dest: "/home/{{ app_user }}/app"
+    version: "main"
 
+```
+el modulo git clona un repo de Git, dest es la carpeta de destino <br>
+La tarea template (plantilla de servicio) copia un archivo de plantilla Jinja2 (.j2) al servidor, procesando variables dentro.
+```bash
+  [Service]
+  User={{ app_user }}
+  ExecStart=/home/{{ app_user }}/app/start.sh
+```
+La siguiente tarea es conocida, el modulo systemd gestiona servicios del sistema (start,stop,restart)<br>
+```bash
+- name: Habilitar y arrancar servicio
+  systemd:
+    name: mi-app
+    enabled: yes
+    state: started
 
+```
+y todo se ejecutaria con 
+```bash
+ansible-playbook -i inventory playbook.yml
+```
+- **Construccion de imagenes**<br>
+Se busca crear artefactos inmutables, contenedores Docker o imagenes VM, con todo preinstalado.<br>
+De modo que minimizamos pasos en tiempo de arranque y garantizamos entornos identicos<br>
+    - Arranque rapido, el contenedor ya incluye dependencias
+    - Reproducibilidad, la imagen es un snapshot de su stack
+    - Inmutabilidad, si falla un nodo lanzas otra imagen
 
-- Construccion de imagenes
+Okay ahora hablemos de Docker<br>
 
+**Docker** 
+Es una plataforma para emmpaquetar aplicaciones y sus dependencias<br>
+En tanto que un contenedor es una "pequeña maquina (vm)" aislada que comparte el kernel de sistema operativo del anfitrion, pero tiene sus propios procesos, sistemas de archivos y red 
+![docker](imagenes/docker.png)
+
+Por su parte la sintaxis de Dockerfile
+![sintaxis](imagenes/sintaxis.png)
+
+Ejemplo
+```bash
+FROM python:3.10-slim
+
+# 1. Instala dependencias del sistema
+RUN apt-get update && apt-get install -y git
+
+# 2. Crea usuario y directorio de trabajo
+RUN useradd -ms /bin/bash deploy
+WORKDIR /home/deploy
+
+# 3. Copia código y dependencias de Python
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+
+# 4. Define comando por defecto
+CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:8000"]
+```
+obtenemos la imagen , iniciamos el contenedor en el sentido de que ejecutamos comandos en tiempo de construccion (una capa por ejecucion), cambiamos al directorio deploy, copiamos requirements a la imagen, y finalmente ejecutamos el comando luego de construido el contenedor
+CMD ejecuta el equivalente a
+```bash
+CMD gunicorn app:app --bind 0.0.0.0:8000
+/bin/sh -c "gunicorn app:app --bind 0.0.0.0:8000"
+
+#un ejemplo mas simple
+
+CMD ["python", "app.py"]
+python app.py
+```
+visualmente
+```bash
+CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:8000"]
+│      │             │           └── red y puerto
+│      │             └── App (módulo:objeto)
+│      └── Ejecutable principal (servidor WSGI)
+└── Instrucción CMD de Docker
+#app.py
+from flask import Flask
+app = Flask(__name__)
+@route('/')
+def saludo():
+  return "saludos!"
+```
+docker build -t mi-app:latest .<br>
+docker run -d -p 8000:8000 mi-app:latest<br>
+
+el CMD ejecuta dentro del contenedor
+```bash
+guicorn app:app --bind 0.0.0.0/8000
+```
+levantamos el servior web flask en http://localhost:8000
+
+**Packer**
+Construye imagenes de maquinas virtuales completas<br>
+   - Amazon AMI (EC2)
+una imagene de todo el sistema operativo(Ubuntu)
+```bash
+{
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "region": "us-east-1",
+      "source_ami": "ami-0abcdef1234567890",
+      "instance_type": "t3.micro",
+      "ssh_username": "ubuntu",
+      "ami_name": "app-{{timestamp}}"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "sudo apt-get update",
+        "sudo apt-get install -y nginx git python3-pip",
+        "git clone https://github.com/mi-org/mi-app.git /opt/mi-app",
+        "pip3 install -r /opt/mi-app/requirements.txt"
+      ]
+    }
+  ]
+}
+```
+packer build packer.json<br>
+Arranca una instancia temporal de EC2,ejecuta los comandos de instacion (apt-get, git, pip3..) , se crea una AMI ya configurada y luego terraform puede instanciar la imagen
+```bash
+provider "aws" {
+  region = "us-east-1"
+}
+
+resource "aws_instance" "web" {
+  ami           = "ami-0a1b2c3d4e5f6g7h8"  # ←← la AMI creada por Packer
+  instance_type = "t3.micro"
+
+  tags = {
+    Name = "ServidorConPacker"
+  }
+}
+
+```
 ### como encajan estas capas en un pipeline 
 - Desarrollo  y pruebas locales
 - Control de calidad
