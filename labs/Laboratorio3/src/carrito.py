@@ -68,7 +68,8 @@ class Carrito:
         raise ValueError("Producto no encontrado en el carrito")
 
     def calcular_total(self):
-        """ Calcula el total del carrito sin descuento."""
+        """ Calcula el total del carrito sin descuento.
+        """
         total = 0
         for item in self.items:
             total += item.precio_total()
