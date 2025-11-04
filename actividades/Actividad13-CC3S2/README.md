@@ -189,6 +189,42 @@ terraform init
 terraform plan
 terraform apply
 ```
+Pero nunca esta de mas detallar como funciona cada comando<br>
+```bash
+terraform init # prepara el proyecto descargando los providers
+providers "aws" {
+  region = "us-east-1"
+}
+resource "aws_instance" {
+  ami = "ID"
+  instance = "t2.micro" # ami
+  tags ".." {
+    ...
+  }
+}
+.....
+
+terraform plan # antes de crear recursos vemos que va a hacer terraform 
+An execution plan has been generated and is shown below.
+Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_instance.mi_ec2 will be created
+  + resource "aws_instance" "mi_ec2" {
+      + ami                          = "ami-0c55b159cbfafe1f0"
+      + instance_type                = "t2.micro"
+      + tags                         = {
+          + "Name" = "MiInstanciaTerraform"
+        }
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
+
+y finalmente 
+terraform apply  # aplica los cambios descritos en el plan
+```
 - **Gestion de configuracion** 
 Dejarla en el estado deseado: intalar  paquetes, copiar archivos de configuracion , gestionar servicios<br>
 Estado deseado : cada playbook decribe el estado final<br>
@@ -660,3 +696,175 @@ terraform fmt -recursive
 tflint --recursive
 checkov -d .
 ```
+OKAY tenemos claro la sintaxis de terraform, algunas de sus palabras reservadas como variable resource cuyos nombres son definidos por el proveedor(ej aws) y tambien tienen un nombre local, ademas sus propiedades como composabilidad . Ademas algunas herramientas y su uso en Devops, ademas docker sus palabras reservadas como FROM RUN CMD, al igual que ansible que usa yml para automatizar la creacion de insfraestructura<br>
+
+Ahora estamos capacitados para resolver la actividad 13<br>
+## Fase 0 : Preparacion
+1. revisando main.tf.json <br>
+```bash
+{
+  "resource": [
+    {
+      "null_resource": [
+        {
+          "hello-server": [
+            {
+              "triggers": {
+                "name": "${var.name}",
+                "network": "${var.network}"
+              },
+              "provisioner": [
+                {
+                  "local-exec": {
+                    "command": "echo 'Arrancando servidor ${var.name} en red ${var.network}'"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+```
+el script main.tf.json presenta un recurso  tipo null_resource, con un nombre local hello_resource, el cual tiene un desencadenante y un provisionador , este provisionador ejecuta localmente(local-exec) el comando detallado en este caso un echo sencillo.<br>
+```bash
+{ resource :[ tipo :[{  disparador :[{}], provisionador:[{}]  }]]}
+```
+Mientras que network.tf.json , declara las variables name y network, cada uno de los cuales tiene tipo , valor por defecto y una descripcion, recordar que estos son palabras reservadas, mas no sus valores, los cuales los asignamos nosostros.<br>
+```bash
+{
+    "variable": [
+        {
+            "name": [
+                {
+                    "type": "string",
+                    "default": "hello-world",
+                    "description": "Nombre del servidor local"
+                }
+            ]
+        },
+        {
+            "network": [
+                {
+                    "type": "string",
+                    "default": "local-network",
+                    "description": "Nombre de la red local"
+                }
+            ]
+        }
+    ]
+}
+
+```
+```bash
+{ "variable" :[ { "v1"        }  , { "v2"         }     ]}
+{ "variable" :[ { "v1" : [ {}]}  , { "v2": [ {}]  }     ]}
+{ "variable" :[ { "v1" : [ { "type":"string"}]}  , { "v2": [ {"type":"string"}]  }     ]}
+```
+2. verificando que se puede ejecutar 
+**python3 generate_envs.py** <br>
+Pero veamos antes algunos detalles del codigo , aunque brevemente<br>
+Se crea una lista ENVS con diccionarios como elementos, 
+```bash
+ENVS[0]
+{'name': 'app1', 'network': 'net1'}
+```
+Cada uno de estos es pasado como argumento a la funcion **render_and_write**  donde se construye la ruta y se crea la carpeta enviroments/app{i} para cada entorno copiando la plantilla de modules/simulated_app/network.tf.json a enviroments/app{i}/network.tf.json con **copyfile()**<br>
+
+Luego generamos el main.tf.json para cada i-entorno. Seguidamente se une a environments/env[i]/ main.tf.json creando la ruta completa **with open(os.path.jooin(),"w")**, luego copiamos config  a esa ruta (archivo) <br>
+
+Finalmente en main.py iteramos en la lista ENVS llamando a la render_and_write para cada elemento(diccionario con nombre y red)<br>
+
+2. verificando que se ejecuta
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio5$ python3 generate_envs.py
+Generados 10 entornos en 'environments/'
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio5$ cd environments/app1
+
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio5/environments/app1$ ls
+main.tf.json  network.tf.json
+
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio5/environments/app1$ terraform init
+
+Initializing the backend...
+Initializing provider plugins...
+- Finding latest version of hashicorp/null...
+- Installing hashicorp/null v3.2.4...
+- Installed hashicorp/null v3.2.4 (signed by HashiCorp)
+Terraform has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that Terraform can guarantee to make the same selections by default when
+you run "terraform init" in the future.
+
+Terraform has been successfully initialized!
+```
+3. Objetivo: conocer la plantilla base
+## Fase 1 : Expresando el cambio de infraestructura
+- Cuando cambian variables de configuracion Terraform los mapea  triggers que, a su vez , reconcilia el estado (variables -> triggers -> recurso) 
+- Actividad 
+  - Modificamos modules/simulated_app/network.tf.json 
+  - Regenera enviroments/app1 con python generate_envs.py
+  - terraform plan
+La fase 1 se intento mediante el flujo indicado, sin embargo los resultados fueron reconstruidos de modo que no hubbieron cambios que apreciar<br>
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2$ python3 generat
+e_envs.py
+Generados 10 entornos en 'environments/'
+```
+Dentro del entorno app1
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2/environments/app1$ terraform init
+Initializing the backend...
+Initializing provider plugins...
+#instalando los provider ....
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2/environments/app1$ terraform plan
+
+Terraform used the selected providers to generate the following execution plan. Resource  
+actions are indicated with the following symbols:
+  + create
+#mostrando lo que vamos a crear
+
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2/environments/app1$ terraform apply
+
+Terraform used the selected providers to generate the following execution plan. Resource  
+actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # creando ..
+```
+De modo que terraform guarda el estado en **terraform.tfstate** , entonces al hacer la modificacion en **network.tf.json** que es solo la plantilla donde se definen las variables name y network, luego generando nuevamente con **generate_envs.py** creamos los 10  entornos ;de modo que terraform.tfstate se rehace,entonces no hay cambio alguno que registrar.<br>
+
+Entonces para conseguir el resultado que la guia facilita, se crean los entornos y una vez en app1 ya con los .tf.json (creados y asignados en el cuerpo de generate_env.py ).Se modifica directamente el valor en "triggers" : { "network" : "net1-1"} , manualmente pues aunque las "variable" 's estan definidas en network.tf.json , estan nunca son referenciadas mediante las expansiones "{var.network}" entonces se modifican(como se menciono) directamente en main.tf.json<br>
+Luego se consigue, luego del init previo 
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2/environments/app1$ terraform plan
+null_resource.app1: Refreshing state... [id=2819289109106705576]
+
+Terraform used the selected providers to generate the following execution plan. Resource  
+actions are indicated with the following symbols:
+-/+ destroy and then create replacement
+
+Terraform will perform the following actions:
+
+  # null_resource.app1 must be replaced
+-/+ resource "null_resource" "app1" {
+      ~ id       = "2819289109106705576" -> (known after apply)
+      ~ triggers = { # forces replacement
+          ~ "network" = "net1" -> "net1-1"
+            # (1 unchanged element hidden)
+        }
+    }
+
+Plan: 1 to add, 0 to change, 1 to destroy.
+
+```
+**Pregunta**
+- mediante la inspeccion de terraform.tf.state<br>
+- Modificar el Json es tal como indica la accion cambiar el valor de alguna clave, mientras que parchear directamente es modificar el estado sin tocar el json.
+- Terraform ve el cambio  lo compara con el etado y solo modifica lo necesario.
+- Eso es precisamente lo que se hizo.
