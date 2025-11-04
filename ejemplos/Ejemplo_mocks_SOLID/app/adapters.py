@@ -26,3 +26,5 @@ class FakeHttpClient(HttpPort):
         self.fixtures = fixtures
     def get_json(self, url: str):
         return self.fixtures[url]
+#timeour , operacion a la libreia que coresponde
+#puede apilarse por ...facilita OSP 

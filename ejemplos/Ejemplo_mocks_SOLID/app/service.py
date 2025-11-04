@@ -2,7 +2,7 @@
 from .ports import HttpPort
 
 class MovieService: #es la logica de dominio, define QUE HAY QUE HACER , ej traer un status, no como se abre a red
-    def __init__(self, http: HttpPort):
+    def __init__(self, http: HttpPort): #DI
         self.http = http
     def status(self):
         return self.http.get_json("https://api.ejemplo.com/status")
