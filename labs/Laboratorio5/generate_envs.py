@@ -5,7 +5,7 @@ from shutil import copyfile
 ENVS = [
     {"name": f"app{i}", "network": f"net{i}"} for i in range(1, 11)
 ]
-
+#ENVS =  [ {"name":f"app{i}" , "network":f"net{i}"} for i in range(1,11)]
 MODULE_DIR = "modules/simulated_app"
 OUT_DIR    = "environments"
 

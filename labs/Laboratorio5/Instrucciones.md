@@ -22,7 +22,7 @@ pip install -r requirements.txt   # si usas Jinja2 o dependencias
    ```bash
    cd environments/app1
    terraform init
-   terraform plan    # revisa cambios, no es parchear sin oversionar!!, remediar cambios manuales, si alguien quiere cambiar desde afuera aparce DRIFT y se bloquea
+   terraform plan    # revisa cambios, no es parchear sin oversionar!!, remediar cambios manuales, si alguien quiere cambiar desde afuera aparce DRIFT y se bloquea,
    terraform apply   # aplica simulación local
    ```
 3. Limpieza:
