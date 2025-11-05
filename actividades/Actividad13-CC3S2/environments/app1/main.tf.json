@@ -8,13 +8,15 @@
                             "provisioner": [
                                 {
                                     "local-exec": {
-                                        "command": "echo 'Arrancando servidor app1 en red net1'"
+                                        "command": "echo 'Arrancando servidor ${var.name} en red ${var.network} en ${var.port} con ${var.api_key}'"
                                     }
                                 }
                             ],
                             "triggers": {
-                                "name": "app1",
-                                "network": "net1"
+                                "name": "${var.name}",
+                                "network": "${var.network}",
+                                "port":"${var.port}",
+                                "api_key":"${var.api_key}"
                             }
                         }
                     ]
