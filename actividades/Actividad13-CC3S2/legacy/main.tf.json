@@ -1,0 +1,17 @@
+{
+    "resource": [
+        {
+            "null_resource": [
+                {
+                    "config_run": {
+                        "provisioner": {
+                            "local-exec": {
+                                "command": "echo 'ARRANCA puerto 8080 '"
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}
