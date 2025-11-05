@@ -2,9 +2,12 @@ import os, json
 from shutil import copyfile
 
 # Parámetros de ejemplo para N entornos
-ENVS = [
-    {"name": f"app{i}", "network": f"net{i}"} for i in range(1, 11)
-]
+ENVS = []
+for i in range(1, 11):
+    if i == 3:
+        ENVS.append({"name": f"app{i}", "network": f"net{i-1}-peered"})
+    else:
+        ENVS.append({"name": f"app{i}", "network": f"net{i}"})
 #ENVS =  [ {"name":f"app{i}" , "network":f"net{i}"} for i in range(1,11)]
 MODULE_DIR = "modules/simulated_app"
 OUT_DIR    = "environments"
@@ -23,7 +26,7 @@ def render_and_write(env):
     config = {
         "resource": [
             {
-                "local_server": [
+                "null_resource": [
                     {
                         env["name"]: [
                             {

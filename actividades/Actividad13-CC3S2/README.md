@@ -1056,3 +1056,79 @@ Y generamos nuevamente los entornos
 esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2$ python3 generate_envs.py
 Generados 10 entornos en 'environments/'
 ```
+4. Variables y constantes: Se añade la variable port con sus atributos clave-valor
+```bash
+{
+      "port": [
+        {
+          "type": "number",
+          "default": "8080",
+          "description": "Puerto que expondra el entorno"
+        }
+      ]
+    },
+```
+Luego en main se agregan como atributos de triggers de modo que terraform pueda actualizar el recurso (creacion de insfraestructura) si cambian. Y finalmente se ejecuta en local , expandiendo sus valores 
+```bash
+{
+"local-exec": {
+  "command": "echo 'Arrancando servidor $  {var.name} en red ${var.network} puerto ${var.port}'"
+  }
+}
+```
+La ejecucion 
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2/modules/simulated_app$ terraform plan
+
+Terraform used the selected providers to generate the following execution plan. Resource  
+actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+...
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2/modules/simulated_app$ terraform apply
+null_resource.hello-server: Creating...
+null_resource.hello-server: Provisioning with 'local-exec'...
+null_resource.hello-server (local-exec): Executing: ["/bin/sh" "-c" "echo 'Arrancando servidor hello-world en red lab-net-2 puerto 8080'"]
+null_resource.hello-server (local-exec): Arrancando servidor hello-world en red lab-net-2 puerto 8080
+null_resource.hello-server: Creation complete after 0s [id=8359037264290896143]
+```
+5. Parametrizar dependencias: En generate_envs.py en lugar de usar lista por comprension lo hacemos explicito
+
+```bash
+ENVS = []
+for i in range(1, 11):
+    if i == 3:
+        ENVS.append({"name": f"app{i}", "network": f"net{i-1}-peered"})
+    else:
+        ENVS.append({"name": f"app{i}", "network": f"net{i}"})
+#ENVS =  [ {"name":f"app{i}" , "network":f"net{i}"} for i in range(1,11)]
+```
+Y ya en en entorno generado app3
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2/environments/app3$ cat main.tf.json
+{
+    "resource": [
+        {
+            "null_resource": [
+                {
+                    "app3": [
+                        {
+                            "provisioner": [
+                                {
+                                    "local-exec": {
+                                        "command": "echo 'Arrancando servidor app3 en red net2-peered'"
+                                    }
+                                }
+                            ],
+                            "triggers": {
+                                "name": "app3",
+                                "network": "net2-peered"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+```

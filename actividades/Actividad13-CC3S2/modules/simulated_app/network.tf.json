@@ -10,6 +10,15 @@
       ]
     },
     {
+      "port": [
+        {
+          "type": "number",
+          "default": "8080",
+          "description": "Puerto que expondra el entorno"
+        }
+      ]
+    },
+    {
       "network": [
         {
           "type": "string",

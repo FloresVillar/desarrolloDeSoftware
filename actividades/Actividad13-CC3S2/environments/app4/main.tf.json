@@ -1,7 +1,7 @@
 {
     "resource": [
         {
-            "local_server": [
+            "null_resource": [
                 {
                     "app4": [
                         {
