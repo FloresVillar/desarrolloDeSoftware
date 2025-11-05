@@ -864,7 +864,195 @@ Plan: 1 to add, 0 to change, 1 to destroy.
 
 ```
 **Pregunta**
-- mediante la inspeccion de terraform.tf.state<br>
+- Mediante la inspeccion de terraform.tf.state<br>
 - Modificar el Json es tal como indica la accion cambiar el valor de alguna clave, mientras que parchear directamente es modificar el estado sin tocar el json.
 - Terraform ve el cambio  lo compara con el etado y solo modifica lo necesario.
 - Eso es precisamente lo que se hizo.
+
+## Fase 2 : Entendiendo la inmutabilidad 
+A. 
+Remediacion de 'drift' (out-of-band-changes) <br>
+En el entorno environmets/app2 : descargamos los providers, y creamos la infraestructura.Luego 
+```bash
+ "triggers": {
+                                "name": "hacked-app",
+                                "network": "net2"
+                            }
+                        }
+```
+Luego inicializamos elentorno y luego mostramos los posibles cambios
+```bash
+ # null_resource.app2 must be replaced
+-/+ resource "null_resource" "app2" {
+      ~ id       = "1292538223457893977" -> (known after apply)
+      ~ triggers = { # forces replacement
+          ~ "name"    = "app2" -> "hacked-app"
+            # (1 unchanged element hidden)
+        }
+    }
+
+Plan: 1 to add, 0 to change, 1 to destroy
+```
+Pero como se ve terrafform no detecta un drift sino que su plan es rehacer el recurso, debido a que resource_null no es un recurso real con el cual hacer la comparacion, por ejemplo si el proveedor fuera aws y el recurso fisico cambiara, entonces terraform lo compararia con la realidad conocida (terraform.tf.state) , pero como se menciona , no en este caso, bueno , se detalla 
+![drift](imagenes/drift.png)
+
+B. Migrando a IaC
+1. Creamos un nuevo directorio legacy/ un simple run.sh + config.cfg 
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2$ mkdir -p legacy && echo "PORT=8080" > legacy/config.cfg
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2$ echo '#!/bin/bash' > legacy/run.sh
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2$ echo 'echo "Arrancando $PORT"' > legacy/run.sh
+
+├── legacy
+│   ├── config.cfg
+│   └── run.sh
+└── modules
+    └── simulated_app
+        ├── main.tf.json
+        └── network.tf.json
+```
+Okay , se tienen dos scripts .conf y .sh respectivamente , antes una anotacion acerca de los .cfg estos permiten definir variables o parametros de configuracion que seran leidos por otros archivos como un .sh por ejemplo
+```bash
+# en el .cfg se tiene
+PORT =8080
+# entonces en el .sh
+#!/usr/bin/env bash
+source ./config.cfg 
+echo "ARRANCANDO $PORT"
+
+```
+Luego lo que se hara es leerlos desde un script python **config_run.py** en este caso 
+```bash
+with open("config.cfg","r") as file_config:
+ puerto = file_config.read().split("=")[1].strip()
+
+with open("run.sh","r") as file_run:
+  comando = file_run.read().split("\n")[2].split(" ")[0].strip()
+
+```
+Si bien es cierto es mas del estilo de JAVA que pythonico, pero cumple su cometido<br>
+Seguidamente al estilo de generate_envs.py  se tiene una plantilla que expandira los valores de puerto y comando leidos desde los archivos. Se declara un recurso tipo null_resource  con de nombre config_run, con un provisioner quien ejecuta en local, el comando en cuestión.
+```bash
+"null_resource" :[
+        {
+            "config_run": {
+                "provisioner":{
+                    "local-exec":{
+                        "command":f"{comando} 'ARRANCA puerto {puerto} '"
+                    } 
+                }
+            }
+        }
+    ]
+```
+y luego se genera el archivo de configuracion , con json.dump quien recibe como argumentos el json y el archivo del archivo .tf.json propio de terraform 
+```bash
+with open("main.tf.json","w") as file:
+  json.dump(cuerpo_terraform_json,file,sort_keys =True , indent = 4)
+```
+Y el resultado es el mismo 
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2/legacy$ bash run.sh
+Arrancando  8080
+# con el .tf.json
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2/legacy$ python3 config_run.py
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2/legacy$ ls
+config.cfg  config_run.py  main.tf.json  run.sh
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2/legacy$ terraform init
+Initializing the backend...
+Initializing provider plugins...
+#recordar que terraform busca los archivos suyos en la carpeta actual
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2/legacy$ terraform apply
+
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated    
+with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # null_resource.config_run will be created
+  + resource "null_resource" "config_run" {
+      + id = (known after apply)
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
+
+Do you want to perform these actions?
+  Terraform will perform the actions described above.
+  Only 'yes' will be accepted to approve.
+
+  Enter a value: yes
+
+null_resource.config_run: Creating...
+null_resource.config_run: Provisioning with 'local-exec'...
+null_resource.config_run (local-exec): Executing: ["/bin/sh" "-c" "echo 'ARRANCA puerto 8080 '"]
+null_resource.config_run (local-exec): ARRANCA puerto 8080
+null_resource.config_run: Creation complete after 0s [id=8060395868755826064]
+
+```
+## Fase 3: Escribiendo codigo limpio en IaC
+
+-  Control de versiones: se trabaja en app3 , alli modificamos el archivo network.tf.json donde se definen dos variables name y network, luego como el nombre de name es referenciado desde main,donde se expande a su valor. Terraform (previo init y apply iniciales) detectará la modificacion en el archivo fuente (luego de init y apply  finales,desde luego) ; la modificacion se detalla en el plan 
+```bash
+-/+ resource "null_resource" "app3" {
+      ~ id       = "2717962483202544732" -> (known after apply)
+      ~ triggers = { # forces replacement
+          ~ "name"    = "app3" -> "hola-mundo"
+```
+Mientras que la mofidificacion de description para la variable name
+```bash
+ "description": "modificando descripcion de variable name"
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2/environments/app3$ terraform init && terraform plan
+null_resource.app3: Refreshing state... [id=739676667262931259]
+
+No changes. Your infrastructure matches the configuration.
+
+Terraform has compared your real infrastructure against your configuration and found no differences, so no        
+changes are needed.
+```
+Esto deebido a que solo se modifica la descripcion de una variable pero no se afecta la infraestructura , entonces terraform no ve cambios entre nuestro codigo y el terraform.tf.state
+
+2. Linting y formateo : 
+```bash
+ jq --version
+jq-1.7
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2$ jq . modules/si
+mulated_app/network.tf.json 
+
+{
+  "variable": [
+    {
+      "name": [
+        {
+          "type": "string",
+          "default": "hello-world",
+          "description": "Nombre del servidor local"
+        }
+      ]
+    },
+    {
+      "network": [
+        {
+          "type": "string",
+          "default": "lab-net-2",
+          "description": "Nombre de la red local"
+        }
+      ]
+    }
+  ]
+}
+```
+Y luego se guarda en tmp y este reemplaza al archivo original
+
+3. Nomenclatura y recursos: En generate_envs.py se tiene una variable MODULE_DIR = "modules/simulated_app" luego en copyfile(modules/simulated_app/network.tf.json → environments/app/network.tf.json) , de modo que en contenido se copia como tal en todos los entornos, sin embargo main.tf.json en modules/simulted_app no se usa , pues los valores de las claves van a cambiar por para cada entorno, luego es mas conveniente tener una plantilla dentro de generate_envs.py
+
+Entonces cambiamos el tipo de recurso de resource_null  a local_server 
+```bash
+ "local_server": [...
+
+```
+Y generamos nuevamente los entornos
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2$ python3 generate_envs.py
+Generados 10 entornos en 'environments/'
+```

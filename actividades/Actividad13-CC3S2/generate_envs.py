@@ -23,7 +23,7 @@ def render_and_write(env):
     config = {
         "resource": [
             {
-                "null_resource": [
+                "local_server": [
                     {
                         env["name"]: [
                             {

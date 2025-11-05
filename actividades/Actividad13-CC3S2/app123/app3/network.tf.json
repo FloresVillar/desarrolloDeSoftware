@@ -1,0 +1,22 @@
+{
+    "variable": [
+        {
+            "name": [
+                {
+                    "type": "string",
+                    "default": "hola-mundo",
+                    "description": "modificando descripcion de variable name"
+                }
+            ]
+        },
+        {
+            "network": [
+                {
+                    "type": "string",
+                    "default": "lab-net-2",
+                    "description": "Nombre de la red local"
+                }
+            ]
+        }
+    ]
+}

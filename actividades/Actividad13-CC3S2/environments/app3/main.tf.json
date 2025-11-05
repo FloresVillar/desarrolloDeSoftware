@@ -1,7 +1,7 @@
 {
     "resource": [
         {
-            "null_resource": [
+            "local_server": [
                 {
                     "app3": [
                         {
@@ -13,7 +13,7 @@
                                 }
                             ],
                             "triggers": {
-                                "name": "${var.name}",
+                                "name": "app3",
                                 "network": "net3"
                             }
                         }
