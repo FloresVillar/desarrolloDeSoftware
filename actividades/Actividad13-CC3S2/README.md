@@ -1265,4 +1265,41 @@ null_resource.app1 (local-exec): arrancandoapp1 en red net1
 null_resource.app1: Creation complete after 0s [id=1547936302727196407]
 ```
 
-4. GitOps local
+4. GitOps local , el gitOps local es para detectar cambios en modules/simulated_app/<br>
+El .pre-commit-config.yml ejecuta automaticamente validaciones antes de cada commit<br>
+```bash
+!#/usr/bin/env bash
+
+if git diff --quiet HEAD -- modules/simulated_app/;then
+    echo "sin cambios"
+else 
+    echo "cambios regenerando"
+    python3 generate_envs.py
+    echo "actualiza environments"
+fi
+```
+Tal como se aprecia si no hay cambios no se rehace, si los hay se ejecuta el bloque else
+
+```bash
+repos:
+ - repo: local
+   hooks: 
+    - id: gitops-regenerate
+      name : Regenerar entornos
+      entry: scripts/gitops_regenerate.sh
+      language: system
+
+    - id: check-json
+      name: Validar JSON
+      entry: jq --check
+      language: system
+      files: \.json$
+```
+en cuanto al archivo de configuracion del framework pre-commit, la lista de repositorios es local, osea  los hooks estan en este archivo, luego vienen 2 bloques hooks propiamente, uno de ellos llama a gitops_regenerate.sh y el otro ejecuta jq --check para verificar el formato json<br>
+
+Ejecutamos del siguiente modo
+```bash
+pip install pre-commit
+pre-commit install 
+```
+Entonces cada vez que hagamos commit se ejecutan ambos hooks

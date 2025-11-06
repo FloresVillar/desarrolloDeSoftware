@@ -1,0 +1,13 @@
+repos:
+ - repo: local
+   hooks: 
+    - id: gitops-regenerate
+      name : Regenerar entornos
+      entry: scripts/gitops_regenerate.sh
+      language: system
+
+    - id: check-json
+      name: Validar JSON
+      entry: jq --check
+      language: system
+      files: \.json$
