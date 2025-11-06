@@ -1,0 +1,1 @@
+Balanceador iniciado con s1 y s2

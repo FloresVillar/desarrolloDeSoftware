@@ -1,0 +1,22 @@
+{
+    "variable":[
+        {
+            "s1":[
+                {
+                    "type" : "string",
+                    "default" : "s1",
+                    "description" : "local_server_1"
+
+                }
+            ]
+        },
+        {
+            "s2":[{
+                "type" : "string",
+                "default" : "s2",
+                "description" : "local_server_2"
+                }
+            ]
+        }
+    ]
+}

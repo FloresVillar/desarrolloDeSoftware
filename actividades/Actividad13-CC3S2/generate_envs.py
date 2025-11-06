@@ -2,13 +2,10 @@ import os, json
 from shutil import copyfile
 
 # Parámetros de ejemplo para N entornos
-ENVS = []
-for i in range(1, 11):
-    if i == 3:
-        ENVS.append({"name": f"app{i}", "network": f"net{i-1}-peered"})
-    else:
-        ENVS.append({"name": f"app{i}", "network": f"net{i}"})
-#ENVS =  [ {"name":f"app{i}" , "network":f"net{i}"} for i in range(1,11)]
+ENVS = [
+    {"name": f"app{i}", "network": f"net{i}"} for i in range(1, 11)
+]
+
 MODULE_DIR = "modules/simulated_app"
 OUT_DIR    = "environments"
 

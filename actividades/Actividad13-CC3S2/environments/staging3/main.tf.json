@@ -1,0 +1,25 @@
+{
+    "resource": [
+        {
+            "null_resource": [
+                {
+                    "staging3": [
+                        {
+                            "triggers": {
+                                "name": "staging3",
+                                "network": "net3"
+                            },
+                            "provisioner": [
+                                {
+                                    "local-exec": {
+                                        "command": "echo 'Servidor staging3 en red net3'"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

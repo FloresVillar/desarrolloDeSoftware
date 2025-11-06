@@ -1132,3 +1132,114 @@ esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2/enviro
         }
     ]
 ```
+6. Mantener secreto : Se agrega esta variable
+```bash
+{
+      "api_key": [
+        {
+          "type": "string",
+          "sensitive": "true",
+          "description": "variable apy_key con una clave sensitive palabra reservada "
+        }
+      ]
+    },
+```
+En main , sus desencadenantes 
+```bash
+"triggers": {
+                                "name": "${var.name}",
+                                "network": "${var.network}",
+                                "port":"${var.port}",
+                                "api_key":"${var.api_key}"
+                            }
+```
+y para la ejecucion en local
+```bash
+"local-exec": {
+                                        "command": "echo 'Arrancando servidor ${var.name} en red ${var.network} en ${var.port} con ${var.api_key}'"
+                                    }
+```
+Luego init , plan y apply 
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2/environments/app1$ export TF_VAR_api_key="clave secreta"
+# se exporta mediante TF_VAR que es reconocido por terraform como una clave api 
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2/environments/app1$ terraform init
+Initializing the backend...
+...
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2/environments/app1$ terraform apply
+
+Terraform used the selected providers to generate the following execution plan. Resource  
+actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # null_resource.app1 will be created
+  + resource "null_resource" "app1" {
+      + id       = (known after apply)
+      + triggers = {
+          + "api_key" = (sensitive value)
+          + "name"    = "hello-world"
+          + "network" = "lab-net-2"
+          + "port"    = "8080"
+        }
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
+
+Do you want to perform these actions?
+  Terraform will perform the actions described above.
+  Only 'yes' will be accepted to approve.
+
+  Enter a value: yes
+
+null_resource.app1: Creating...
+null_resource.app1: Provisioning with 'local-exec'...
+null_resource.app1 (local-exec): (output suppressed due to sensitive value in config)     
+null_resource.app1 (local-exec): (output suppressed due to sensitive value in config)     
+null_resource.app1: Creation complete after 0s [id=8248002793919612407]
+
+```
+No se volca en disco y es protegido por ser sensible
+
+## Fase 4 : Integracion final y discusion
+  2. - En generate_envs, son dos bucles el externo para los modulo y el interno para los entornos
+      - Usaria de linteres
+      - Mediante variables exportadas
+      - Usar jq para para validar el codigo json
+### Ejercicios 
+1. Drift avanzado : se detalla en la carpeta ejercicios
+
+2. Cli 
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/actividades/Actividad13-CC3S2$ python3 generate_envs.py --count 5 --prefix staging
+Generados 5 entornos en 'environments/' con prefijo 'staging'
+```
+3. JSON Schema que valide la estructura de los TF files,bueno, no se abarca a profundidad , podria (y eso se hizo) pedir a la ia que lo genere y analizar el codigo <br>
+
+Esto de un schema es preciso detallar un poco mas 
+```bash
+
+SCHEMA_R = {
+    "type" : "object",
+    "properties":{
+        "resource":{
+            "type" : "array",
+            "items":{
+                "type":"object",
+                "properties":{
+                    "null_resource":{
+                        "type":"array"
+                    }
+                },
+                "required":["null_resource"]
+            }
+            
+        }     
+    },
+    "required":["resource"] 
+}
+
+```
+Analiza a main.tf.json del siguiente modo : { } es un tipo object a eso se refiere el primer clave valor , luego tiene como propiedades un "resource"; la sitanxis  usada es ":{" luego nuestro resource tiene un [] que en el schema es un "type" : "array", seguidamente los elementos de resource son "items" para el schema , cuyo tipo es "object" . Luego se analiza al propio "null_resource" con la misma logica.
+ 

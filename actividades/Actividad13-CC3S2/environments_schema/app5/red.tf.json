@@ -1,0 +1,40 @@
+{
+  "variable": [
+    {
+      "name": [
+        {
+          "type": "string",
+          "default": "hello-world",
+          "description": "Nombre del servidor local"
+        }
+      ]
+    },
+    {
+      "port": [
+        {
+          "type": "number",
+          "default": "8080",
+          "description": "Puerto que expondra el entorno"
+        }
+      ]
+    },
+    {
+      "api_key": [
+        {
+          "type": "string",
+          "sensitive": "true",
+          "description": "variable apy_key con una clave sensitive palabra reservada "
+        }
+      ]
+    },
+    {
+      "network": [
+        {
+          "type": "string",
+          "default": "lab-net-2",
+          "description": "Nombre de la red local"
+        }
+      ]
+    }
+  ]
+}

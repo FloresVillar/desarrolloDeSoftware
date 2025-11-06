@@ -1,0 +1,25 @@
+{
+    "resource": [
+        {
+            "null_resource": [
+                {
+                    "app7": [
+                        {
+                            "provisioner": [
+                                {
+                                    "local-exec": {
+                                        "comnand": "echo 'arrancando'app7 en red net7"
+                                    }
+                                }
+                            ],
+                            "triggers": {
+                                "name": "app7",
+                                "network": "net7"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

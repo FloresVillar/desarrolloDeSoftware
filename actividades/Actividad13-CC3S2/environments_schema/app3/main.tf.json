@@ -1,0 +1,25 @@
+{
+    "resource": [
+        {
+            "null_resource": [
+                {
+                    "app3": [
+                        {
+                            "provisioner": [
+                                {
+                                    "local-exec": {
+                                        "comnand": "echo 'arrancando'app3 en red net3"
+                                    }
+                                }
+                            ],
+                            "triggers": {
+                                "name": "app3",
+                                "network": "net3"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

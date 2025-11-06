@@ -1,0 +1,55 @@
+{
+  "terraform": {
+    "required_providers": {
+      "null": {
+        "source": "hashicorp/null",
+        "version": "3.2"
+      }
+    }
+  },
+  "resource": {
+    "null_resource": {
+      "local_server_1": {
+        "provisioner": [
+          {
+            "local-exec": {
+              "command": "echo 'Ejercicio Drift avanzado ${var.s1} y ${var.s2}'"
+            }
+          }
+        ],
+        "triggers": {
+          "name": "${var.s1}"
+        }
+      },
+      "local_server_2": {
+        "provisioner": [
+          {
+            "local-exec": {
+              "command": "echo 'Ejercicio Drift avanzado ${var.s1} y ${var.s2}'"
+            }
+          }
+        ],
+        "triggers": {
+          "name": "${var.s2}"
+        }
+      },
+      "load_balancer": {
+        "depends_on": [
+          "null_resource.local_server_1",
+          "null_resource.local_server_2"
+        ],
+        "triggers": {
+          "backend1": "${null_resource.local_server_1.triggers.name}",
+          "backend2": "${null_resource.local_server_2.triggers.name}"
+        },
+        "provisioner": [
+          {
+            "local-exec": {
+              "command": "echo 'Balanceador iniciado con ${self.triggers.backend1} y ${self.triggers.backend2}' > load_balancer.txt"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
