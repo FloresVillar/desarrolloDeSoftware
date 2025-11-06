@@ -56,7 +56,7 @@ def render_write(env):
                                 "provisioner":[
                                     {
                                         "local-exec":{
-                                            "comnand":(f"echo 'arrancando'" f"{env['name']} en red {env["network"]}")
+                                            "command":(f"echo 'arrancando'" f"{env['name']} en red {env["network"]}")
                                         }
                                     }
                                 ]

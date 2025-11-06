@@ -1242,4 +1242,27 @@ SCHEMA_R = {
 
 ```
 Analiza a main.tf.json del siguiente modo : { } es un tipo object a eso se refiere el primer clave valor , luego tiene como propiedades un "resource"; la sitanxis  usada es ":{" luego nuestro resource tiene un [] que en el schema es un "type" : "array", seguidamente los elementos de resource son "items" para el schema , cuyo tipo es "object" . Luego se analiza al propio "null_resource" con la misma logica.
- 
+
+
+Tenemos los schemas en el script main, donde ademas esta la plantilla para los main.tf. 
+
+Y son estas lineas las que hacen la validacion
+```bash
+ try:
+        validate(instance=plantilla, schema=SCHEMA_R)
+    except ValidateError as e:
+        raise ValuError(f"error")
+    with open(os.path.join(env_dir,"main.tf.json"),"w") as f:
+        json.dump(plantilla, f, sort_keys=True,indent= 4)
+    
+```
+
+```bash
+null_resource.app1: Creating...
+null_resource.app1: Provisioning with 'local-exec'...
+null_resource.app1 (local-exec): Executing: ["/bin/sh" "-c" "echo 'arrancando'app1 en red net1"]
+null_resource.app1 (local-exec): arrancandoapp1 en red net1
+null_resource.app1: Creation complete after 0s [id=1547936302727196407]
+```
+
+4. GitOps local

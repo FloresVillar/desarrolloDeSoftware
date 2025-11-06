@@ -8,7 +8,7 @@
                             "provisioner": [
                                 {
                                     "local-exec": {
-                                        "comnand": "echo 'arrancando'app8 en red net8"
+                                        "command": "echo 'arrancando'app8 en red net8"
                                     }
                                 }
                             ],
