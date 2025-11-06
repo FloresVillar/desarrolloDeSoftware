@@ -1303,3 +1303,30 @@ pip install pre-commit
 pre-commit install 
 ```
 Entonces cada vez que hagamos commit se ejecutan ambos hooks
+
+5. Comparticion segura de secretos:
+Segun se ve un  archivo del tipo ~/.config/secure.json guarda secretos, el cuerpo tendra un diccionario con un solo para clave-valor
+```bash
+{
+    "api-key" : "SDfdifnsudfbnsgfbasdg"
+}
+
+```
+Mientras que el script desde donde se leera tiene los siguientes bloques
+```bash
+ruta = os.path.expandeuser("archivo como ruta")
+if not os.path.exists(ruta):
+  sys.exit("no existe")
+data = None
+with os.open(ruta,"r") as af:
+  data = f.load() 
+clave = data.get("api-key")
+if not clave :
+  sys.exit("no existe la clave") 
+
+```
+El script anterior no es tan complejo sin embargo ,GPT me recomienda:
+```bash
+export API_KEY=$(jq -r .api_key ~/.config/secure.json)
+terraform apply -var "api_key=$API_KEY"
+```
