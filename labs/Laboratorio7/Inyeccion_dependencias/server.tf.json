@@ -5,7 +5,7 @@
                 "provisioner": [
                     {
                         "local-exec": {
-                            "command": "echo Server hello-world \n  usa red: hello-local-network \n  IP asignada: 10.0.0.5"
+                            "command": "echo -e 'Server hello-world\\nusa red: hello-local-network\\nIP asignada: 10.0.0.5'"
                         }
                     }
                 ],

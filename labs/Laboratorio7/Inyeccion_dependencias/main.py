@@ -31,10 +31,10 @@ class ServerFactoryModule:
                         "provisioner": [{
                             "local-exec": {
                                 "command": (
-                                    f"echo Server {self._name} \n"
-                                    f"  usa red: {self._network} \n"
-                                    f"  IP asignada: {self._network_ip}"
-                                )
+                                f"echo -e 'Server {self._name}\\n"
+                                f"usa red: {self._network}\\n"
+                                f"IP asignada: {self._network_ip}'"
+                            )
                             }
                         }]
                     }
