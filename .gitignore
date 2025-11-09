@@ -8,10 +8,6 @@ venv_labo4/
 venv_labo2/
 venv_labo3/
 venv_labo/
-test/
-tests/
-**/test/
-**/tests/
 *.coverage
 **/lib
 **/out/
