@@ -64,7 +64,7 @@ La base de la seguridad empieza protegiendo la cadena de sumistros del software(
 
 Con este objetivo, generamos elementos como el SBOM (lista de componentes del software) , ademas los attestations y metadatos al estilo SLSA , estos permiten rastrear el origen de los artefactos.
 
-Todo requiere estar firmado y tener controles como checksum de proveedores o loclfiles que congelan versiones no confiables.
+Todo requiere estar firmado y tener controles como checksum de proveedores o lockfiles que congelan versiones no confiables.
 La idea es que el pipeline produzca artefactos verificables
 
 En tanto que la gestion de secretos, se intenta que el codigo no exponga secretos, entonces el almacenamiento se da en AWS Secrets Manager (por ejemplo). Se prohibe claves estaticas, en su lugar se utilizan tokens temporales generados via IODC hacie cloud. El codigo usa escanares para detectar secretos antes de cualquier commit. Se evita tambien que los outputs de terraform tengan valores sensibles.
@@ -76,3 +76,48 @@ configuramos terraform se configura como un control de integridad. El estado deb
 La observabilidad total del pipeline se consigue mediante registros de plan y apply, traza de auditoria  y metricas operativas, que miden la calidad del proceso. La deteccion de drift se convierte en un mecanismo diario : los modulos se comparan con sus estados anteriores, se evalua segun su impacto y se decide si hay remediacion. La resiliencia por estrategias de respaldo, restauracion y diseños multi-zona, que garantizen continuidad, con pruebas continuas que validen estos mecanismos.
 
 Finalmente , la postura en tiempo de ejecucion se gestiona via CSPM  o CNAPP que vigilan configuraciones y exposiciones. Se crea un ciclo cerrado donde la infraestructura aplicada e infraestructura observada siempre coinciden, caso contrario se corrige. En este ecosistema se automatiza recursos, tambien es gobernable, auditable y resiliente. Tambien obtnemos trazabilidad, integramos controles de seguridad y operaciones disciplinadas.
+
+# Actividad16-CC3S2
+
+## Parte A. Preguntas teorico-conceptuales 
+A1. Monorepositorio vs multi-repositorio
+1. Comenzar con un monorepositorio acelera el poder construir y levantar la insfraetructura inicial y los modulos básicos, porque (por ejemplo) es muy fácil encontrar un recurso especáfico buscado, pues tenemos una sola fuente; trazar los cambios es muy fácil, se puede ver  TODOS los cambios correspondientes al proyecto mediante **git log**, el cual  muestra el historial completo con todo lo que ello implica, se sabra exactamente quien , cuándo y por qué realizó el cambio.
+
+2. De la experiencia , en un proyecto con colaboradores , si se depende de un solo repositorio las solicitudes de merge se ralentizan, tenemos que esperar que el colaborador envie su pull-requests para poder implementar nuestros issues, pese a que ya se modulariza* mediante las columnas del kanban.
+Esto es evidente en el control de concurrencia(locks),ya que luego de un plan - apply se bloquea el estado remoto para asegurar que solo una persona este modificando estado en un momento dado. Esto obviamente obliga a los demas colaboradores a esperar para usar un recurso especifico.
+En correlacion con lo anterior, quienes estan asignados para la resvision de los pull-requests sufriran sobrecarga de trabajo, podiendo revisar cambios en areas totalmente separadas pero que son necesarios revisar.
+En cuanto a la Ci lenta, sabemos que en un repositorio todo el codigo forma el cojunto del proyecto , de modo que las configuraciones que necesita un modulo en concreto, se aplican  a todo el repositorio.
+Permisos demasiado amplios, git otorga permisos a todo el repo, que se de permisos sobre un modulo particular es un tanto complicado.Esto aumenta, desde luego , el radio de impacto de una error, pues un solo commit afectaria a toda la infra.
+3. Cuando el proyecto crece es preciso extraer modulos y trabajar con un enfoque multi-repo. 
+Tal como se explica en la lectura 18: 
+- (1) se identifica el directorio, en este caso **modules/network** ,
+- (2) se extrae el historial (**git filter-repo**) con esto creamos un repo con los commits correspondientes a esa carpeta , 
+- (3) se verifica la integridad del historial mediante **git log**, **terraform init , plan** apuntando al estado existente(?),
+- (4) configuramos el nuevo repositorio ( creamos el pipeline especifico **lint ,terraform init, terraform plan**) ,  
+- (5) se publica la primera versión semántica (**git tag v1.0.0 ,git psuh origin main --tags**)
+- (6) se actualiza consumos en el repositorio original(cambiamos los **source** de los modulos , se ubican los URL de los nuevos repos , eliminamos la carpeta en un commit posterior, una vez que los clientes hayan migrado)
+
+A2.Versionado semántico y notas de versión 
+
+El versionado semántico detalla mediante numeros si las nuevas funciones (cambios son incompatibles, compatibles, se realizaron cambios menores)
+VMAJOR.MINOR.PATCH. Si MAJOR crece **v1.0.0 → v3.0.0** significa que hay cambios incompatibles entre versiones
+
+MINOR crece si hay funcionalidades nuevas pero compatibles.
+
+PATCH crece cuando hay correciones menores que desde luego no rompen la logica entre versiones.
+
+No es aceptable que un equipo apunte a la rama main de un modulo sin una etiqueta de version firmada, pues main es no representa el producto final, main es volatil, en main podria eliminarse una funcion que se esta usando en por un equipo en particular.Por otro lado una ausencia de contrato, podria provocar que luego de un terraform plan se rompa la compatibilidad sin que se haya versionado.
+
+Acerca de la nota de version debe ser una guia de upgrade que el equipo consumidor podra adoptar,el cual deberá incluir 
+- Contexto y justificacion funcional:   se detalla el por que se introdujo el cambio. Ejemplo **se introduce este modulo para cumplir con el nuevo estandar de cifrado (AES -256) requerido por el area de seguridad** 
+- Impacto operativo y variables : Detalla con precision como la actualizacion afecta al codigo de consumo, variables : variables nuevas , variables eliminadas, valores por defecto modificados ejemplo (el tipo e instancia cambia de **t3.medium a t4g.medium**) 
+Migraciones de estado:si el cambio requiere que se modifique un recurso existente ejemplo (**el nombre logico del recurso de base de datos ha cambiado, se requerira un state move manual antes de apply para evitar recreacion**)     
+
+A3. Seguridad en cadena de suministros
+- SBOM + verificacion de proveedores: 
+La lista de componentes de software 
+y el SLSA permite revisar metadatos,
+
+
+
+
