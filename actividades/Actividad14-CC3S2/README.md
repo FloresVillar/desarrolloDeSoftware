@@ -85,7 +85,7 @@ class Composite:   # las clases anteiores podrian heredar de Component, en este 
         self.lista
     def add(self,obj):
         self.lista.add(obj)
-    def mostrar_all(self,)  # o mostrar_todos()
+    def mostrar_all(self,)  # o construir_todos()
         conjunto  = {}
         for e in self.lista
             r = e.mostrar()
@@ -129,5 +129,58 @@ for f in fabricas :
 El patron permite la clonacion de objetos modificando solo las partes necesarias. Util por ejemplo cuando queremos generar subredes con algunos atributos modificados
 
 ```bash
+import copy
+class Prototype:
+    def __init__(self,valor,etiqueta):
+        self.valor = valor 
+        self.etiqueta = etiqueta
+    def clonar(self, **cambios):
+        nuevo = copy.deepcopy(self)
+        for  clave, valor in changes.items:
+            setattr(nuevo,clave,valor)
+        return nuevo
+
+proto = Prototype(valor = 100, etiqueta ="BASE")
+prot1 = proto.clone(etiqueta = "A")
+prot2 = proto.clone(etiqueta = "B",valor = 200)
 
 ```
+Un poco de la sintaxis **cambios, python convierte a dict los argumentos pasados; mientras que con setttr() se realiza la modificaicon del atributo del nuevo objeto creado.
+
+CABE MENCIONAR QUE ESTOS SON EJEMPLOS DE LOS PATRONES QUE SE ESTAN ESTUDIANDO, EN UN CAMPO DE PROGRAMACION GENERAL, SIN AUN VINCULAR INFRAESTRUCTURA.
+
+### Patron Builder : Construcción paso a paso
+Se crea un objeto mediante pasos encadenados
+```bash
+class ServerBuilder:
+    def __init__(self):
+        self.config = {}
+    def nombre(self,nombre):
+        self.config["nombre"] = nombre
+    ......
+    def construir(self):
+        nombre = self.config.get("nombre","servidor")
+        print(f"{nombre}...")
+        return self.config
+```
+### Criterios para seleccionar el patron
+1. Grado de reutilizacion: 
+    - declarar un unico recurso global <= singleton  
+    - clonar multiples configuraciones <= prototype
+2. Complejidad de configuracion
+    - pocas propiedades construccion directa <= factory
+    - muchas opciones <= Builder
+3. Estructura jerarquicas
+    - Varias capas de dependencias (VPC->subredes->intancias) <= Composite
+4. Escalamiento y mantenibilidad
+    - proyectos pequeños <= Factory y prototype
+    - Sistemas empresariales <=Factory y Prototype
+5. Pruebas y validacion
+    - facilitar test unitarios evitando singleton ocultos <= Builder y Factory
+6. Evolucion de proyectos
+    - proyecto grande <=Composite + Builder
+    - scripts rapidos <= Factory y prototype
+
+## Resumen (a lo sumo) de la lectura 17
+
+### Patrones de dependencia en IaC
