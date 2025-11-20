@@ -429,4 +429,113 @@ class ResourcePrototype:
         new_copy = deepcopy(self.template)
         mutator(new_copy)
         return new_copy
+                           <<module>>
+                          copy (stdlib)
+                         +-----------+
+                         | deepcopy |
+                         +-----------+
+                               ^
+                               |
+     uses (1)                  |   uses (1)
++------------------------+     |      
+|   ResourcePrototype    |-----+-------------------+
+|------------------------|                         |
+| - template: dict       |                         |
+|------------------------|                         |
+| + clone(mutator) : dict|                         |
++------------------------+                         |
+          ^                                        |
+          |  mutator (callable)                    |
+          |   uses (1)                              |
+          |                                         v
+          |                                 +------------------+
+          |                                 |     Mutator      |
+          +---------------------------------|  «function»       |
+                                            |------------------|
+                                            | + __call__()     |
+                                            +------------------+
+
 ```
+![uml](imagenes/uml.png)
+
+4. Composite
+```bash
+# composite.py
+from typing import List, Dict
+
+class CompositeModule:
+    def __init__(self):
+        self.children: List[Dict] = []
+
+    def add(self, block: Dict):
+        self.children.append(block)
+
+    def export(self) -> Dict:
+        merged: Dict = {"resource": {}}
+        for child in self.children:
+            # Imagina que unimos dicts de forma recursiva
+            for rtype, resources in child["resource"].items():
+                merged["resource"].setdefault(rtype, {}).update(resources)
+        return merged
+```
+Tal como se menciona en el resumen , en lugar de determinar de que tipo es cada objeto, simplemente se agrega a la lista de la clase(objeto?) composite, y luego se recorre dicha lista ejecutando el metodo de interes.
+
+En este caso en particular se agrega via **add(bloque) : lista.append(bloquee)** y luego recorremos mediante **export() : for i in lista:....**
+
+4. Builder
+```bash
+# builder.py
+import json
+from composite import CompositeModule
+from factory import NullResourceFactory
+from prototype import ResourcePrototype
+
+class InfrastructureBuilder:
+    def __init__(self):
+        self.module = CompositeModule()
+
+    def build_null_fleet(self, count: int):
+        base = NullResourceFactory.create("app")
+        proto = ResourcePrototype(base)
+        for i in range(count):
+            def mutator(block):
+                # Renombra recurso "app" a "app_<i>"
+                res = block["resource"]["null_resource"].pop("app")
+                block["resource"]["null_resource"][f"app_{i}"] = res
+            self.module.add(proto.clone(mutator))
+        return self
+
+    def export(self, path: str = "terraform/main.tf.json"):
+        with open(path, "w") as f:
+            json.dump(self.module.export(), f, indent=2)
+```
+5. Builder
+```bash
+# builder.py
+import json
+from composite import CompositeModule
+from factory import NullResourceFactory
+from prototype import ResourcePrototype
+
+class InfrastructureBuilder:
+    def __init__(self):
+        self.module = CompositeModule()
+
+    def build_null_fleet(self, count: int):
+        base = NullResourceFactory.create("app")
+        proto = ResourcePrototype(base)
+        for i in range(count):
+            def mutator(block):
+                # Renombra recurso "app" a "app_<i>"
+                res = block["resource"]["null_resource"].pop("app")
+                block["resource"]["null_resource"][f"app_{i}"] = res
+            self.module.add(proto.clone(mutator))
+        return self
+
+    def export(self, path: str = "terraform/main.tf.json"):
+        with open(path, "w") as f:
+            json.dump(self.module.export(), f, indent=2)
+```
+El constructor de esta clase define un objeto tipo Composite , entonces este apilara el la lista los objetos de interes. Mientras que en el metodo **build_null_fleet** se crean el objeto **base = Factory()** contiene las fabricas para la construccion de (por ejemplo) recursos de interes y luego  **proto = Prototype(base)** que usa esta fabrica como  informacion que podra ser cambiado segun se quiera o no. Esto es lo que se realiza dentro de la funcion interna **mutador**  reasignando los nombres de las app segun sus indices.
+
+Finalmente el metodo **export()** realiza la construccion llamando al export de Composite que realiza la ejecucion de la funcion de interes iterando para cada elemento de la lista del Composite.
