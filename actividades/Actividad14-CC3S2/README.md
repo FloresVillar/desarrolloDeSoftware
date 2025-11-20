@@ -119,7 +119,7 @@ class ServerFactory:
 ```
 Y como en el ejemplo de la lectura, el orquestador itera sobre una coleccion de fabricas(las clases delegadas) 
 ```bash
-fabricas = []
+fabricas = [DataFactory(""),RedFactory(""),ServerFactory("")]
 for f in fabricas : 
     recurso = f.construir()
     print(recurso)
@@ -265,3 +265,168 @@ module "computo" {
 }
 ```
 Entonces con realaciones unidireccionales: Eliminamos ciclos en el grafo de dependencias, facilitamos el calculo automatico de ordenes de provision , mejoramos la mantenibilidad pues cada modulo tiene una interfaz clara  , permite test modulares.
+
+### Inyeccion de dependencias
+Se necesita desacoplar, para tal fin se usa DI, IoC, DIP.
+Como se vio en el ejemplo anterior , sera un orquestador quien pase los valores de los parametros hacia los modulos.Es el orquestador quien usa el principio IoC y decide el flujo, usando en este contexto DI para pasar parametros a los modulos.
+Veamos claramente IoC  y Di 
+```bash
+IoC == QUIEN MANDA "el modulo no controla el flujo"
+#IoC
+module "red" {
+    source = "./modulos/red"
+    cidr_block = var.vpc.cidr  # ← DI
+}
+```
+Pero pareciera que IoC y DI fueran uno mismo, no es asi, veamos los contraejemplos de ello
+```bash
+# IoC sin DI
+# IoC el framework llama  a la funcion
+def on_request():  
+    db = RealDatabase() # sin DI
+
+# DI sin IoC
+def main():
+    db = RealDatabase()
+    servicio = MiServicio(db) # ← DI
+    servicio.run() #pero estamos contralando en flujo dentro
+```
+.....FALTA
+
+# Actividad14-CC3S2
+## Fase 0 :Preparacion 
+1. 
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6$ cd iac_patterns  
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns$ ls  
+__init__.py  builder.py  composite.py  factory.py  prototype.py  singleton.py   
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns$ pythesau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns$ python -m venv venv_labo6 && source venv_labo6/bin/activate
+(venv_labo6) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns$ pip install --upgrade pip
+Requirement already satisfied: pip in ./venv_labo6/lib/python3.12/site-packages (24.0)
+Collecting pip
+  Using cached pip-25.3-py3-none-any.whl.metadata (4.7 kB)
+Using cached pip-25.3-py3-none-any.whl (1.8 MB)
+Installing collected packages: pip
+  Attempting uninstall: pip
+    Found existing installation: pip 24.0
+    Uninstalling pip-24.0:
+      Successfully uninstalled pip-24.0
+Successfully installed pip-25.3
+(venv_labo6) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns$
+```
+2. 
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware$ cd labs/Laboratorio6
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6$ python generate_infra.py
+[Builder] Terraform JSON escrito en: terraform/main.tf.json
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6$ cd terraform
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/terraform$ ls
+main.tf.json
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/terraform$ terraform init
+Initializing the backend...
+Initializing provider plugins...
+- Reusing previous version of hashicorp/null from the dependency lock file
+- Using previously-installed hashicorp/null v3.2.4
+
+Terraform has been successfully initialized!
+...
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/terraform$ terraform validate
+Success! The configuration is valid.
+```
+3. 
+```bash
+     ...
+           ]
+        },
+        {
+            "null_resource": [
+                {
+                    "finalizador": [
+                        {
+                            "triggers": {
+                                "nota": "Recurso compuesto generado din\u00e1micamente en tiempo de ejecuci\u00f3n",
+                                "factory_uuid": "e8d530c9-699e-4f82-80ff-293b0b7d782d",
+                                "timestamp": "2025-11-20T18:44:28.196668"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+```
+
+## Fase 1 : Exploracion y analisis
+1. Singleton 
+```bash
+# singleton.py
+import threading
+from datetime import datetime
+
+class SingletonMeta(type):
+    _instances: dict = {}
+    _lock: threading.Lock = threading.Lock()
+
+    def __call__(cls, *args, **kwargs):
+        with cls._lock:
+            if cls not in cls._instances:
+                instance = super().__call__(*args, **kwargs)
+                cls._instances[cls] = instance
+        return cls._instances[cls]
+
+class ConfigSingleton(metaclass=SingletonMeta):
+    def __init__(self, env_name: str):
+        self.env_name = env_name
+        self.settings: dict = {}
+        self.created_at: str = datetime.utcnow().isoformat()
+```
+Se vió en el resumen de la lectura 16, el cómo singleton asegura que solo se cree una instancia de dicha clase, esto mediante un atributo de clase y una funcion magica, este ultimo es invocado automaticamente por python, de modo que se ejecuta su cuerpo. Se analiza si cls esta en cls._instances...
+
+Sin embargo ; es un tanto mas complejo, al tratarse de una metaclase, este será la base de muchas clases, de modo que cada clase implemente solo instancia (que es el objetivo del patron singleton ), lo cual añade complejidad.
+
+__call__  recibe la clase (una de las que implementa la metaclase SingletonMeta) y verifica si esa clase (la instancia) esta en el diccionarios de intancias _instances : dict = {} , si no se encuentra llama al __call_ "anterior" del MRO (osea el call de la clase "padre" ) le pasamos la clase (*args) como primer argumento, y otros argumentos de interes **kwargs. 
+
+Como se va a usar un diccionario como el atributo de clase (de la metaclase) , donde se almacenaran las instancias(direcciones de memoria) unicas de las clases que usan a la metaclase Singleton , entonces se requiere bloquear (proteger?) el acceso para evitar condiciones de carrera, y esto es precisamente lo que hace **Threading.lock()**  similar al Synchronized de java.
+
+2. Factory
+```bash
+# factory.py
+import uuid
+from datetime import datetime
+
+class NullResourceFactory:
+    @staticmethod
+    def create(name: str, triggers: dict = None) -> dict:
+        triggers = triggers or {
+            "factory_uuid": str(uuid.uuid4()),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        return {
+            "resource": {
+                "null_resource": {
+                    name: {"triggers": triggers}
+                }
+            }
+        }
+```
+Como se detallo en el resumen, las fabricas comparten una clase base que tiene (por ejemplo un metodo construir) de modo que cada clase define su propio metodo construir. El patron factory usa este hecho para que se construyan las clases dentro de una lista y luego se recorra la lista con llamadas a los metodos construir de cada instancia de clase, iterativamente (dentro del for)
+
+En el caso de un .tf o python con codigo json que sera "convertido" a .tf.  
+La fabrica en NullResourceFactory , quien define el meetodo create , este ultimo encapsula la creacion del recurso y ademas define los disparadores. Estos triggers 
+registran metadatos   , con una sintaxis propia de python , se asigna triggers a triggers si no hay metadatos de interes, caso contrario se asignan **factory_uuid ← nuemero aleatorio que identificara a lo que se quiera**
+**timestamp ← tiempo**
+3. Prototype
+```bash
+# prototype.py
+from copy import deepcopy
+from typing import Callable
+
+class ResourcePrototype:
+    def __init__(self, template: dict):
+        self.template = template
+
+    def clone(self, mutator: Callable[[dict], None]) -> dict:
+        new_copy = deepcopy(self.template)
+        mutator(new_copy)
+        return new_copy
+```
