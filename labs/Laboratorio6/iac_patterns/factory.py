@@ -1,38 +1,15 @@
-"""Patrón Factory
-Encapsula la lógica de creación de objetos para recursos Terraform del tipo null_resource.
-"""
-
 from typing import Dict, Any
 import uuid
-from datetime import datetime
+from datetime import datetime,timezone
+import json
 
-class NullResourceFactory:
-    """
-    Fábrica para crear bloques de recursos `null_resource` en formato Terraform JSON.
-    Cada recurso incluye triggers personalizados y valores únicos para garantizar idempotencia.
-    """
-
-    @staticmethod
-    def create(name: str, triggers: Dict[str, Any] | None = None) -> Dict[str, Any]:
-        """
-        Crea un bloque de recurso Terraform tipo `null_resource` con triggers personalizados.
-
-        Args:
-            name: Nombre del recurso dentro del bloque.
-            triggers: Diccionario de valores personalizados que activan recreación del recurso.
-                      Si no se proporciona, se inicializa con un UUID y un timestamp.
-
-        Returns:
-            Diccionario compatible con la estructura JSON de Terraform para null_resource.
-        """
+class NullResourceFactory: 
+    @staticmethod #no necesita una instancia
+    def create(name, triggers) -> Dict[str, Any]: 
         triggers = triggers or {}
-
         # Agrega un trigger por defecto: UUID aleatorio para asegurar unicidad
-        triggers.setdefault("factory_uuid", str(uuid.uuid4()))
-
-        # Agrega un trigger con timestamp actual en UTC
-        triggers.setdefault("timestamp", datetime.utcnow().isoformat())
-
+        triggers.setdefault("factory_uuid", str(uuid.uuid4())) 
+        triggers.setdefault("timestamp", str(datetime.now(timezone.utc)))
         # Retorna el recurso estructurado como se espera en archivos .tf.json
         return {
             "resource": [{
@@ -43,3 +20,39 @@ class NullResourceFactory:
                 }]
             }]
         }
+
+class TimeNullResourceFactory(NullResourceFactory):
+    @staticmethod 
+    def crear(nombre,fmt):
+        ts = str(datetime.now(timezone.utc).strftime(fmt)) 
+        triggers = {}
+        triggers.setdefault("ts",ts)
+        return {
+            "terraform":{
+                "required_providers":{
+                    "null":{
+                        "source":"hashicorp/null"
+                    }
+                }
+            },
+            "provider":{
+                "null":{}
+            },
+            "resource":[{
+                "null_resource":[
+                    {
+                        nombre:[{
+                            "triggers" : triggers
+                        }]
+                    }
+                ]
+            }]
+        }
+formato = '%Y-%m-%d'
+obj = TimeNullResourceFactory()
+resultado = obj.crear("fabrica_prueba",formato)
+print(resultado)
+
+with open("fabrica.tf.json","w") as f:
+    json.dump(resultado,f,indent=2)
+print("archivo tf.json generado")
