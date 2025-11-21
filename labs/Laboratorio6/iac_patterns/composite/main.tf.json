@@ -1,0 +1,43 @@
+{
+  "terraform": {
+    "required_providers": {
+      "null": {
+        "source": "hashicorp/null"
+      },
+      "local": {
+        "source": "hashicorp/local"
+      }
+    }
+  },
+  "provider": {
+    "null": {},
+    "local": {}
+  },
+  "resource": [
+    {
+      "null_resource": [
+        {
+          "red": [
+            {
+              "triggers": {
+                "x": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "local_file": [
+        {
+          "app": [
+            {
+              "content": "app",
+              "filename": "app.txt"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
