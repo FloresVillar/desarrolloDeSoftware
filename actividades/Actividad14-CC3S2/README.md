@@ -570,6 +570,30 @@ class TimeNullResourceFactory(NullResourceFactory):
         triggers = {}
         triggers.setdefault("ts",ts)
 ```
+el valor o diccionario devuelto es 
+```bash
+return {
+            "terraform":{
+                "required_providers":{
+                    "null":{
+                        "source":"hashicorp/null"
+                    }
+                }
+            },
+            "provider":{
+                "null":{}
+            },
+            "resource":[{
+                "null_resource":[
+                    {
+                        nombre:[{
+                            "triggers" : triggers
+                        }]
+                    }
+                ]
+            }]
+        }
+```
 Ejecutando la prueba, pasando el formato deseado como argumento al metodo crear de la nueva clase.
 ```bash
 formato = '%Y-%m-%d'
@@ -610,4 +634,71 @@ Terraform will perform the following actions:
     }
 
 Plan: 1 to add, 0 to change, 0 to destroy.
+```
+### Ejercicio 2.3 :
+```bash
+import copy
+from typing import Dict, Any
+import json
+
+recurso = {
+    "resource" :[{
+        "null_resource":[{
+            "proto_prueba":[
+                {
+                    "triggers":{
+                        "version":"1.0"
+                    }
+                }
+            ]
+        }]
+    }]
+}
+
+class ResourcePrototype: 
+    def __init__(self, resource_dict: Dict[str, Any]) -> None:
+        self._resource_dict = resource_dict
+    def clonar(self, mutador=lambda d: d) -> "ResourcePrototype":
+        # Copia profunda para evitar mutaciones al recurso original
+        new_dict = copy.deepcopy(self._resource_dict)
+        # Aplica la función mutadora para modificar el clon si se desea
+        mutador(new_dict)
+        # Devuelve un nuevo prototipo con el contenido clonado
+        return ResourcePrototype(new_dict)
+    @property
+    def data(self) -> Dict[str, Any]: 
+        return self._resource_dict
+
+def mutador(new_dict):
+    new_dict["resource"][0]["null_resource"][0]["proto_prueba"][0]["triggers"]["welcome"] = "¡Hola!"
+    new_dict["resource"].append({"local_file" : [{
+        "welcome_txt": [{
+            "content": "Bienvenido",
+            "filename": "${path.module}/bienvenida.txt"
+        }]
+    }]})
+
+obj = ResourcePrototype(recurso)
+resultado = obj.clonar(mutador)
+with open("prototype.tf.json","w") as f:
+    json.dump(resultado.data,f,indent=2)
+#luego terraform apply
+```
+Y aplicando 
+```bash
+(venv_labo6) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns$ terraform init
+Terraform has been successfully initialized!
+...
+(venv_labo6) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns$ terraform apply
+
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the   
+following symbols:
+  + create
+  ..
+null_resource.proto_prueba: Creating...
+local_file.welcome_txt: Creating...
+null_resource.proto_prueba: Creation complete after 0s [id=7181163649754672474]
+local_file.welcome_txt: Creation complete after 0s [id=f51b98d412e1b580125610b614731dfa39f79046]
+
+Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
 ```
