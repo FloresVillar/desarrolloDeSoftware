@@ -702,3 +702,126 @@ local_file.welcome_txt: Creation complete after 0s [id=f51b98d412e1b580125610b61
 
 Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
 ```
+### Ejercicio 2.4 : 
+```bash
+from typing import List, Dict, Any
+import json
+
+class CompositeModule: 
+    def __init__(self): 
+        self._children = []
+    def add(self, resource_dict):
+        self._children.append(resource_dict)
+    def export(self,base): 
+        agregado = base.copy()
+        agregado["resource"] = []
+        for child in self._children: 
+            agregado["resource"].extend(child.export()["resource"])
+        return agregado
+class ModuloRed:
+    def export(self):
+        return  {
+             
+            "resource":[ 
+                {"null_resource":[
+                    {"red":[
+                        {
+                            "triggers":{
+                                "x" : 1
+                            }
+                        }
+                    ]}
+                ]}]}
+class ModuloApp:
+    def export(self):
+        return {
+            
+            "resource":[
+                {
+                    "local_file":[
+                        {
+                            "app":[
+                                {
+                                    "content":"app",
+                                    "filename":"app.txt"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        } 
+
+compuesto = CompositeModule()
+compuesto.add(ModuloRed())
+compuesto.add(ModuloApp())
+base = {
+    "terraform": {
+        "required_providers": {
+            "null": {"source": "hashicorp/null"},
+            "local": {"source": "hashicorp/local"}
+        }
+    },
+    "provider": {
+        "null": {},
+        "local": {}
+    }
+}
+resultado =compuesto.export(base)
+with open("main.tf.json","w") as f:
+    json.dump(resultado,f,indent = 2)
+```
+Ejecutando 
+```bash
+(venv_labo6) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns/composite$ python composite.py
+(venv_labo6) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns/composite$ terraform init
+Initializing the backend...
+Initializing provider plugins...
+...
+(venv_labo6) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns/composite$ terraform apply
+
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the   
+following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # local_file.app will be created
+  + resource "local_file" "app" {
+      + content              = "app"
+      + content_base64sha256 = (known after apply)
+      + content_base64sha512 = (known after apply)
+      + content_md5          = (known after apply)
+      + content_sha1         = (known after apply)
+      + content_sha256       = (known after apply)
+      + content_sha512       = (known after apply)
+      + directory_permission = "0777"
+      + file_permission      = "0777"
+      + filename             = "app.txt"
+      + id                   = (known after apply)
+    }
+
+  # null_resource.red will be created
+  + resource "null_resource" "red" {
+      + id       = (known after apply)
+      + triggers = {
+          + "x" = "1"
+        }
+    }
+
+Plan: 2 to add, 0 to change, 0 to destroy.
+
+Do you want to perform these actions?
+  Terraform will perform the actions described above.
+  Only 'yes' will be accepted to approve.
+
+  Enter a value: yes
+
+null_resource.red: Creating...
+local_file.app: Creating...
+null_resource.red: Creation complete after 0s [id=1999702726758919520]
+local_file.app: Creation complete after 0s [id=7d1043473d55bfa90e8530d35801d4e381bc69f0]
+
+Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
+(venv_labo6) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns/composite$
+```
