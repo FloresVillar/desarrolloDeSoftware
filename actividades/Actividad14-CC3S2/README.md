@@ -539,3 +539,75 @@ class InfrastructureBuilder:
 El constructor de esta clase define un objeto tipo Composite , entonces este apilara el la lista los objetos de interes. Mientras que en el metodo **build_null_fleet** se crean el objeto **base = Factory()** contiene las fabricas para la construccion de (por ejemplo) recursos de interes y luego  **proto = Prototype(base)** que usa esta fabrica como  informacion que podra ser cambiado segun se quiera o no. Esto es lo que se realiza dentro de la funcion interna **mutador**  reasignando los nombres de las app segun sus indices.
 
 Finalmente el metodo **export()** realiza la construccion llamando al export de Composite que realiza la ejecucion de la funcion de interes iterando para cada elemento de la lista del Composite.
+
+## Fase 2 : 
+### Ejercicio 2.1 : 
+```bash
+# se añade este metodo a ConfigSingleton
+  def reset(self): 
+        self.settings.clear()
+# el script test_singleton.py
+# ejecutando el test
+(venv_labo6) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns$ pytest -v test_singleton.py
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.1, pluggy-1.6.0 -- /home/esau/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns/venv_labo6/bin/python
+cachedir: .pytest_cache
+rootdir: /home/esau/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns
+collected 1 item                                                                
+
+test_singleton.py::test_ PASSED                                          [100%] 
+
+=============================== warnings summary ===============================
+test_singleton.py::test_ ...
+```
+### Ejercicio 2.2 :
+Se crea
+```bash
+class TimeNullResourceFactory(NullResourceFactory):
+    @staticmethod 
+    def crear(nombre,fmt):
+        ts = str(datetime.now(timezone.utc).strftime(fmt)) 
+        triggers = {}
+        triggers.setdefault("ts",ts)
+```
+Ejecutando la prueba, pasando el formato deseado como argumento al metodo crear de la nueva clase.
+```bash
+formato = '%Y-%m-%d'
+obj = TimeNullResourceFactory()
+resultado = obj.crear("fabrica_prueba",formato)
+print(resultado)
+
+with open("fabrica.tf.json","w") as f:
+    json.dump(resultado,f,indent=2)
+print("archivo tf.json generado")
+ 
+```
+Se hizo la serializacion de un dict a un tf.json, archivo que terraform reconoce. 
+
+```bash
+(venv_labo6) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns$ terraform 
+init
+Initializing the backend...
+Initializing provider plugins...
+- Finding latest version of hashicorp/null...
+
+...
+(venv_labo6) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns$ terraform 
+plan
+
+Terraform used the selected providers to generate the following execution plan. Resource actions   
+are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # null_resource.fabrica_prueba will be created
+  + resource "null_resource" "fabrica_prueba" {
+      + id       = (known after apply)
+      + triggers = {
+          + "ts" = "2025-11-21"
+        }
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
+```
