@@ -1,0 +1,30 @@
+{
+  "resource": [
+    {
+      "null_resource": [
+        {
+          "proto_prueba": [
+            {
+              "triggers": {
+                "version": "1.0",
+                "welcome": "\u00a1Hola!"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "local_file": [
+        {
+          "welcome_txt": [
+            {
+              "content": "Bienvenido",
+              "filename": "${path.module}/bienvenida.txt"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

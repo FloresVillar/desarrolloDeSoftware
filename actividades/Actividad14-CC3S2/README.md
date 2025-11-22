@@ -825,3 +825,185 @@ local_file.app: Creation complete after 0s [id=7d1043473d55bfa90e8530d35801d4e38
 Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
 (venv_labo6) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns/composite$
 ```
+### Ejercicio 2.5 :
+Recordar que builder hace 
+```bash
+class Builder:
+    def __init__(..)
+        self..atributo = {}
+    def nombre(..):
+        self.config["nombre"] = ...
+    def zone(..):    
+        self.config["zone"]= ...
+    def construir():
+        self.config
+# invocando
+srv = Builder().nombre("web").cpu(4).construir()
+# pero en el caso de IaC
+def build(self):
+        name = self.config.get("name", "server")
+        cmd = f"echo 'Server {name} en zona {self.config.get('zone')}' > {name}.txt"
+        return {
+          name: {
+            "triggers": {"always_run": "${timestamp()}"},
+            "provisioner": {"local-exec": {"command": cmd}}
+          }
+        }
+```
+En el ejercicio:
+```bash
+from typing import Dict, Any
+from copy import deepcopy
+import json
+
+# ================================
+# Composite
+# ================================
+class CompositeModule:
+    def __init__(self):
+        self.content = {}
+
+    def add(self, block: dict):
+        for key, value in block.items():
+            if key not in self.content:
+                self.content[key] = value
+            else:
+                if isinstance(value, dict):
+                    self.content[key].update(value)
+
+    def export(self):
+        return self.content
+
+
+# ================================
+# Prototype Pattern
+# ================================
+class ResourcePrototype:
+    def __init__(self, base):
+        self.base = base
+
+    def clone(self, mutator):
+        copy_block = deepcopy(self.base)
+        mutator(copy_block)
+        return copy_block
+
+
+# ================================
+# NullResource Factory
+# ================================
+class NullResourceFactory:
+    @staticmethod
+    def create(name: str):
+        return {
+            "resource": {
+                "null_resource": {
+                    name: {
+                        "triggers": {"dummy": "x"}
+                    }
+                }
+            }
+        }
+
+
+# ================================
+# InfrastructureBuilder (SIN MÓDULOS)
+# ================================
+class InfrastructureBuilder:
+    def __init__(self):
+        self.module = CompositeModule()
+
+    def build_group(self, name: str, size: int):
+        base = NullResourceFactory.create(name)
+        proto = ResourcePrototype(base)
+
+        for i in range(size):
+            def mut(block, i=i):
+                res = block["resource"]["null_resource"].pop(name)
+                block["resource"]["null_resource"][f"{name}_{i}"] = res
+
+            self.module.add(proto.clone(mut))
+
+        return self
+
+    def build(self):
+        return self.module.export()
+
+
+# ================================
+# EJECUCIÓN
+# ================================
+builder = InfrastructureBuilder()
+out = builder.build_group("grupo", 3).build()
+
+print(json.dumps(out, indent=2))
+
+with open("main.tf.json", "w") as f:
+    json.dump(out, f, indent=2)
+
+```
+
+Ejecutando
+```bash
+python builder.py
+{
+  "resource": {
+    "null_resource": {
+      "grupo_2": {
+        "triggers": {
+          "dummy": "x"
+        }
+      }
+    }
+  }
+}
+(venv_labo6) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns/builder$ terraform init
+Initializing the backend...
+Initializing provider plugins...
+- Finding latest version of hashicorp/null...
+- Installing hashicorp/null v3.2.4...
+- Installed hashicorp/null v3.2.4 (signed by HashiCorp)
+Terraform has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that Terraform can guarantee to make the same selections by default when
+you run "terraform init" in the future.
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+(venv_labo6) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns/builder$ terraform apply
+
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the   
+following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # null_resource.grupo_2 will be created
+  + resource "null_resource" "grupo_2" {
+      + id       = (known after apply)
+      + triggers = {
+          + "dummy" = "x"
+        }
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
+
+Do you want to perform these actions?
+  Terraform will perform the actions described above.
+  Only 'yes' will be accepted to approve.
+
+  Enter a value: yes
+
+null_resource.grupo_2: Creating...
+null_resource.grupo_2: Creation complete after 0s [id=2167900450072497247]
+
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
+(venv_labo6) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio6/iac_patterns/builde
+
+```

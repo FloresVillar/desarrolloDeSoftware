@@ -1,0 +1,11 @@
+{
+  "resource": {
+    "null_resource": {
+      "grupo_2": {
+        "triggers": {
+          "dummy": "x"
+        }
+      }
+    }
+  }
+}
