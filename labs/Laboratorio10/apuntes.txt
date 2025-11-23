@@ -1,0 +1,30 @@
+
+$HOME/.local
+devops
+-stataless service
+-base de datos por servicio
+-12-factor/config por entorno
+-health checks y osbser
+-api-first , contractos claros
+
+devSecOps
+-superficie de ataque reducida
+-principio de minimo privilegio , el serv corre con un usuarion no root
+-Supply chain security , una imagen reproducible desde un dokerfile claro, la generacion de SBOM la firma de imagenes
+-Tests con barreras(gates) 
+	-> test de seguridad SAS, fuzzing
+
+
+docker run item-service
+PATRON DE TRABAJO : codgio → git commit → 
+CI   docker build → test, escaneos de seguridad
+SI TOTO PASA SE PUBLICA Y DESPLIEGA
+
+SI hay mas microservicios ENTONCES docker compose,
+
+tambien hay patrones de microservicios en kubernetes:Sidecar, Gateway, Service mesh
+
+GROK CODE modelo de codificion , cometAPI
+Kilo ai es el agente de codificacion
+cline visual cline bot
+
