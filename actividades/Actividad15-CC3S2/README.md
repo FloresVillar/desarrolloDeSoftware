@@ -229,3 +229,17 @@ return PulumiIAMPolicy(
         statements=lista
     )
 ```
+**Mediator**<br>
+Mediator centraliza la coordinacion entre varios modulos. Cada modulo no se comunica con los demas, el mediator orquesta el flujo.
+```bash
+class InfraMediator:
+    def deploy_dns(self, record_name):
+        lb = self.deploy_load_balancer()
+        servers = self.deploy_servers(lb)
+        self.configure_firewall(servers)
+        self.setup_network()
+        return self.create_dns_record(record_name, lb.endpoint)
+```
+# Laboratorio7-CC3S2
+
+## Fase 1 : Relaciones unidireccionales
