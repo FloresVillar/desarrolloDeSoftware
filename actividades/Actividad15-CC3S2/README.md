@@ -134,4 +134,98 @@ def framework(serv):
 #en main
 framework(servicio)
 ```
-.....FALTA
+**Inversion de Dependencias(DIP)**
+Se eleva la resiliencia,todo depende de abstracciones, los modulos de alto nivel (orquetador) y los de bajo nivel(modulo de base de datos) no de implementaciones concretas.
+Si se migra de la nube a docker, o de S3 a un almacenamiento local , bastará con crear una implementacion de esa abstracción.
+Un ejemplo muy minimalista seria
+```bash
+# DI pero sin DIP
+class Servicio:
+    sef __init__(db:Data):
+        self.db = db
+#DI + DIP
+class Servicio:
+    sef __init__(db:DataInterface):
+        self.db = db
+```
+El ejemplo 
+```bash
+class RealDatabase:
+    def connect(self, url): ...
+
+class MockDatabase:
+    def connect(self, url): return InMemoryDB()
+
+def main(db_client):
+    conn = db_client.connect(db_client.url)
+    # lógica de despliegue…
+
+# En producción
+main(RealDatabase(url="postgres://..."))
+# En test
+main(MockDatabase(url="in-memory"))
+```
+### Patrones Facade, Adapter y Mediator en IaC
+**FACADE** <br>
+Facade ofrece una interfaz simple para el usuario. Seria como pasar parametros a funcion y que se construya lo que se quiere en esas funciones.
+```bash
+module "storage_secure" {
+  source           = "./modules/storage-facade"
+  name             = "my-data-bucket"
+  region           = "us-east-1"
+  logs_retention   = 30
+}
+#es lo que ejecuta el usuario
+```
+Pero internamento esto es lo que hace
+```bash
+storage-facade/
+├── main.tf
+├── variables.tf
+└── outputs.tf
+#variables
+variable "name" {}
+variable "region" {}
+variable "logs_retention" {
+  default = 30
+}
+#internamente crea el bucket y mas bloques
+resource "aws_s3_bucket" "this" {
+  bucket = var.name
+  region = var.region
+}
+...
+```
+
+**ADAPTER**<br>
+lo que tenemos (JSON, API) ---adapter---lo que el sistema espera (Terraform , Pulumi)
+```bash
+#tenemos
+{
+    "read":["dev"],
+    "write":["ops"]
+}
+#
+def adapter(args):
+    lista = []
+    mapa = {
+        "read": ["s3:GetObject"],
+        "write": ["s3:PutObject"]
+    }
+    for a,b in args.items():
+        lista.append({
+            "actions":mapa.get(a,[]),
+            "principals":b
+        })
+    return {"aws_iam_policy":{"example":{"stament":lista}}}
+#en main
+argss = {"read":["dev"],"write":["ops"]}
+terraform = adapter(argss)
+```
+Ahora si se cambia a pulummi el return es lo que se modifica
+```bash
+return PulumiIAMPolicy(
+        name="example",
+        statements=lista
+    )
+```
