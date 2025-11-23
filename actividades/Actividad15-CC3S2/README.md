@@ -2,7 +2,7 @@
 ## Resumen (a lo sumo) de la lectura 17
 
 ### Patrones de dependencia en IaC
-Se tiene que definir como fluyen los datos y el orden de creacion,para este fin se recurre a patrones de dependencias que imprimen un orden logica y desacoplo en los modulos IaC
+Se tiene que definir como fluyen los datos y el orden de creacion,para este fin se recurre a patrones de dependencias que imprimen un orden logico y desacoplo en los modulos IaC
 **Relaciones unidireccionales**
 ```bash 
 ---------------------                ----------------------
@@ -243,3 +243,140 @@ class InfraMediator:
 # Laboratorio7-CC3S2
 
 ## Fase 1 : Relaciones unidireccionales
+1. Inspección
+```bash
+├── Inversion_control
+│   ├── Instrucciones.md
+│   ├── main.py
+│   ├── main.tf.json
+│   ├── Makefile
+│   └── network
+│       ├── network_outputs.json
+│       ├── network.tf.json
+│       ├── terraform.tfstate
+│       └── terraform.tfstate.backup
+```
+- Para network.tf.json , se tienen 2 recursos
+```bash
+.."resource" : {
+    "tipo 1": {
+        "recurso1" :{}
+        }  ,
+    "tipo 2": {
+        "recurso2" :{}
+    }
+}
+```
+En este caso corresponden a "network" tipo "null_resource" y "network_state" tipo "local_file. En cuanto a las dependencias explicitas en el campo "depends_on"
+```bash
+"depends_on": ["null_resource.network"]  # local_file.network_state depende de null_resource.network
+```
+- Para main.tf.json
+En este caso se tiene un ambito global de recursos (resource block map), donde se declaran los recursos, "null_resource" ,quien genera un nuevo mapa (el resource type map) ,el ambito para este tipo de recurso,las claves declaradas seran recursos de este tipo;lo cual se hace seguidamente declarando la instancia como tal ,a saber "hello_world".
+```bash
+{
+    "resource":{
+        "null_resource":{
+            "hello_world":{
+                #no hay dependencias explicitas
+            }
+        }
+    }
+}
+```
+2. Ejercicio practico
+Descargamos los providers:
+```bash
+"required_providers": {
+      "null":  { "source": "hashicorp/null",  "version": "~> 3.2" },
+      "local": { "source": "hashicorp/local", "version": "~> 2.5" }
+```
+Esto se hace via init
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control/network$ terraform init
+Initializing the backend...
+Initializing provider plugins...
+- Reusing previous version of hashicorp/null from the dependency lock file
+- Reusing previous version of hashicorp/local from the dependency lock file
+- Installing hashicorp/null v3.2.4...
+- Installed hashicorp/null v3.2.4 (signed by HashiCorp)
+- Installing hashicorp/local v2.5.3...
+- Installed hashicorp/local v2.5.3 (signed by HashiCorp)
+
+Terraform has been successfully initialized!
+```
+Luego levantamos la infraestructura con apply sin pedir confirmacion
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control/network$ terraform apply -auto-approve
+null_resource.network: Refreshing state... [id=6271637016324757625]
+local_file.network_state: Refreshing state... [id=d9e6632b7b6fe51a56c55fab21bc32b9df7fc2c0]
+
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the
+following symbols:
+-/+ destroy and then create replacement
+
+Terraform will perform the following actions:
+
+  # null_resource.network must be replaced
+-/+ resource "null_resource" "network" {
+      ~ id       = "6271637016324757625" -> (known after apply)
+      ~ triggers = { # forces replacement
+          ~ "render_time" = "2025-11-03T20:44:13Z" -> (known after apply)
+        }
+    }
+
+Plan: 1 to add, 0 to change, 1 to destroy.
+null_resource.network: Destroying... [id=6271637016324757625]
+null_resource.network: Destruction complete after 0s
+null_resource.network: Creating...
+null_resource.network: Creation complete after 0s [id=8660587588827423380]
+
+Apply complete! Resources: 1 added, 0 changed, 1 destroyed.
+```
+En este punto surge una duda, init descarga los providers y ese bloque esta declarado dentro de network.tf.json para el ambito de "terraform" y seguidamente el "required_providers" , quien contiene en su ambito las fuentes de los recursos. Pero por qué main.tf.json no declara un bloque "terraform" : { "required_providers"}, no es necesario , terraform buscara en los .tf.json el los providers y solo hace falta declararlos una vez.
+
+Ahora para ejecutar "make all", fue un embrollo, dentro de Inversion_control/network/ se descargan los providers(bootstrap) y levanta la infra de forma manual, luego en Inversion_control/ automatizamos la ejecucion. Pero un detalle importante respecto a "local-exec" :{
+    "command" : "echo ...."
+}
+en bash echo -e "\(\)" es perfectamente valido , entonces usamos ese (?) para escapar de los caracterers especiales, que la shell interpretaria de otra manera, en esta caso los parentesis son subshell(recordar el comando de sustitucion en un .sh).Con este escape terraform  ejecutara local-exec de forma correcta. Finalmente se tendrá **"command": "echo \"Creando servidor hello-world en subred hello-world-subnet (CIDR 10.0.0.0/16, zona local)\""**
+
+Entonces make all ejecuta las recetas 
+```bash
+    all : prepare network server
+    prepare: #crea las carpetas 
+
+    network: # crea subcarpetas 
+
+    server: # init apply
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control$ make all
+cd network && TF_DATA_DIR=/home/esau/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control/.terraform TF_PLUGIN_CACHE_DIR=/home/esau/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control/.terraform/plugin-cache TMP=/home/esau/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control/.terraform/tmp TEMP=/home/esau/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control/.terraform/tmp terraform init -upgrade -no-color && \
+TF_DATA_DIR=/home/esau/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control/.terraform TF_PLUGIN_CACHE_DIR=/home/esau/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control/.terraform/plugin-cache TMP=/home/esau/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control/.terraform/tmp TEMP=/home/esau/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control/.terraform/tmp terraform apply -auto-approve -no-color
+Initializing the backend...
+Initializing provider plugins...
+
+...
+Finding hashicorp/local versions matching "~> 2.5"...
+- Finding hashicorp/null versions matching "~> 3.2"...
+- Using previously-installed hashicorp/local v2.6.1
+- Using previously-installed hashicorp/null v3.2.4
+..
+  # null_resource.network must be replaced
+-/+ resource "null_resource" "network" {
+      ~ id       = "8820400861797525431" -> (known after apply)
+      ~ triggers = { # forces replacement
+          ~ "render_time" = "2025-11-23T19:40:17Z" -> (known after apply)
+        }
+    }
+    ...
+Plan: 1 to add, 0 to change, 1 to destroy.
+null_resource.hello-world: Destroying... [id=5457904178799376462]
+null_resource.hello-world: Destruction complete after 0s
+null_resource.hello-world: Creating...
+null_resource.hello-world: Provisioning with 'local-exec'...
+null_resource.hello-world (local-exec): Executing: ["/bin/sh" "-c" "echo \"Creando servidor hello-world en subred hello-world-subnet (CIDR 10.0.0.0/16, zona local)\""]
+null_resource.hello-world (local-exec): Creando servidor hello-world en subred hello-world-subnet (CIDR 10.0.0.0/16, zona local) 
+null_resource.hello-world: Creation complete after 0s [id=5846758902788901647]
+
+Apply complete! Resources: 1 added, 0 changed, 1 destroyed
+```
+
