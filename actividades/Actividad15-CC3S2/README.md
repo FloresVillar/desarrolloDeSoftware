@@ -189,12 +189,21 @@ variable "region" {}
 variable "logs_retention" {
   default = 30
 }
-#internamente crea el bucket y mas bloques
+#en main.tf internamente crea el bucket y mas bloques
 resource "aws_s3_bucket" "this" {
   bucket = var.name
   region = var.region
 }
+#outputs.tf
+output "bucket_arn" {
+  value = aws_s3_bucket.this.arn
+}
+
+output "bucket_name" {
+  value = aws_s3_bucket.this.bucket
+}
 ...
+# que luego son referenciados en el module "storage-facade" usando el atributo  source con la ruta del modulo como valor 
 ```
 
 **ADAPTER**<br>
@@ -351,6 +360,7 @@ Entonces make all ejecuta las recetas
 esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control$ make all
 cd network && TF_DATA_DIR=/home/esau/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control/.terraform TF_PLUGIN_CACHE_DIR=/home/esau/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control/.terraform/plugin-cache TMP=/home/esau/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control/.terraform/tmp TEMP=/home/esau/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control/.terraform/tmp terraform init -upgrade -no-color && \
 TF_DATA_DIR=/home/esau/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control/.terraform TF_PLUGIN_CACHE_DIR=/home/esau/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control/.terraform/plugin-cache TMP=/home/esau/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control/.terraform/tmp TEMP=/home/esau/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control/.terraform/tmp terraform apply -auto-approve -no-color
+# para cada DIR_ACTUAL (CURDIR) se crea .terraform y subcarpetas donde se guarda info del estado (/) , plugins providers (/plugins-cache) y operaciones intermedias (tmp/)
 Initializing the backend...
 Initializing provider plugins...
 
@@ -379,4 +389,97 @@ null_resource.hello-world: Creation complete after 0s [id=5846758902788901647]
 
 Apply complete! Resources: 1 added, 0 changed, 1 destroyed
 ```
+## Fase 2 : Inyeccion de dependencias
+1. Inversion de control , inversion de dependencias
 
+Se estudia **main.py** "en caliente",  se tiene una variable global FILE (macro?) que corresponde al .json output para la network. En tanto que clase NMOuput recibe FILE como argumento, se convierte a un path via Path, pues asi se usaran los metodos de un objeto archivo(?), si la ruta no existe se lanza un error. Caso contrario se lee el contenido de esa ruta **data =json.loads(path.read_text())**. En el bloque **try** asigna a las atributos de instancia(objeto?) name y cidr de **data["outputs"]["name"]["value"]  y ["outputs"]["cidr"]["value"]** 
+
+En tanto la clase SFModule , el constructor recibe name zone y el FILE como argumentos y asignamos esos valores a los atributos de instancia; se crea red como una instancia de la clase anterior. Asimismo el atributo recursos llama a su metodo "build()" . Build usa la sintaxis vista, se declara el block map "resource" , el type map "null_resource" , se declara el nombre self._name dentro {} los diparadores y los provisioner. Dentro de provisioner ejecutamos el local-exec : { "command" : ....mostramos info (ejecutar comando si se quiere)}
+
+Okay, desde luego , los terminos tecnicos seran incluidos más adelante.
+
+2. Ejercicio practico
+
+Ahora dentro del type map ,agregamos un nuevo recurso con sus propios  "triggers "y "provisioner" 
+```bash
+class ServerFactoryModule:
+    """Define un null_resource que simula un servidor ligado a la subred."""
+    def __init__(self, name_red,name_server, zone="local", outputs_path=OUTPUTS_FILE):
+        self._name_red = name_red
+        self._name_server =name_server
+        self._zone = zone
+        self._network = NetworkModuleOutput(outputs_path)
+        self.resources = self._build()
+
+    def _build(self):
+        return {
+            "resource": {
+                "null_resource": {
+                    self._name_red: {
+                        "triggers": {
+                            "server_name": self._name_red,
+                            "subnet_name": self._network.name,
+                            "subnet_cidr": self._network.cidr,
+                            "zone": self._zone
+                        },
+                        "provisioner": [{
+                            "local-exec": {
+                                "command": 
+                                    f'echo "Creando red {self._name_red}, en subred {self._network.name} ,(CIDR {self._network.cidr}, zona {self._zone})"'
+                            }
+                        }]
+                    },
+                    self._name_server: {
+                        "triggers": {
+                            "server_name": self._name_red,
+                        },
+                        "provisioner": [{
+                            "local-exec": {
+                                "command": 
+                                    f'echo "Creando server {self._name_red}"'
+                            }
+                        }]
+                    }
+                }
+            }
+        }
+
+```
+los valores para los campos de los bloques se inyectan como argumentos.
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control$ python main.py
+main.tf.json generado.
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control$ terraform init
+Initializing the backend...
+Initializing provider plugins...
+- Reusing previous version of hashicorp/null from the dependency lock file
+- Using previously-installed hashicorp/null v3.2.4
+
+Terraform has been successfully initialized!
+..
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control$ terraform apply
+null_resource.hello-world: Refreshing state... [id=708224974330177754]
+null_resource.server: Refreshing state... [id=3061381188353554108]
+
+No changes. Your infrastructure matches the configuration.
+```
+Nuevamente se ejecuta la receta all prepare , network , server 
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio7/Inversion_control$ make all
+cd network && ...
+ Finding hashicorp/null versions matching "~> 3.2"...
+- Finding hashicorp/local versions matching "~> 2.5"...
+- Using previously-installed hashicorp/null v3.2.4
+- Using previously-installed hashicorp/local v2.6.1
+...
+null_resource.hello-world: Refreshing state... [id=708224974330177754]
+null_resource.server: Refreshing state... [id=3061381188353554108]
+
+No changes. Your infrastructure matches the configuration.
+
+Terraform has compared your real infrastructure against your configuration and found no differences, so no changes are needed.
+
+Apply complete! Resources: 0 added, 0 changed, 0 destroyed
+```
+
+## Fase 3 : Patrón Facade 

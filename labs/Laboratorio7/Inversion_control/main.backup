@@ -24,9 +24,8 @@ class NetworkModuleOutput:
 
 class ServerFactoryModule:
     """Define un null_resource que simula un servidor ligado a la subred."""
-    def __init__(self, name_red,name_server, zone="local", outputs_path=OUTPUTS_FILE):
-        self._name_red = name_red
-        self._name_server =name_server
+    def __init__(self, name, zone="local", outputs_path=OUTPUTS_FILE):
+        self._name = name
         self._zone = zone
         self._network = NetworkModuleOutput(outputs_path)
         self.resources = self._build()
@@ -35,28 +34,20 @@ class ServerFactoryModule:
         return {
             "resource": {
                 "null_resource": {
-                    self._name_red: {
+                    self._name: {
                         "triggers": {
-                            "server_name": self._name_red,
+                            "server_name": self._name,
                             "subnet_name": self._network.name,
                             "subnet_cidr": self._network.cidr,
                             "zone": self._zone
                         },
                         "provisioner": [{
                             "local-exec": {
-                                "command": 
-                                    f'echo "Creando red {self._name_red}, en subred {self._network.name} ,(CIDR {self._network.cidr}, zona {self._zone})"'
-                            }
-                        }]
-                    },
-                    self._name_server: {
-                        "triggers": {
-                            "server_name": self._name_red,
-                        },
-                        "provisioner": [{
-                            "local-exec": {
-                                "command": 
-                                    f'echo "Creando server {self._name_red}"'
+                                "command": (
+                                    f"echo Creando servidor {self._name} "
+                                    f"en subred {self._network.name} "
+                                    f"(CIDR {self._network.cidr}, zona {self._zone})"
+                                )
                             }
                         }]
                     }
@@ -67,7 +58,7 @@ class ServerFactoryModule:
 if __name__ == "__main__":
     Path("main.tf.json").write_text(
         json.dumps(
-            ServerFactoryModule("hello-world","server").resources,
+            ServerFactoryModule("hello-world").resources,
             indent=4,
             sort_keys=True
         )
