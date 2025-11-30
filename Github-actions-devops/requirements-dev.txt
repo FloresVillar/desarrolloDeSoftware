@@ -1,0 +1,6 @@
+# Dependencias 3de desarrollo para análisis de seguridad, pruebas y utilidades HTTP (no se incluyen en producción)
+bandit==1.7.9  #SAST 
+semgrep==1.86.0 # estatico patrones
+pip-audit==2.7.3 # requirements.txt
+pytest==8.3.3 #
+requests==2.32.3
