@@ -29,8 +29,8 @@ WORKDIR /app
 # Copiar binarios y dependencias instaladas
 COPY --from=builder /root/.local /home/${APP_USER}/.local
 
-# Copiar todo el código fuente
-COPY . /app
+# Copiar todo el código fuente , microsevice,tests,todo
+COPY . /app 
 
 # <- AÑADE ESTO para dar permisos sobre /app
 RUN chown -R ${APP_USER}:${APP_USER} /app
