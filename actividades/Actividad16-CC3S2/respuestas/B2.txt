@@ -1,16 +1,9 @@
-Sí, la política bloquea configuraciones inseguras. Por ejemplo, revisa si un bucket se va a crear o actualizar como público, 
-y también verifica los outputs de Terraform para detectar strings que parezcan 
-secretos como claves, tokens o passwords. 
-Si encuentra alguno de estos casos, genera un mensaje de denegación 
-("deny") y OPA retorna un error, evitando que el plan pase sin control.
+El SBOM generado lista todos los archivos del proyecto con su hash SHA256,
+incluyendo proveedores, librerías y dependencias que el proyecto usa.
 
-El tipo de chequeo que hace es comparar el plan actual (plan.json) con reglas predefinidas en las 
-políticas Rego. Para buckets, revisa los atributos `public` de los recursos `creates` 
-o `updates`. Para outputs, analiza cada valor y usa expresiones regulares 
-para detectar palabras clave sensibles.
+Guardar este archivo con hash y firma permite demostrar la integridad de cada artefacto
+y cumplir con niveles SLSA, porque garantiza que nada fue alterado desde la fuente original.
 
-Si se intenta "forzar" algo inseguro en main.tf, 
-por ejemplo creando un bucket público o exponiendo un secreto 
-en un output, al correr `make policy` OPA devolvería una lista con los mensajes
- de deny correspondientes y el comando terminaría con código de error,
-  bloqueando la aplicación del plan.
+Para un auditor, se puede mostrar este SBOM junto con la firma y el mirror interno:
+así se demuestra que no se están descargando providers aleatorios de Internet,
+sino que todos provienen de un repositorio controlado y verificado.

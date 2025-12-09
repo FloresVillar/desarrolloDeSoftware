@@ -40,7 +40,8 @@ Declarar y levantar infraestructura no es algo trivial, no se confia sin tener c
 Desde luego los **drift** (desvios) se detectan via el ya conocido terraform apply.Toda la info que mantiene tfstate permitira que luego pueda auditarse adecuadamente, sin tener que buscar nada mas ,toda la info esta para unicamente ser leida.
 
 ## Parte B
-### 1 
+### B1
+#### 1 
 ```bash
 Requirement already satisfied: pluggy<2,>=1.5 in ./bdd/lib/python3.12/site-packages (from pytest==8.3.3->-r requirements.txt (line 2)) (1.6.0)
 (bdd) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/ejemplos/IaC-seguridad$ cp .env.example .env
@@ -56,7 +57,7 @@ svc = BucketService(storage, evidence_dir)
     state = load_json("state/state.json")
     plan = svc.plan(desired, state)
 ```
-### 2
+#### 2
 El archivo .json generado es    
 ```bash
 {
@@ -83,7 +84,7 @@ El archivo .json generado es
   }
 }
 ```
-### 3 
+#### 3 
 Mientras que la receta policy via **make policy**  ejecuta el comando opa con muchas banderas, brevemente algo de OPA antes, opa permite evaluar politicas de seguridad definiendo primero una politica como 
 ```bash
 package terraform
@@ -137,4 +138,23 @@ vemos que **opa eval -i ./.evidence/plan.json -d policies 'data.local.plan.** si
 OPA RC=0
 ```
 Una lista vacia de errores, RC=0
-### 4
+#### 4
+
+### B2
+Ahora vamos por la receta **sbom** ejecuta la linea **@$(PY) tools/sbom.py .** 
+#### 1
+Ejecutando @$(PY) tools/sbom.py . se genera un SBOM del proyecto. El script primero define el directorio a escanear con target = sys.argv[1] if len(sys.argv)>1 else ".", y luego recorre todos los archivos con os.walk(root). Para cada archivo calcula su hash SHA-256 con sha256_of_file(path), lo añade a la lista de artefactos items.append({"path": p, "sha256": sha256_of_file(p)}), y finalmente guarda todo en .evidence/sbom.json usando json.dump(sbom, f, indent=2). La carpeta .evidence se crea si no existe con os.makedirs(".evidence", exist_ok=True). Cada hash funciona como “huella digital”, permitiendo detectar cualquier cambio posterior y demostrar integridad. Esto sirve como evidencia auditable para mostrar a un auditor que todos los archivos del proyecto estaban en un estado conocido en un momento dado y que no se bajaron proveedores ni artefactos de fuentes externas sin control.
+#### 2
+```bash
+{
+  "generated_by": "local_iac_demo",
+  "artifacts": [
+    {
+      "path": "./Makefile",
+      "sha256": "a92d7d963962e82ddc615ead512c5dd865b942682e691d1c67e4d083d5ec64a5"
+    },
+    {
+      "path": "./.env.example",
+      "sha256": "61ad8e3c0b8e8f03394550e6b8b3c7e45168f13c44fadad6cd52927dfd9d88c8"
+    },
+```

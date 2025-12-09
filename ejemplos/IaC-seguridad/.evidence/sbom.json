@@ -3,7 +3,7 @@
   "artifacts": [
     {
       "path": "./Makefile",
-      "sha256": "2ab48a801e2e39e34be0e93107a3e45516b77e688254d01f77e6f0e49b242784"
+      "sha256": "a92d7d963962e82ddc615ead512c5dd865b942682e691d1c67e4d083d5ec64a5"
     },
     {
       "path": "./.env.example",
@@ -71,7 +71,7 @@
     },
     {
       "path": "./policies/no_secret_outputs.rego",
-      "sha256": "17dc1de0ed816c64a8d317d484892fe607b5a9cef13bfab5b731a760f0e70a8a"
+      "sha256": "543fab2c4b9c219f0d680a7097c1c57d9dd086e46e673317b58c221d85518718"
     },
     {
       "path": "./policies/no_public.rego",
@@ -115,11 +115,11 @@
     },
     {
       "path": "./bdd/bin/python3",
-      "sha256": "1d3cf64f97cadc79fdc6fe2496a21b7b456cb94211978cfef5a65f616af74fd5"
+      "sha256": "1319c137ea5d30f1d7599943cb0e72666648c20a94cf5932dd095364d07dafeb"
     },
     {
       "path": "./bdd/bin/python3.12",
-      "sha256": "1d3cf64f97cadc79fdc6fe2496a21b7b456cb94211978cfef5a65f616af74fd5"
+      "sha256": "1319c137ea5d30f1d7599943cb0e72666648c20a94cf5932dd095364d07dafeb"
     },
     {
       "path": "./bdd/bin/pip3.12",
@@ -127,7 +127,7 @@
     },
     {
       "path": "./bdd/bin/python",
-      "sha256": "1d3cf64f97cadc79fdc6fe2496a21b7b456cb94211978cfef5a65f616af74fd5"
+      "sha256": "1319c137ea5d30f1d7599943cb0e72666648c20a94cf5932dd095364d07dafeb"
     },
     {
       "path": "./bdd/bin/activate",
@@ -4880,6 +4880,14 @@
     {
       "path": "./app/__pycache__/ports.cpython-312.pyc",
       "sha256": "8da1a86a2535bcce9f118637da4adc859ed237abeed5124c621d9a911e900192"
+    },
+    {
+      "path": "./.evidence/sbom.json",
+      "sha256": "8f61b600de8cd2a19e11650a12bd94182ee8003b3191bc47246d18c50a2cb9c1"
+    },
+    {
+      "path": "./.evidence/plan.json",
+      "sha256": "2cfd526d40569f22219620afdcac8443b960dd81e6de01061b746dc66a262393"
     }
   ]
 }
