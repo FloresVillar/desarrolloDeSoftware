@@ -45,3 +45,8 @@ clean:
 	@echo "[clean] reseteando state/state.json"
 	@echo '{ "version": 1, "resources": [] }' > state/state.json
 	@echo "listo"
+
+.PHONY: evidence
+evidence:
+	@echo "Generando archivo de evidencia..."
+	@tar -cvf evidence-$(shell date +%Y%m%d).tar .evidence/

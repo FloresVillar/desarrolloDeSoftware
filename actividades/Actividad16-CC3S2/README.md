@@ -158,3 +158,19 @@ Ejecutando @$(PY) tools/sbom.py . se genera un SBOM del proyecto. El script prim
       "sha256": "61ad8e3c0b8e8f03394550e6b8b3c7e45168f13c44fadad6cd52927dfd9d88c8"
     },
 ```
+### B3
+
+#### 1 
+```bash
+.PHONY: evidence
+evidence:
+	@echo "Generando archivo de evidencia..."
+	@tar -cvf evidence-$(shell date +%Y%m%d).tar .evidence/
+.....
+── data
+├── desired
+│   └── config.yaml
+├── evidence-20251209.tar
+├── Instrucciones.md
+├── Makefile
+```

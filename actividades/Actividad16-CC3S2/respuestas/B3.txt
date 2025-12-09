@@ -1,0 +1,10 @@
+Antes de aplicar un cambio en producción, incluiría estas piezas mínimas de evidencia en el ticket de cambio:
+
+- Plan de Terraform (tfplan) firmado o con hash, para demostrar exactamente qué se va a crear/modificar.
+- SBOM con hashes de todos los artefactos que se van a desplegar, mostrando integridad y procedencia.
+- Resultado del escaneo de secretos (OPA o Conftest), para asegurar que no se están exponiendo claves ni outputs sensibles.
+- Mención explícita del tag semántico del módulo que se va a usar (por ejemplo, v1.2.0), asegurando reproducibilidad y que no se toman versiones “random” del repositorio.
+
+RACI:
+- R/Responsible: la persona o equipo que ejecuta el cambio (por ejemplo, DevOps o Infra Engineer). Es quien corre terraform apply o el pipeline.
+- A/Accountable: la persona que responde formalmente por el resultado del cambio en producción (por ejemplo, Cloud Infra Manager o Lead DevOps). Es quien firma la aprobación y garantiza que todo cumple políticas y controles.
