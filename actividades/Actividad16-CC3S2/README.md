@@ -38,3 +38,103 @@ De modo que se dara un mensaje de advertencia, una forma aterrizada y no transpa
 ### A5
 Declarar y levantar infraestructura no es algo trivial, no se confia sin tener certeza de que los controles han sido solventados correctamente.Corroborando lo anterior via SBOM firmados (los componentes son confiables).De momento lo mas cercano son los resultados de **plan, apply** , estos nos permiten ver que configuraciones tenemos y quermos aplicar.
 Desde luego los **drift** (desvios) se detectan via el ya conocido terraform apply.Toda la info que mantiene tfstate permitira que luego pueda auditarse adecuadamente, sin tener que buscar nada mas ,toda la info esta para unicamente ser leida.
+
+## Parte B
+### 1 
+```bash
+Requirement already satisfied: pluggy<2,>=1.5 in ./bdd/lib/python3.12/site-packages (from pytest==8.3.3->-r requirements.txt (line 2)) (1.6.0)
+(bdd) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/ejemplos/IaC-seguridad$ cp .env.example .env
+(bdd) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/ejemplos/IaC-seguridad$ make plan
+Plan guardado en: ./.evidence/plan.json
+Plan en ./.evidence/plan.json
+```
+Al ejecutar la receta plan via **make plan** hacemos **@ $(PY) tools/plan.y** , e script plan.py  , es aqui donde comparamos el estado deseado **desired** vs el estado actual **state** , el deseado se declara en **config.yaml** 
+```bash
+svc = BucketService(storage, evidence_dir)
+
+    desired = svc.load_desired("desired/config.yaml")
+    state = load_json("state/state.json")
+    plan = svc.plan(desired, state)
+```
+### 2
+El archivo .json generado es    
+```bash
+{
+  "creates": [
+    {
+      "type": "bucket",
+      "name": "research-artifacts",
+      "public": false,
+      "classification": "Restricted",
+      "allowed_prefix": "experiments/"
+    },
+    {
+      "type": "bucket",
+      "name": "docs",
+      "public": false,
+      "classification": "Internal",
+      "allowed_prefix": "handbooks/"
+    }
+  ],
+  "updates": [],
+  "outputs": {
+    "count_desired_buckets": 2,
+    "count_state_buckets": 0
+  }
+}
+```
+### 3 
+Mientras que la receta policy via **make policy**  ejecuta el comando opa con muchas banderas, brevemente algo de OPA antes, opa permite evaluar politicas de seguridad definiendo primero una politica como 
+```bash
+package terraform
+
+# Requiere entrada tipo tfplan para Conftest/OPA
+#politica.rego
+deny[msg] {
+  some k
+  output := input.planned_values.outputs[k]
+  val := output.value
+  is_string(val)
+  re_match("(?i)(key|secret|password|token|api[_-]?key)", val)
+  msg := sprintf("El output '%s' puede contener un secreto sensible", [k])
+}
+``` 
+Y luego comprobando si nuestro tfplan la cumple **opa eval --format=pretty --data politica.rego --input tfplan.json "data.terraform.deny"**
+En nuestro caso se hace esto via la receta **policy** de nuestro Makefile, antes se añaden 3 lineas de comando a la receta para obtener el ejecutable, darle permisos de ejecucion y guardarlo en la ruta los binarios
+```bash
+@curl -L -o opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64
+	@chmod +x opa
+	@sudo mv opa /usr/local/bin/
+	@if command -v opa >/dev/null 2>&1; then \
+		opa eval -i ./.evidence/plan.json -d policies 'data.local.plan.deny'; \
+		RC=$$?; \
+		echo "OPA RC=$$RC"; \
+		exit $$RC; \
+	else \
+		echo "opa no instalado; omitiendo policy gate"; \
+	fi
+
+```
+vemos que **opa eval -i ./.evidence/plan.json -d policies 'data.local.plan.** sigue la sintaxis opa eval -input PLAN/ESTADO -data POLITICA REGLA_A_EVALUAR , antes se cambia una de las politicas de policies usando **re_match("(?i)(key|secret|token|password)", sprintf("%v", [v]))**, la salida devuelta es 
+```bash
+(bdd) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/ejemplos/IaC-seguridad$ make policy
+{
+  "result": [
+    {
+      "expressions": [
+        {
+          "value": [],
+          "text": "data.local.plan.deny",
+          "location": {
+            "row": 1,
+            "col": 1
+          }
+        }
+      ]
+    }
+  ]
+}
+OPA RC=0
+```
+Una lista vacia de errores, RC=0
+### 4

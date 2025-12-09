@@ -11,6 +11,9 @@ plan:
 	@echo "Plan en ./.evidence/plan.json"
 
 policy:
+	@curl -L -o opa https://openpolicyagent.org/downloads/v0.48.0/opa_linux_amd64
+	@chmod +x opa
+	@sudo mv opa /usr/local/bin/
 	@if command -v opa >/dev/null 2>&1; then \
 		opa eval -i ./.evidence/plan.json -d policies 'data.local.plan.deny'; \
 		RC=$$?; \

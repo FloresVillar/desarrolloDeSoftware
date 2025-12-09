@@ -1,0 +1,16 @@
+Sí, la política bloquea configuraciones inseguras. Por ejemplo, revisa si un bucket se va a crear o actualizar como público, 
+y también verifica los outputs de Terraform para detectar strings que parezcan 
+secretos como claves, tokens o passwords. 
+Si encuentra alguno de estos casos, genera un mensaje de denegación 
+("deny") y OPA retorna un error, evitando que el plan pase sin control.
+
+El tipo de chequeo que hace es comparar el plan actual (plan.json) con reglas predefinidas en las 
+políticas Rego. Para buckets, revisa los atributos `public` de los recursos `creates` 
+o `updates`. Para outputs, analiza cada valor y usa expresiones regulares 
+para detectar palabras clave sensibles.
+
+Si se intenta "forzar" algo inseguro en main.tf, 
+por ejemplo creando un bucket público o exponiendo un secreto 
+en un output, al correr `make policy` OPA devolvería una lista con los mensajes
+ de deny correspondientes y el comando terminaría con código de error,
+  bloqueando la aplicación del plan.
