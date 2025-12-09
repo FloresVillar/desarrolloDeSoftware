@@ -1,0 +1,23 @@
+{
+  "creates": [
+    {
+      "type": "bucket",
+      "name": "research-artifacts",
+      "public": false,
+      "classification": "Restricted",
+      "allowed_prefix": "experiments/"
+    },
+    {
+      "type": "bucket",
+      "name": "docs",
+      "public": false,
+      "classification": "Internal",
+      "allowed_prefix": "handbooks/"
+    }
+  ],
+  "updates": [],
+  "outputs": {
+    "count_desired_buckets": 2,
+    "count_state_buckets": 0
+  }
+}

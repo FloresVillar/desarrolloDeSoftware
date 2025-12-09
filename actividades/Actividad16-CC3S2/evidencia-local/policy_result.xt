@@ -1,0 +1,15 @@
+{
+  "errors": [
+    {
+      "message": "undefined function to_string",
+      "code": "rego_type_error",
+      "location": {
+        "file": "policies/no_secret_outputs.rego",
+        "row": 6,
+        "col": 47
+      }
+    }
+  ]
+}
+OPA RC=2
+make: *** [Makefile:17: policy] Error 2

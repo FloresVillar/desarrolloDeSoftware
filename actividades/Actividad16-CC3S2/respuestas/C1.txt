@@ -1,0 +1,15 @@
+Para equilibrar autonomía y control, primero conviene separar los módulos en repositorios 
+independientes con “dueños naturales” responsables de cada módulo. 
+Esto permite que los equipos de producto desarrollen y prueben cambios rápidamente sin bloquear a otros, 
+mientras que la responsabilidad de la calidad recae en alguien claro.  
+
+El versionado semántico con notas de versión claras asegura que los equipos pueden consumir módulos de manera predecible,
+eligiendo versiones estables y entendiendo los cambios que afectan seguridad o compatibilidad.  
+
+Los gates automáticos, como OPA, escaneo de secretos y SBOM, funcionan como un “control técnico”
+ que aplica las políticas duras (encriptado por defecto, IAM mínimo, TLS 1.3+, no exponer secretos)
+de manera automática y reproducible, evitando revisiones manuales lentas.  
+
+Finalmente, las métricas tipo DORA o KPIs de IaC permiten monitorear el proceso:
+tiempos de revisión, locks concurrentes y porcentaje de rechazos por política. 
+La idea es que sean bajos pero distintos de cero, mostrando que las políticas funcionan sin bloquear la velocidad del equipo.  
