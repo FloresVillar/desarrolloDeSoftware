@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telnet-server
+  labels:
+    app: telnet-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: telnet-server
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # Puede crear 1 pod adicional durante el despliegue
+      maxUnavailable: 0  # Nunca deja el número de pods disponibles en 0
+  template:
+    metadata:
+      labels:
+        app: telnet-server
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 10001
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - telnet-server
+                topologyKey: "kubernetes.io/hostname"
+      containers:
+        - name: telnet-server
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsUser: 10001
+          image: dftd/telnet-server:v1
+          imagePullPolicy: IfNotPresent
+
+          # Variables de entorno que usa tu binario (main.go)
+          env:
+            - name: TELNET_PORT
+              value: "2323"
+            - name: METRIC_PORT
+              value: "9000"
+
+          ports:
+            - containerPort: 2323
+              name: telnet
+            - containerPort: 9000
+              name: metrics
+
+          # El pod se considera "ready" cuando el endpoint /metrics responde
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 9000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+            successThreshold: 1
+
+          # Liveness: si /metrics deja de responder, Kubernetes reinicia el contenedor
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 9000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+            successThreshold: 1
+
+          resources:
+            requests:
+              cpu: "0.1"
+              memory: "1Mi"
+            limits:
+              cpu: "0.5"
+              memory: "100Mi"

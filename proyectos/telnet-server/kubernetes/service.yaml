@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: telnet-server
+  labels:
+    app: telnet-server
+spec:
+  type: LoadBalancer
+  selector:
+    app: telnet-server
+    color: blue    # <- cambia a "green" cuando quieras pasar al entorno verde
+  ports:
+    - port: 2323
+      name: telnet
+      protocol: TCP
+      targetPort: 2323
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: telnet-server-metrics
+  labels:
+    app: telnet-server
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9000"
+spec:
+  type: ClusterIP
+  selector:
+    app: telnet-server
+    color: blue    # <- mismo color que el Service principal
+  ports:
+    - name: metrics
+      port: 9000
+      protocol: TCP
+      targetPort: 9000

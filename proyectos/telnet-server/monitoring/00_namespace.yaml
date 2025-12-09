@@ -1,0 +1,6 @@
+# Namespace dedicado para recursos de monitoreo (Prometheus, Alertmanager, etc.)
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring

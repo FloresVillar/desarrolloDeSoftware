@@ -1,0 +1,21 @@
+# ConfigMap para registrar los dashboards de Grafana desde archivos en el pod
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: monitoring
+data:
+  dashboards.yaml: |-
+    apiVersion: 1
+
+    providers:
+      - name: 'dftd-dashboards'
+        orgId: 1
+        type: file
+        disableDeletion: false
+        editable: true
+        updateIntervalSeconds: 30
+        allowUiUpdates: false
+        options:
+          path: /etc/grafana/dashboards
+          foldersFromFilesStructure: true
