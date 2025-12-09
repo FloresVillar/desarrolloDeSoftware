@@ -16,3 +16,5 @@ venv_labo/
 **/coverage.txt
 **/__pycache__/
 labs/Laboratorio11/minikube-linux-amd64
+proyectos/telnet-server/minikube-linux-amd64
+Github-actions-devops/kubectl
