@@ -36,16 +36,26 @@ test:
 	docker compose -f docker-compose.test.yml down -v
 
 .PHONY: sbom
-sbom:
+sbom: dep
 	./scripts/sbom.sh $(APP_IMG)  ./dist/sbom-app.spdx.json
 	./scripts/sbom.sh $(AIRFLOW_IMG) ./dist/sbom-airflow.spdx.json
 	@echo "SBOMs en ./dist"
+.PHONY: dep
+dep: 
+	@curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sudo sh
+	./bin/syft version
 
 .PHONY: scan
-scan:
+scan: dep-trivy
 	./scripts/scan_vulns.sh $(APP_IMG)
 	./scripts/scan_vulns.sh $(AIRFLOW_IMG)
-.PHONY: reset-init
 
+.PHONY: dep-trivy
+dep-trivy:
+	@mkdir -p ./bin
+	@curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b ./bin
+	@./bin/trivy version
+	trivy --version
+.PHONY: reset-init
 reset-init:
 	./scripts/airflow_reset_init.sh

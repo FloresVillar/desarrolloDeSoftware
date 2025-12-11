@@ -338,3 +338,108 @@ esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio9$ docker compose ex
  beta  |     5 |            25
 (5 rows)
 ```
+make test 
+```bash
+test:
+	docker compose -f docker-compose.test.yml up --build --exit-code-from sut
+	docker compose -f docker-compose.test.yml down -v
+# en el docker compose se levantan construyen(las imagenes) dos servicios en sus repectivos contenedores, sut y postgres ,con los atributos usuales tanto para la definicion de las imagenes como para los contextos docker,
+...
+postgres-1  | 2025-12-11 02:17:58.401 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"                                                           
+postgres-1  | 2025-12-11 02:17:58.413 UTC [27] LOG:  database system was shut down at 2025-12-11 02:17:56 UTC                                                              
+postgres-1  | 2025-12-11 02:17:58.430 UTC [1] LOG:  database system is ready to accept connections
+[+] Running 3/3
+ ✔ Container laboratorio9-sut-1       Removed                                                                                                                         0.0s 
+ ✔ Container laboratorio9-postgres-1  Removed                                                                                                                         0.0s 
+ ! Network laboratorio9_backend       Resource is still in use     1
+
+```
+make sbom
+```bash
+#una nueva receta prerrequisito de sbom para instalar syft 
+.PHONY: sbom
+sbom: dep
+	./scripts/sbom.sh $(APP_IMG)  ./dist/sbom-app.spdx.json
+	./scripts/sbom.sh $(AIRFLOW_IMG) ./dist/sbom-airflow.spdx.json
+	@echo "SBOMs en ./dist"
+.PHONY: dep
+dep: 
+	@curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sudo sh
+	./bin/syft version
+#make sbom
+#ejecuta el .sh 
+SYFT_BIN="./bin/syft"
+
+"$SYFT_BIN" "$IMG" -o spdx-json > "$OUT"
+...
+ ✔ Loaded image                                                                                                                                            etl-app:1.0.0   
+ ✔ Parsed image                                                                                  sha256:e679f317d5a7e07d9f8366a017a9792accec157f754907ca68243bd271bd4636   
+ ✔ Cataloged contents                                                                                   6257ef686c0f68dee0395d0b0634be08751902068fa1652184f832e8a81efe22   
+   ├── ✔ Packages                        [113 packages]
+   ├── ✔ Executables                     [838 executables]
+   ├── ✔ File metadata                   [2,690 locations]
+   └── ✔ File digests                    [2,690 files]
+./scripts/sbom.sh airflow-secure:1.0.0 ./dist/sbom-airflow.spdx.json
+[SBOM] Generando SBOM para airflow-secure:1.0.0 en ./dist/sbom-airflow.spdx.json
+ ✔ Loaded image                                                                                                                                     airflow-secure:1.0.0   
+ ⠙ Parsing image                   ━━━━━━━━━━━━━━━━━━━━                                          sha256:27c89e1cb1ceb9cccac5a66a0c0cff0acd502ae93ac858fe4b68c4932d56778b   
+..
+ ✔ Parsed image                                                                                  sha256:27c89e1cb1ceb9cccac5a66a0c0cff0acd502ae93ac858fe4b68c4932d56778b   
+ ✔ Cataloged contents                                                                                   288565d245a60d678545605e9890de773d54e79241b1879f8ce0ba580425de4c   
+   ├── ✔ Packages                        [603 packages]
+   ├── ✔ Executables                     [1,367 executables]
+   ├── ✔ File metadata                   [7,939 locations]
+   └── ✔ File digests                    [7,939 files]
+SBOMs en ./dist
+```
+make scan
+```bash
+#se agrega la receta dep-trivy
+
+.PHONY: scan
+scan: dep-trivy
+	./scripts/scan_vulns.sh $(APP_IMG)
+	./scripts/scan_vulns.sh $(AIRFLOW_IMG)
+
+.PHONY: dep-trivy
+dep-trivy:
+	@mkdir -p ./bin
+	@curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b ./bin
+	@./bin/trivy version
+	trivy --version
+```
+ejecutando el .sh scan_vulns
+**./bin/trivy image --exit-code 1 --severity HIGH,CRITICAL "$IMG"**
+```bash
+ sudo chmod +x scripts/scan_vulns.sh
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio9$ make scan
+aquasecurity/trivy info checking GitHub for latest tag
+aquasecurity/trivy info found version: 0.68.1 for v0.68.1/Linux/64bit
+...
+```
+Para lo anterior fue necesario 
+```bash
+[./bin existe y es de root]
+           │
+           ▼
+ls -ld ./bin
+           │
+           ▼
+make dep-trivy
+  # Falla: install: Permission denied
+           │
+           ▼
+sudo chown -R $(whoami):$(whoami) ./bin
+           │
+           ▼
+make dep-trivy
+  # Vuelve a intentar, puede tardar por conexión lenta
+           │
+           ▼
+rm -rf ./bin && mkdir ./bin
+           │
+           ▼
+make dep-trivy
+  # Descarga e instala Trivy en ./bin ✅
+
+```
