@@ -440,6 +440,17 @@ rm -rf ./bin && mkdir ./bin
            │
            ▼
 make dep-trivy
-  # Descarga e instala Trivy en ./bin ✅
+  # Descarga e instala Trivy en ./bin 
 
 ```
+Ahora la actividad propiamente
+## Parte 1 - Operar, observar y documentar
+### 1.1 Levantamiento y verificacion
+imagenes → verifica estado 
+Los artefactos se guardadn en evidencias/
+
+### Topologia y superficie expuesta
+servicios → redes → resolucion de nombres en red Docker ..
+
+Detecta la red , inspeccion de la red, tabla de puertos, prueba DNS 
+
