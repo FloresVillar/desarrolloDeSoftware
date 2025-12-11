@@ -1,0 +1,11 @@
+
+ laboratorio9-airflow-scheduler-1 
+
+
+ laboratorio9-airflow-webserver-1 
+
+
+ laboratorio9-postgres-1 
+21:            "Health": {
+22-                "Status": "healthy",
+23-                "FailingStreak": 0,

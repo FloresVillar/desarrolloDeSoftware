@@ -1,0 +1,95 @@
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.08kB done
+#1 DONE 0.0s
+
+#2 [etl-app internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.06kB done
+#2 DONE 0.0s
+
+#3 [airflow-webserver internal] load build definition from Dockerfile
+#3 transferring dockerfile: 618B done
+#3 DONE 0.0s
+
+#4 [airflow-webserver internal] load metadata for docker.io/apache/airflow:2.9.1-python3.11
+#4 DONE 0.3s
+
+#5 [etl-app internal] load metadata for docker.io/library/python:3.12-slim
+#5 DONE 0.3s
+
+#6 [airflow-webserver internal] load .dockerignore
+#6 transferring context: 2B done
+#6 DONE 0.0s
+
+#7 [etl-app internal] load .dockerignore
+#7 transferring context: 2B done
+#7 DONE 0.0s
+
+#8 [airflow-webserver 1/4] FROM docker.io/apache/airflow:2.9.1-python3.11@sha256:1553c44823e2787dc1e78d50c39c147792b381adb45d2044d383051d35c8b5c0
+#8 DONE 0.0s
+
+#9 [etl-app builder 1/4] FROM docker.io/library/python:3.12-slim@sha256:590cad70271b6c1795c6a11fb5c110efca593adbd0d4883cd19c36df6a56467b
+#9 DONE 0.0s
+
+#10 [airflow-webserver internal] load build context
+#10 transferring context: 525B done
+#10 DONE 0.0s
+
+#11 [etl-app internal] load build context
+#11 transferring context: 159B done
+#11 DONE 0.0s
+
+#12 [airflow-webserver 3/4] COPY app          /opt/airflow/app
+#12 CACHED
+
+#13 [airflow-webserver 2/4] COPY airflow/dags /opt/airflow/dags
+#13 CACHED
+
+#14 [airflow-webserver 4/4] RUN pip install --no-cache-dir     --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.9.1/constraints-3.11.txt"     pandas psycopg2-binary
+#14 CACHED
+
+#15 [etl-app runtime 3/7] WORKDIR /app
+#15 CACHED
+
+#16 [etl-app builder 4/4] RUN apt-get update  && apt-get install -y --no-install-recommends build-essential gcc  && pip install --upgrade pip  && python -m venv /venv  && . /venv/bin/activate  && pip install -r requirements.txt  && apt-get purge -y build-essential gcc  && apt-get autoremove -y  && rm -rf /var/lib/apt/lists/*
+#16 CACHED
+
+#17 [etl-app runtime 4/7] COPY --from=builder /venv /venv
+#17 CACHED
+
+#18 [etl-app runtime 2/7] RUN useradd --create-home --uid 10001 etluser
+#18 CACHED
+
+#19 [etl-app builder 2/4] WORKDIR /build
+#19 CACHED
+
+#20 [etl-app runtime 5/7] COPY pipeline.py ./pipeline.py
+#20 CACHED
+
+#21 [etl-app builder 3/4] COPY requirements.txt .
+#21 CACHED
+
+#22 [etl-app runtime 6/7] COPY healthcheck.py ./healthcheck.py
+#22 CACHED
+
+#23 [etl-app runtime 7/7] COPY data ./data
+#23 CACHED
+
+#24 [etl-app] exporting to image
+#24 exporting layers done
+#24 writing image sha256:e679f317d5a7e07d9f8366a017a9792accec157f754907ca68243bd271bd4636 done
+#24 naming to docker.io/library/etl-app:1.0.0 done
+#24 DONE 0.0s
+
+#25 [airflow-webserver] exporting to image
+#25 exporting layers done
+#25 writing image sha256:27c89e1cb1ceb9cccac5a66a0c0cff0acd502ae93ac858fe4b68c4932d56778b done
+#25 naming to docker.io/library/airflow-secure:1.0.0 done
+#25 DONE 0.0s
+
+#26 [etl-app] resolving provenance for metadata file
+#26 DONE 0.0s
+
+#27 [airflow-webserver] resolving provenance for metadata file
+#27 DONE 0.0s
+ airflow-secure:1.0.0  Built
+ etl-app:1.0.0  Built

@@ -1,0 +1,58 @@
+NET=
+[]
+[
+    {
+        "Name": "observabilidad-mcp_default",
+        "Id": "a8e0f26360e19fec12705bb86e5ca088aa1e4a1bd87b75a8d2dca12621115db6",
+        "Created": "2025-12-03T10:02:33.933208655-05:00",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.21.0.0/16",
+                    "IPRange": "",
+                    "Gateway": "172.21.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "com.docker.compose.config-hash": "c7e3ed3d03b04be4f52ae6c8d1d677cfaa1308943bd49821c87ae38b7330b7f6",
+            "com.docker.compose.network": "default",
+            "com.docker.compose.project": "observabilidad-mcp",
+            "com.docker.compose.version": "2.40.3"
+        },
+        "Containers": {},
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.21.0.0/16": {
+                        "IPsInUse": 3,
+                        "DynamicIPsAvailable": 65533
+                    }
+                }
+            }
+        }
+    }
+]
+laboratorio9-postgres-1	5432/tcp
+laboratorio9-airflow-scheduler-1	8080/tcp
+laboratorio9-airflow-webserver-1	0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+pc5_api	0.0.0.0:8001->8000/tcp, [::]:8001->8000/tcp
+pc5_db	5432/tcp
+[DNS] airflow-webserver:
+[DNS] postgres:
+[HTTP] webserver /health:
+000
