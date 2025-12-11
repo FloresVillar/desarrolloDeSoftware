@@ -13,13 +13,28 @@ help:
 	@echo "  make sbom         - genera SBOM para auditoría"
 	@echo "  make scan         - escaneo rápido de vulns de imagen"
 
+.PHONY: env
+env:
+	@source ./scripts/exportar_env.sh
+
 .PHONY: build
 build:
 	docker build --no-cache -t $(APP_IMG) ./app
 	docker build --no-cache -t $(AIRFLOW_IMG) -f airflow/Dockerfile .
 
+PHONY: build-rapido env
+build-rapido:
+	docker build -t $(APP_IMG) ./app
+	docker build -t $(AIRFLOW_IMG) -f airflow/Dockerfile .
+
+.PHONY: up-rapido env
+up-rapido: build-rapido
+	docker compose up --build -d
+
 .PHONY: up
 up: build
+	docker compose down -v
+	docker compose prune -f
 	docker compose up --build -d
 
 .PHONY: init-airflow

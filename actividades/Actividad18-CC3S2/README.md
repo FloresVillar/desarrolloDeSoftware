@@ -547,3 +547,61 @@ docker run --rm --network "$NET" byrnedo/alpine-curl \
   | tee -a Actividad18-CC3S2/evidencia/03_logs_airflow.txt
 ```
 Ahorrajaba **webserver /health: 000 webserver /health: 000** , pues nuestro brige no es **echo "${NET}" observabilidad-mcp_default** sino  **8a96f1faa8f8   laboratorio9_backend         bridge    local**
+```bash
+$ docker run --rm --network laboratorio9_backend byrnedo/alpine-curl \
+    curl -s -o /dev/null -w "webserver /health: %{http_code}\n" http://airflow-webserver:8080/health
+webserver /health: 000
+{"dag_processor": {"latest_dag_processor_heartbeat": null, "status": null}, "metadatabase": {"status": "healthy"}, "scheduler": {"latest_scheduler_heartbeat": "2025-12-11T15:28:27.361457+00:00", "status": "healthy"}, "triggerer": {"latest_triggerer_heartbeat": null, "status": null}}webserver /health: 200
+# con un esquema grafico de que se hizo (cortesia de GPT)
+# 1. Definición de red en docker-compose.yml
+networks:
+  backend:
+    driver: bridge
+           │
+           ▼
+# 2. Docker Compose genera automáticamente un nombre real para la red
+#    <prefijo_proyecto>_<nombre_red>
+#    Prefijo del proyecto = nombre de la carpeta del docker-compose.yml en minúsculas
+#    Nombre de red = backend
+#    → Nombre real de la red:
+#       laboratorio9_backend
+           │
+           ▼
+# 3. Verificación con docker network
+docker network ls
+# OUTPUT EXAMPLE:
+# NETWORK ID     NAME                     DRIVER    SCOPE
+# 8a96f1faa8f8   laboratorio9_backend    bridge    local
+           │
+           ▼
+# 4. Uso en docker run para conectarse a la red correcta
+docker run --rm --network laboratorio9_backend byrnedo/alpine-curl \
+    curl -s -o /dev/null -w "webserver /health: %{http_code}\n" http://airflow-webserver:8080/health
+# OUTPUT:
+# webserver /health: 200
+
+```
+## Parte 2 Endurecimiento del compose /Dockerfile
+Se agrega el atributo **healthcheck** a los servicios que indica a guia
+```bash
+#aunque sea repetitivo, vamos,nunca esta de mas detallar la sintaxis
+healthcheck:
+  test: ["CMD", "comando", "arg1", "arg2", ...]  # Comando que verifica la salud
+  interval: 10s       # Cada cuánto tiempo se ejecuta el test
+  timeout: 3s         # Tiempo máximo que puede tardar el test
+  retries: 5          # Número de intentos fallidos antes de marcar unhealthy
+  start_period: 20s   # Período inicial de gracia (evita falsos negativos al arrancar)
+```
+Levantando nuevamente via make up .Demora demasiado, por ello se define una receta up-rapido sin el flag --no-cache, para no descargar y construir la imagen nuevamente.
+```bash
+
+PHONY: build-rapido
+build-rapido:
+	docker build -t $(APP_IMG) ./app
+	docker build -t $(AIRFLOW_IMG) -f airflow/Dockerfile .
+
+.PHONY: up-rapido
+up-rapido: build-rapido
+	docker compose up --build -d
+
+```

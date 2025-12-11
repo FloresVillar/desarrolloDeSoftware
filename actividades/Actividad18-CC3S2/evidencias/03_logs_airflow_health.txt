@@ -1,2 +1,4 @@
-webserver /health: 000
-webserver /health: 000
+{"dag_processor": {"latest_dag_processor_heartbeat": null, "status": null}, "metadatabase": {"status": "healthy"}, "scheduler": {"latest_scheduler_heartbeat": "2025-12-11T15:43:20.092605+00:00", "status": "healthy"}, "triggerer": {"latest_triggerer_heartbeat": null, "status": null}}webserver /health: 200
+[MARCA] DAG cargado: etl_pipeline
+[MARCA] webserver /health: 200
+[MARCA] Scheduler heartbeat detectado

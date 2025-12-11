@@ -398,3 +398,5 @@ airflow-scheduler-1  | [[34m2025-12-11T13:58:18.331+0000[0m] {[34mscheduler_j
 airflow-scheduler-1  | [[34m2025-12-11T14:03:25.559+0000[0m] {[34mscheduler_job_runner.py:[0m1595} INFO[0m - Adopting or resetting orphaned tasks for active dag runs[0m
 airflow-scheduler-1  | [[34m2025-12-11T14:08:27.032+0000[0m] {[34mscheduler_job_runner.py:[0m1595} INFO[0m - Adopting or resetting orphaned tasks for active dag runs[0m
 airflow-scheduler-1  | [[34m2025-12-11T14:13:30.892+0000[0m] {[34mscheduler_job_runner.py:[0m1595} INFO[0m - Adopting or resetting orphaned tasks for active dag runs[0m
+webserver /health: 000
+{"dag_processor": {"latest_dag_processor_heartbeat": null, "status": null}, "metadatabase": {"status": "healthy"}, "scheduler": {"latest_scheduler_heartbeat": "2025-12-11T15:42:29.441879+00:00", "status": "healthy"}, "triggerer": {"latest_triggerer_heartbeat": null, "status": null}}webserver /health: 200
