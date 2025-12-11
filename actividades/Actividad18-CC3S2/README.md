@@ -95,3 +95,246 @@ Dockerfile(FROM imagen airflow)  /opt/airflow/dags   ←←←←←←← airfl
 ↓
 Airflow scheduler, webserver, workers
 ```
+Desde luego hay mucho mas que detallar , incluyendo los principios tecnicos subyacentes, con todo y muy  a mi pesar, el tiempo es el peor enemigo.Sin embargo se entiende el porque y como encaja airflow en el proeyecto y de momento eso es ligeramente suficiente.
+En ese sentido **make reset-init** levanta un contenedor temporal 
+```bash
+# levanta un contenedor temporal
+docker compose run --rm -e AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$DB_URL airflow-webserver bash -lc
+
+# ejecuta dos comandos , borrando la metadata y  recrea las datas airflow
+
+airflow db reset -y &&
+    airflow db init &&
+
+# para luego crear un usuario con todos atributos (opciones)
+airflow users create \
+  --username admin \
+  --firstname Admin \
+  --lastname User \
+  --role Admin \
+  --email admin@example.com \
+  --password admin || true
+
+```
+La siguientes recetas son mucho mas directas
+```bash
+.PHONY: up
+up:                 
+	docker compose up(SERVICIOS ) --build(RECONSTRUYE IMAGENES) -d (SEGUNDO PLANO)    
+PHONY: logs
+logs:
+	docker compose logs -f airflow-webserver
+```
+Y el resto de las instrucciones son explicativas y claras..
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio9$ make build
+docker build --no-cache -t etl-app:1.0.0 ./app
+[+] Building 181.0s (15/15) FINISHED                                                                                                                        docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                  0.0s
+ => => transferring dockerfile: 1.06kB                                                                                                                                0.0s
+ => [internal] load metadata for docker.io/library/python:3.12-slim                                                                                                   1.7s
+ => [internal] load .dockerignore                                
+...
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio9$ make reset-init
+./scripts/airflow_reset_init.sh
+[+] Running 1/1
+ ✔ Container laboratorio9-postgres-1  Started                                                                                                                         0.7s 
+[+] Creating 1/1
+ ✔ Container laboratorio9-postgres-1  Running   
+ ...
+```
+Para make reset-init se realiza lo siguiente
+```bash
+Tú corres:
+    make reset-init
+         |
+         v
+Script intenta:
+    airflow db reset
+         |
+         v
+Airflow intenta crear:
+    /opt/airflow/logs/...
+         |
+         v
+ERROR: Permission denied
+(no coincide el UID del contenedor con permisos del host)
+         |
+         v
+Necesitamos saber el UID interno → probamos:
+    docker run airflow-secure:1.0.0 id -u
+         |
+         v
+ENTRYPOINT fuerza:
+    airflow id -u    ← ERROR
+         |
+         v
+Solución:
+    docker run --entrypoint "" airflow-secure:1.0.0 id -u
+         |
+         v
+Resultado:
+    50000   ← UID real del contenedor
+         |
+         v
+Ahora puedes corregir permisos:
+    chown -R 50000:50000 ./airflow
+         |
+         v
+Finalmente:
+    make reset-init
+✔ Funciona
+```
+y
+```bash
+               ┌────────────────────────────────────────┐
+               │      TU MÁQUINA (HOST - Ubuntu)        │
+               └────────────────────────────────────────┘
+                             │
+                             │  Montas esta carpeta al contenedor
+                             ▼
+                 ./airflow/ (dueño = esau:esau)
+                 ├── dags/
+                 ├── logs/              ← PROBLEMA
+                 └── plugins/
+
+   El contenedor Airflow necesita escribir en:
+   /opt/airflow/logs/scheduler/...
+
+   PERO el usuario interno del contenedor es:
+                     UID = 50000
+                     GID = 50000
+
+   Y el host tenía:
+                     dueño = esau (UID 1000)
+                     permisos = 755
+
+   Resultado:
+   ┌────────────────────────────────────────────────────┐
+   │  ERROR: PermissionError: [Errno 13] Permission denied│
+   │  Airflow no puede crear carpetas en logs/           │
+   └────────────────────────────────────────────────────┘
+
+
+───────────────────────────
+      🔧 SOLUCIÓN FINAL
+───────────────────────────
+
+PASO 1 — Cambiar dueño del directorio montado  
+(para que coincida con el usuario del contenedor)
+
+    sudo chown -R 50000:50000 airflow
+           │      │      │       └── carpeta local que se monta
+           │      │      └───────── grupo interno del contenedor
+           │      └──────────────── usuario interno del contenedor
+           └──────────────────────── recursivo (subcarpetas)
+
+PASO 2 — Limpiar logs corruptos
+    sudo rm -rf airflow/logs/*
+
+PASO 3 — Reintentar inicialización
+    make reset-init
+
+
+───────────────────────────
+        ✔️ RESULTADO
+───────────────────────────
+
+Ahora el contenedor:
+
+   /opt/airflow/logs  ↔  ./airflow/logs  
+   (50000:50000)          (50000:50000)
+
+   → Puede crear carpetas  
+   → Puede escribir logs  
+   → Puede correr `airflow db init`  
+   → No hay más PermissionError
+...
+[2025-12-11T00:36:29.092+0000] {override.py:1880} INFO - Added Permission can read on Permission Views to role Admin
+[2025-12-11T00:36:29.117+0000] {override.py:1829} INFO - Created Permission View: menu access on Permission Pairs
+[2025-12-11T00:36:29.124+0000] {override.py:1880} INFO - Added Permission menu access on Permission Pairs to role Admin
+[2025-12-11T00:36:29.894+0000] {override.py:1516} INFO - Added user admin
+User "admin" created with role "Admin"
+```
+make up
+```bash
+ ✔ airflow-secure:1.0.0                        Built                                                                                                                  0.0s 
+ ✔ etl-app:1.0.0                               Built                                                                                                                  0.0s 
+ ✔ Container laboratorio9-postgres-1           Healthy                                                                                                                0.9s 
+ ✔ Container laboratorio9-airflow-scheduler-1  Started                                                                                                                1.2s 
+ ✔ Container laboratorio9-etl-app-1            Started                                                                                                                1.2s 
+ ✔ Container laboratorio9-airflow-webserver-1  Started                                                                                                                1.2s 
+ ✔ Container laboratorio9-airflow-init-1       Started               
+```
+make logs
+```bash
+.PHONY: logs
+logs:
+	docker compose logs -f airflow-webserver(SERVICIO)
+
+```
+<p aling = center>
+    <img src=airflow.png 
+    width = 80%>
+</p>
+
+Como bien indica las instrucciones del laboratorio **csv_path = os.environ.get("ETL_INPUT", "data/input.csv")**
+calcula la columna **df["value_squared"] = df["value"] ** 2**  e insertamos el resultado en una tabla **INSERT INTO processed_data (name, value, value_squared)
+VALUES (%(name)s, %(value)s, %(value_squared)s)**
+
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio9$ docker compose run --rm etl-app python pipeline.py
+[+] Creating 1/1
+ ✔ Container laboratorio9-postgres-1  Running                                                                                                                         0.0s 
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio9$ 
+```
+Para el siguiente comando 
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio9$ docker compose exec -T postgres  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT * FROM processed_data
+ LIMIT 5;"
+psql: error: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: FATAL:  role "root" does not exist
+```
+veamos lo que sucede
+```bash
+              Tu .env
+    ┌─────────────────────────┐
+    │ POSTGRES_USER=airflow   │
+    │ POSTGRES_DB=lab9        │
+    └─────────────┬───────────┘
+                  │
+     Docker Compose (sí lo lee)
+                  │
+         Contenedores OK ✔
+                  │
+────────────── LOCAL SHELL ────────────────
+                  │
+    (POSTGRES_USER no existe aquí)   ✘
+                  │
+docker compose exec postgres \
+  psql -U "$POSTGRES_USER" ...
+                  │
+"$POSTGRES_USER" → "" (vacío)
+                  │
+psql usa usuario local → root
+                  │
+Postgres: "role root no existe" → ERROR
+    set -a
+    . .env
+    set +a    ← modo auto export ,cada variable definada despues se exporta
+
+```
+Resultado deseado
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio9$ set -a
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio9$ . .env
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio9$ set +a
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio9$ docker compose exec -T postgres  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT * FROM processed_data LIMIT 5;"
+ name  | value | value_squared 
+-------+-------+---------------
+ alpha |     2 |             4
+ beta  |     5 |            25
+ gamma |    -3 |             9
+ alpha |     2 |             4
+ beta  |     5 |            25
+(5 rows)
+```
