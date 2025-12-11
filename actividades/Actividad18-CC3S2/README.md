@@ -449,8 +449,101 @@ Ahora la actividad propiamente
 imagenes → verifica estado 
 Los artefactos se guardadn en evidencias/
 
-### Topologia y superficie expuesta
+### 1.2 Topologia y superficie expuesta
 servicios → redes → resolucion de nombres en red Docker ..
 
 Detecta la red , inspeccion de la red, tabla de puertos, prueba DNS 
 
+### 1.3 Observabilidad minima
+logs de webserver , del scheduler, morker  y comprobacion de salud
+
+Se tuvo problemas al ejecutar la obtencion de los logs **docker compose logs --tail=200 airflow-scheduler | sed -E 's/(password|token|secret)=\S+/REDACTED/g' | tee -a Actividad18-CC3S2/evidencia/03_logs_airflow.txt** , por lo que se se resetringe pandas < 2.2 para que trabaje bien con airflow 2.9.1 , ademas se solventa el hecho de que **depends_on: postgres: condition: service_healthy** espera que inicie el servicio postgres pero no a que este listo , entonces definimos esa dependencia explicitamente en el make 
+```bash
+.PHONY: build
+build:
+	docker build --no-cache -t $(APP_IMG) ./app
+	docker build --no-cache -t $(AIRFLOW_IMG) -f airflow/Dockerfile .
+
+.PHONY: up
+up: build
+	docker compose up --build -d
+
+```
+Al hacer make up , se construyen y levantan los servicios.
+Y la consulta resulta.
+```bash
+(.venv_labo9) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio9$ make up
+docker build --no-cache -t etl-app:1.0.0 ./app
+[+] Building 124.9s (9/14)                                 docker:default
+[+] Building 644.1s (15/15) FINISHED                       docker:default
+ => [internal] load build definition from Dockerfile                 0.0s 
+ => => transferring dockerfile: 1.06kB 
+...
+(.venv_labo9) esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio9$ docker compose logs --tail=200 airflow-scheduler | sed -E 's/(password|token|secret)=\S+/REDACTED/g' | tee ~/desarrolloDeSoftware/actividades/Actividad18-CC3S2/evidencias/03_logs_airflow_scheduler.txt
+airflow-scheduler-1  | 
+airflow-scheduler-1  |   ____________       _____________
+airflow-scheduler-1  |  ____    |__( )_________  __/__  /________      __ 
+airflow-scheduler-1  | ____  /| |_  /__  ___/_  /_ __  /_  __ \_ | /| / / 
+airflow-scheduler-1  | ___  ___ |  / _  /   _  __/ _  / / /_/ /_ |/ |/ /  
+airflow-scheduler-1  |  _/_/  |_/_/  /_/    /_/    /_/  \____/____/|__/   
+airflow-scheduler-1  | [2025-12-11T15:01:36.498+0000] {task_context_logger.py:63} INFO - Task context logging is enabled
+airflow-scheduler-1  | [2025-12-11T15:01:36.498+0000] {executor_loader.py:235} INFO - Loaded executor: SequentialExecutor
+airflow-scheduler-1  | [2025-12-11T15:01:36.672+0000] {scheduler_job_runner.py:796} INFO - Starting the scheduler
+airflow-scheduler-1  | [2025-12-11T15:01:36.673+0000] {scheduler_job_runner.py:803} INFO - Processing each file at most -1 times
+airflow-scheduler-1  | [2025-12-11 15:01:36 +0000] [21] [INFO] Starting gunicorn 22.0.0
+
+```
+El pipeline* seguido, Cortesia de GPT 
+```bash
+# Construcción y setup del pipeline Airflow + ETL
+
+Dockerfile airflow modificado:
+  ├─ COPY dags /opt/airflow/dags
+  ├─ COPY app /opt/airflow/app
+  ├─ USER airflow (runtime seguro, no root)
+  └─ pip install pandas<2.2 psycopg2-binary
+      # Restricción pandas <2.2 evita incompatibilidades con Airflow 2.9.1
+
+           │
+           ▼
+make build
+  ├─ docker build -t etl-app:1.0.0 ./app
+  ├─ docker build -t airflow-secure:1.0.0 -f airflow/Dockerfile .
+  └─ Prepara imágenes listas para levantar stack
+           │
+           ▼
+make up
+  ├─ up: build → ya ejecuta make build antes
+  ├─ docker compose up --build -d
+  ├─ Levanta contenedores: postgres, etl-app, airflow-webserver, airflow-scheduler
+  ├─ Dependencias:
+      postgres -> etl-app / airflow-* via service_healthy
+  ├─ Inicialización implícita:
+      airflow-init:
+        ├─ Inicializa DB
+        └─ Crea usuario admin
+  └─ ETL y Airflow Scheduler ya pueden acceder a Postgres por DNS interno
+           │
+           ▼
+Pipeline/flujo en ejecución
+  ├─ ETL lee datos de input.csv
+  ├─ ETL procesa datos y los escribe en Postgres
+  ├─ Airflow Scheduler detecta DAGs en /opt/airflow/dags
+  ├─ Airflow Webserver expone UI en localhost:8080
+  └─ Todos los logs se guardan en /opt/airflow/logs
+
+# Notas de seguridad y diseño:
+  - Solo airflow-webserver expone puerto 8080 al host
+  - Postgres y etl-app solo se comunican internamente por la red 'backend'
+  - build como prerequisito de up garantiza que los contenedores siempre tengan la versión correcta
+  - Restricción pandas<2.2 asegura compatibilidad de librerías, evitando fallos en los DAGs/ETL
+
+```
+
+Este comando 
+```bash
+docker run --rm --network "$NET" byrnedo/alpine-curl \
+  curl -s -o /dev/null -w "webserver /health: %{http_code}\n" http://airflow-webserver:8080/health \
+  | tee -a Actividad18-CC3S2/evidencia/03_logs_airflow.txt
+```
+Ahorrajaba **webserver /health: 000 webserver /health: 000** , pues nuestro brige no es **echo "${NET}" observabilidad-mcp_default** sino  **8a96f1faa8f8   laboratorio9_backend         bridge    local**

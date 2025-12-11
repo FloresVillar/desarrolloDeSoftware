@@ -19,8 +19,12 @@ build:
 	docker build --no-cache -t $(AIRFLOW_IMG) -f airflow/Dockerfile .
 
 .PHONY: up
-up:
+up: build
 	docker compose up --build -d
+
+.PHONY: init-airflow
+init-airflow:
+	docker compose run -rm airflow-init
 
 .PHONY: down
 down:
@@ -59,3 +63,7 @@ dep-trivy:
 .PHONY: reset-init
 reset-init:
 	./scripts/airflow_reset_init.sh
+
+.PHONY: check-salud
+check-salud:
+	

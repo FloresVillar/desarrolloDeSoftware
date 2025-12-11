@@ -15,5 +15,5 @@ ARG CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints
 
 RUN pip install --no-cache-dir \
     --constraint "${CONSTRAINT_URL}" \
-    pandas psycopg2-binary
+    "pandas<2.2" psycopg2-binary
 #librerias 
