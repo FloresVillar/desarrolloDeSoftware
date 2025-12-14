@@ -132,7 +132,86 @@ DDD : Diseño guiado por el dominio, que introduce limites contextuales , delimi
 
 DRY (don´t repeat yourself) ,se acepta cierta duplicacion controlada para reducir acoplamiento y mantener la independencia de cada servicio
 
+Respecto a la cantidad de responsabilidad , pues esta refleja la naturaleza de cada servicio. El sistema de pago por ejemplo sera mayor que el de login.
 
+## Empaquetado y verificacion 
+
+```bash
+# construccion
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio10$ docker build --no-cache -t ejemplo-microservicio:0.1.0 .
+[+] Building 27.2s (14/14) FINISHED                                                                       docker:default
+ => [internal] load build definition from Dockerfile                                                                0.0s
+ => => transferring dockerfile: 1.24kB                                                                              0.0s 
+ => [internal] load metadata for docker.io/library/python:3.12-slim                                                 1.9s 
+ => [internal] load .dockerignore                                                                                   0.0s
+ => => transferring context: 257B                                                                                   0.0s 
+ => CACHED [builder 1/4] FROM docker.io/library/python:3.12-slim@sha256:fa48eefe2146644c2308b909d6bb7651a768178f84  0.0s 
+ => [internal] load build context                                                                                   0.1s 
+ => => transferring context: 120.77kB                                                                               0.1s
+ => CACHED [builder 2/4] WORKDIR /build                                   
+ 
+ ....
+
+ => => exporting layers                                                                                 0.3s 
+ => => writing image sha256:a9d2c178286f820106facf8cd785178c7981078598a07b24bb766ee96b222a32                        0.0s 
+ => => naming to docker.io/library/ejemplo-microservicio:0.1.0                                        
+```
+
+```bash
+#mapear el puerto 80:80 host:contenedor
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio10$ docker run --rm -d --name ejemplo-ms -p 80:80 ejemplo-microservice:0.1.0
+260bbbb0e51829afbadc2eb5018f9f333e5429cef4aa37cb7045d8df1ffaf372
+```
+
+```bash
+# Verificacion http
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware$ curl -i http://localhost/api/items/
+HTTP/1.1 200 OK
+date: Sun, 14 Dec 2025 22:13:49 GMT
+server: uvicorn
+content-length: 68
+content-type: application/json
+
+[{"name":"test-item","description":"Descripción de prueba","id":1}]
+```
+En este punto un detalle que no se ve claramente , porque el dominio es localhost? , en que linea de codigo se define eso? , en el Dockefile quizas ? en la construccion de la imagen o en el levantamiento del contenedor?. Pues no .
+El comando  **docker run -p 80:80 ejemplo-microservicio:0.1.0** dentro de este contenedor nuestra app escucha en 0.0.0.0:80  en todas las interfaces ( grupos de ip, simplificando el termino)del contenedor , docker crea una regla NAT que conecta el puerto 80 host con el 80 contenedor, como docker expone el puerto 80 del host en 0.0.0.0 cualquier interfaz de nuestra maquina que reciba trafico en este puerto(80) lo redirige al contenedor .
+Si localhost (127.0.0.1) recibe una peticion en el puerto 80 , lo redirige al CONTENEDOR. 
+```bash
+[Tu navegador o curl]
+       |
+       v
+[localhost:80 en Host]   <-- Docker NAT mapea puerto -->
+       |
+       v
+[Contenedor Docker: 0.0.0.0:80]
+       |
+       v
+[Tu aplicación → rutas como /api/items/]
+
+```
+
+```bash
+#logs
+e$ docker logs -n 200 ejemplo-ms
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+2025-12-14 21:53:28,748 - INFO - microservice - Arrancando la aplicación
+2025-12-14 21:53:28,748 - INFO - microservice - Inicializando base de datos en app.db
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:80 (Press CTRL+C to quit)
+INFO:     172.17.0.1:44342 - "GET /api/items/ HTTP/1.1" 200 OK
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware$
+```
+
+
+```bash
+#  limpieza
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware$ docker rm -f ejemplo-ms && docker image prune -f
+ejemplo-ms
+Total reclaimed space: 0B
+# se detallo su sintaxis antes
+```
  => [production 3/6] WORKDIR /app                                                              0.1sg                        
  => [production 4/6] COPY --from=builder /root/.local /home/appuser/.local                     0.2s
  => [production 5/6] COPY . /app                                                               0.1s
@@ -143,6 +222,8 @@ DRY (don´t repeat yourself) ,se acepta cierta duplicacion controlada para reduc
  => => naming to docker.io/library/ejemplo-microservice:0.1.0           
  # imagen creada con un ID unico (SHA256)
  #  y tag asignado ejemplo             
+
+
 ```
 ## Etiquetado y verificacion 
 **Contruccion**
