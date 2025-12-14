@@ -18,3 +18,6 @@ labs/Laboratorio11/minikube-linux-amd64
 proyectos/telnet-server/minikube-linux-amd64
 Github-actions-devops/kubectl
 ../../labs/Laboratorio9/.venv_labo9/
+airflow/logs/
+labs/Laboratorio9/airflow/logs/
+labs/Laboratorio9/.venv_labo9/

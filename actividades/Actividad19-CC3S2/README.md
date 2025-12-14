@@ -1,3 +1,6 @@
+# Laboratio 10 
+Ejecucion de las indicaciones del laboratorio 
+
 ## Etiquetado y verificacion 
 **Contruccion**
 ```bash
