@@ -295,6 +295,37 @@ Eliminamos ,de esta forma, la divergencia entre entornos.
 
 - Recarga en vivo. Detener un contenedor  , reconstruir la imagen y volver a ejecutarla rompe el flujo de trabajo . Docker compose permite el uso de bind mounts, un montaje directo del codigo fuente del host dentro del contenedor.De modo que el contenedor ejecuta el servidor de desarrollo (uvicorn --reload) mientras el codigo reside fisicamente en el sistema de desarrollo. Ante cada cambio el interprete dentro del contenedor deetecta el cambio  y recarga automaticamente la aplicacion. Docker compose se convierte en un facilitador de desarrollo diario.
 
+2. El uso de perfiles, nos permiten controlar que servicios y configuraciones se activan segun el contexto de ejecucion . 
+Permiten la separacion explicita de entornos. (dev vs test). En desarrollo : el foco es la productividad, se recarga "en  caliente" (uvicorn --reload) bin mounts para editar el codigo sin reconstruir imagenes . En testing : reproducibilidad, aislamiento. <br>
+Los perfiles permiten declarar esta diferencia de forma estructurada. Se activan via 
+```bash
+services:
+  api:
+    image: ejemplo-microservice
+    ports:
+    profiles:
+      - dev
+  api-test:
+    image: ejemplo-microservice
+    command: pytest -q
+    profiles:
+      - test
+# y ejecutan 
+docker compose --profile dev up
+docker compose --profile test up
+```
+3. Fragmento conceptual de docker-compose.yml 
+- Servicio Api ,se construye a partir de una imagen **imagen: ejemplo-microservice:0.1.0** , exposicion de puertos **ports: 8080:80** enturando el puerto 8080 del host al puerto 80 del contenedor. El bind mount para la edicion en vivo **volumes: - ./app:/app** , montamos en caliente nuestro directorio app dentro del directorio app del contenedor.Finalmente el campo command para **command: uvicorn main:app --reload --host 0.0.0.0 --port 80** , con modulo:objeto ASGI(fastapi).
+
+
+- Redis (cache) se declara como un servicio dentro del campo services, con sus propios campos **image:redis:7 , expose: "6379"** imagen y puerto que expone respectivamente.
+
+
+- Relacion entre servicios, api y cache se comunican dentro de la red de compose. **API → redis://cache:6379** , esta dependencia se declara con el campo depends_on en **services: api : depends_on: - redis** para **redis: image: redis:7**
+
+
+
+
  => [production 3/6] WORKDIR /app                                                              0.1sg                        
  => [production 4/6] COPY --from=builder /root/.local /home/appuser/.local                     0.2s
  => [production 5/6] COPY . /app                                                               0.1s
