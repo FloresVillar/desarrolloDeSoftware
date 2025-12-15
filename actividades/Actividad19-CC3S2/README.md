@@ -374,55 +374,317 @@ def test_mock_inventorio(client):
     assert respuesta.status_code == 201
 ```
 
+```bash
+docker exec ejemplo-microservice py
+test -q
+..F                                                                      [100%]
+=================================== FAILURES ===================================
+_____________________ test_create_item_and_verify_in_list ______________________
+
+client = <starlette.testclient.TestClient object at 0x7b2bf2a63170>
+
+    def test_create_item_and_verify_in_list(client):
+        """
+        1) Crea un ítem          -> 201 Created
+        2) Devuelve los datos    -> nombre y descripción coinciden
+        3) El ítem aparece luego en el listado general
+        """
+        payload = {"name": ITEM_NAME, "description": ITEM_DESCRIPTION}
+        create_resp = client.post("/api/items", json=payload) #crea
+>       assert create_resp.status_code == 201 # verifica
+E       assert 400 == 201
+E        +  where 400 = <Response [400 Bad Request]>.status_code
+
+tests/test_api.py:43: AssertionError
+----------------------------- Captured stdout call -----------------------------
+2025-12-15 14:33:52,012 - ERROR - microservice - Error al crear ítem
+Traceback (most recent call last):
+  File "/app/microservice/api/routes.py", line 45, in create_item
+    created = business_logic.create_item(item.name, item.description)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/microservice/services/business_logic.py", line 15, in create_item
+    item_id = database.add_item(name, description)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/microservice/services/database.py", line 53, in add_item
+    cursor.execute(
+sqlite3.IntegrityError: UNIQUE constraint failed: items.name
+------------------------------ Captured log call -------------------------------
+ERROR    microservice:routes.py:48 Error al crear ítem
+Traceback (most recent call last):
+  File "/app/microservice/api/routes.py", line 45, in create_item
+    created = business_logic.create_item(item.name, item.description)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/microservice/services/business_logic.py", line 15, in create_item
+    item_id = database.add_item(name, description)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/microservice/services/database.py", line 53, in add_item
+    cursor.execute(
+sqlite3.IntegrityError: UNIQUE constraint failed: items.name
+--------------------------- Captured stdout teardown ---------------------------
+2025-12-15 14:33:52,036 - INFO - microservice - Deteniendo la aplicación
+---------------------------- Captured log teardown -----------------------------
+INFO     microservice:main.py:39 Deteniendo la aplicación
+=============================== warnings summary ===============================
+../home/appuser/.local/lib/python3.12/site-packages/_pytest/config/__init__.py:1448
+  /home/appuser/.local/lib/python3.12/site-packages/_pytest/config/__init__.py:1448: PytestConfigWarning: Unknown config option: python_paths
+
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+../home/appuser/.local/lib/python3.12/site-packages/pydantic/fields.py:814
+../home/appuser/.local/lib/python3.12/site-packages/pydantic/fields.py:814
+  /home/appuser/.local/lib/python3.12/site-packages/pydantic/fields.py:814: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'example'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.8/migration/
+    warn(
+
+microservice/main.py:24
+  /app/microservice/main.py:24: DeprecationWarning:
+          on_event is deprecated, use lifespan event handlers instead.
+
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).       
+
+    @app.on_event("startup")
+
+../home/appuser/.local/lib/python3.12/site-packages/fastapi/applications.py:4495
+../home/appuser/.local/lib/python3.12/site-packages/fastapi/applications.py:4495
+  /home/appuser/.local/lib/python3.12/site-packages/fastapi/applications.py:4495: DeprecationWarning:
+          on_event is deprecated, use lifespan event handlers instead.
+
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).       
+
+    return self.router.on_event(event_type)
+
+microservice/main.py:33
+  /app/microservice/main.py:33: DeprecationWarning:
+          on_event is deprecated, use lifespan event handlers instead.
+
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).       
+
+    @app.on_event("shutdown")
+
+tests/test_api.py::test_mock_inventorio
+  /home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py:690: DeprecationWarning: The 'app' shortcut is now deprecated. Use the explicit style 'transport=WSGITransport(app=...)' instead.
+    warnings.warn(message, DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_api.py::test_create_item_and_verify_in_list - assert 400 ==...
+1 failed, 2 passed, 8 warnings in 0.99s
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio10$ c
+```
+
+
 **Despliegue de despliegue kubernetes local**
-- carga de imagenes locales 
-  - kind
-  - minikube
+Teniamos contenedores levantados via docker( o docker-compose) ahora introducimos Kubernetes
+un breve esquema de como actua kubernetes(cortesia de GPT)
+```bash
+┌──────────────────────────────────────────┐
+│            MANIFIESTO YAML               │
+│                                          │
+│ kind: Deployment                         │
+│ spec:                                   │
+│   replicas: 2                            │
+│   template:                             │
+│     spec:                               │
+│       containers:                       │
+│       - name: ejemplo-ms                │
+│         image: ejemplo-ms:0.1.0  ─────┐ │
+└────────────────────────────────────────┘ │
+                                           │
+                                           │ (1) Declaración, NO acción
+                                           ▼
+┌──────────────────────────────────────────┐
+│        KUBERNETES (API SERVER)            │
+│                                          │
+│ "Ok, cuando cree un Pod..."               │
+│ "usaré una imagen llamada:"               │
+│                                          │
+│     ejemplo-ms:0.1.0                      │
+│                                          │
+└──────────────────────────────────────────┘
+                   │
+                   │ (2) Kubernetes NO construye
+                   │ (2) Kubernetes NO busca en tu PC
+                   │ (2) Kubernetes NO ejecuta Docker
+                   ▼
+┌──────────────────────────────────────────┐
+│        RUNTIME DEL NODO (containerd)      │
+│                                          │
+│ ¿Existe la imagen localmente?             │
+│   ├─ SÍ → crear contenedor                │
+│   └─ NO → intentar pull del registry      │
+│                                          │
+└──────────────────────────────────────────┘
+                   │
+                   │ (3) Si el pull falla
+                   ▼
+┌──────────────────────────────────────────┐
+│             ERROR DEL POD                 │
+│                                          │
+│ ImagePullBackOff                          │
+│ ErrImageNeverPull                         │
+│                                          │
+└──────────────────────────────────────────┘
+
+```
+De modo que los comandos 
+```bash
+  docker build     # construye la imagen 
+  kind load docker-image   # hace la imagen visible al cluster
+  kubeclt apply  # declara el estado deseado 
+
+```
+Ahora **minikube docker-env** , exporta las variables de entorno haciendo que variables como **export DOCKER_HOST=tcp://127.0.0.1:32770export DOCKER_TLS_VERIFY=1
+export DOCKER_CERT_PATH=/home/user/.minikube/certs
+export MINIKUBE_ACTIVE_DOCKERD=minikube
+**  queden en el shell , luego del docker build , hacemos que Docker Cli se conecte con el daemon de kubernetes y no con el del docker(como se venia haciendo) , sucede algo muy similar a 
+```bash
+(1) Usuario ejecuta:
+    eval $(minikube docker-env)
+        |
+        |  (exporta variables de entorno)
+        v
+┌────────────────────────────────────────────┐
+│  TU SHELL (bash/zsh)                        │
+│                                            │
+│  DOCKER_HOST=tcp://127.0.0.1:32770          │
+│  DOCKER_TLS_VERIFY=1                        │
+│  DOCKER_CERT_PATH=~/.minikube/certs         │
+│                                            │
+└────────────────────────────────────────────┘
+        |
+        |  docker build
+        v
+Docker CLI
+        |
+        |  lee variables de entorno
+        |  (NO sabe qué es minikube)
+        v
+SOCKET TCP en el HOST (127.0.0.1:32770)
+        |
+        |  NAT / tunnel / proxy (minikube)
+        v
+┌─────────────────────────────┐
+│  MINIKUBE VM / CONTAINER    │
+│                             │
+│  dockerd  ← daemon real     │
+│  containerd                 │
+│  kubelet                    │
+└─────────────────────────────┘
+
+```
+
 - manifiestos minimos
   - Deployment
   - livenessProbe
   - Service
-
-**Verificacion**
+Respecto a los manifiestos minimos esto declararlos es mucho mas amigable que entender anterior que es casi transparente al usuario
 ```bash
-esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio10$ curl -i http://localhost/api/items/
-HTTP/1.1 200 OK
-date: Sun, 23 Nov 2025 15:40:42 GMT
-server: uvicorn
-content-length: 68
-content-type: application/json
-
-[{"name":"test-item","description":"Descripción de prueba","id":1}]
+apiVersion: ..
+kind: Deployment # tipo reconocido y admitido por kubernetes
+spec: 
+  replicas: 2 # aceptable 
+  spec:
+..
 ```
-**Logs**
+Antes entendamos que el Deployment (el archivo yml/ manifiesto) es una plantilla de pods <br>
+Mientras que spec la especificacion (el estado deseado) , en tanto spec.template detalla el "como debe ser cad pod" <br>
+spec.spec es la definicion del pod propiamente. 
+````bash`
+Deployment.spec            ← reglas del Deployment
+Deployment.spec.template   ← definición del Pod
+Deployment.spec.template.spec ← definición de CADA POD
+``` 
+Luego los campos que definen a cada contenedor estaran dentro de spec.template.spec
 ```bash
-esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio10$ docker logs -n 200 ejemplo-ms
-INFO:     Started server process [1]
-INFO:     Waiting for application startup.
-2025-11-23 15:40:38,894 - INFO - microservice - Arrancando la aplicación
-2025-11-23 15:40:38,894 - INFO - microservice - Inicializando base de datos en app.db
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:80 (Press CTRL+C to quit)
-INFO:     172.17.0.1:36166 - "GET /api/items/ HTTP/1.1" 200 OK
-```
-**Limpieza**
-```bash
-esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio10$ docker rm -f ejemplo-ms && docker image prune -f
-ejemplo-ms
-Deleted Images:
-deleted: sha256:c30cd3ec36073ac8b957bbba8cf3aed2ee757daeb220ce9861c9f34cf6047bca
+spec:                      # spec DEL DEPLOYMENT
+  replicas: 2
 
-Total reclaimed space: 0B
-```
-**Pruebas**
-```bash
-esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio10$ rm app.db
-esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio10$ pytest -q
-..                                                                                                                                                                                                                                                                           [100%]
-================================================================================================================================= warnings summary =================================================================================================================================
-../../../../../usr/lib/python3/dist-packages/_pytest/config/__init__.py:1373
-  Warning: Unknown config option: python_paths
+  template:                # PLANTILLA DE POD
+    metadata:
+      labels:
+        app: ejemplo-ms
 
--- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-2 passed, 1 warning in 0.29s
+    spec:                  # spec DEL POD
+      containers:          # ← aquí empiezan los contenedores
+        - name: ejemplo-ms
+          image: ejemplo-ms:0.1.0
+          imagePullPolicy: IfNotPresent
+
+```
+En tanto que los probes son propiedades de los contenedores, no del pod ni del deployment.
+```bash
+Deployment
+│
+├── spec
+│   ├── replicas
+│   └── selector
+│
+└── template
+    ├── metadata
+    │   └── labels
+    │
+    └── spec          ← POD
+        └── containers
+            └── ejemplo-ms
+                ├── image
+                ├── ports
+                ├── readinessProbe
+                └── livenessProbe
+
+```
+Finalmente el manifiesto 
+```bash
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ejemplo-ms
+spec:
+  replicas: 2                     # 2 pods (alta disponibilidad básica)
+  selector:
+    matchLabels:
+      app: ejemplo-ms
+  template:
+    metadata:
+      labels:
+        app: ejemplo-ms
+    spec:
+      containers:
+        - name: ejemplo-ms
+          image: ejemplo-ms:0.1.0  # imagen local cargada en kind/minikube
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+
+          # --- Health checks ---
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            periodSeconds: 10
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            periodSeconds: 10
+            failureThreshold: 3
+```
+En tanto el manifiesto para el servicio, con ind: service
+```bash
+apiVersion: v1
+kind: Service
+metadata: 
+  name : ejemplo-ms
+spec:
+  type: 
+  selector: 
+    app: ejemplo-ms
+  ports:
+    - port : 80
+      targetPort :
+      nodePort: 
+
 ```
