@@ -10,7 +10,7 @@ REGISTRY ?= ghcr.io/your-org
 build:
 	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) .
 
-run:
+run: build
 	docker run -d \
 		-p 80:80 \
 		--name $(IMAGE_NAME) \

@@ -174,8 +174,7 @@ content-type: application/json
 
 [{"name":"test-item","description":"Descripción de prueba","id":1}]
 ```
-En este punto un detalle que no se ve claramente , porque el dominio es localhost? , en que linea de codigo se define eso? , en el Dockefile quizas ? en la construccion de la imagen o en el levantamiento del contenedor?. Pues no .
-El comando  **docker run -p 80:80 ejemplo-microservicio:0.1.0** dentro de este contenedor nuestra app escucha en 0.0.0.0:80  en todas las interfaces ( grupos de ip, simplificando el termino)del contenedor , docker crea una regla NAT que conecta el puerto 80 host con el 80 contenedor, como docker expone el puerto 80 del host en 0.0.0.0 cualquier interfaz de nuestra maquina que reciba trafico en este puerto(80) lo redirige al contenedor .
+En este punto un detalle que no se ve claramente , porque el dominio es localhost? , en que linea de codigo se define eso? , en el Dockefile quizas ? en la construccion de la imagen o en el levantamiento del contenedor?. Veamos, localhost es nuestra propia maquina, es un alias de nuestro sistema operativo. (127.0.0.1 definido /etc/hosts/). curl://localhost:80 indica a nuestro OS dirigirse a 127.0.0.1 en el puerto 80, luego el comando  **docker run -p 80:80 ejemplo-microservicio:0.1.0** dentro de este contenedor nuestra app escucha en 0.0.0.0:80  en todas las interfaces ( grupos de ip, simplificando el termino)del contenedor , docker crea una regla NAT que conecta el puerto 80 host con el 80 contenedor, como docker expone el puerto en 0.0.0.0 cualquier interfaz de nuestra maquina que reciba trafico en este puerto(80 del host) lo redirige al contenedor .
 Si localhost (127.0.0.1) recibe una peticion en el puerto 80 , lo redirige al CONTENEDOR. 
 ```bash
 [Tu navegador o curl]
@@ -195,7 +194,7 @@ Si localhost (127.0.0.1) recibe una peticion en el puerto 80 , lo redirige al CO
 #logs
 e$ docker logs -n 200 ejemplo-ms
 INFO:     Started server process [1]
-INFO:     Waiting for application startup.
+INFO:     Waiting for aspplication startup.
 2025-12-14 21:53:28,748 - INFO - microservice - Arrancando la aplicación
 2025-12-14 21:53:28,748 - INFO - microservice - Inicializando base de datos en app.db
 INFO:     Application startup complete.
@@ -210,8 +209,79 @@ esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware$
 esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware$ docker rm -f ejemplo-ms && docker image prune -f
 ejemplo-ms
 Total reclaimed space: 0B
-# se detallo su sintaxis antes
+# se detalló su sintaxis antes
 ```
+
+## Base de datos : SQLite 
+
+
+## Pruebas pytest -q
+```bash
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio10$ pytest -q                                                                     [100%]
+======================================================================== FAILURES =========================================================================
+___________________________________________________________ test_create_item_and_verify_in_list ___________________________________________________________
+
+client = <starlette.testclient.TestClient object at 0x7539605912b0>
+
+    def test_create_item_and_verify_in_list(client):
+        """
+        1) Crea un ítem          -> 201 Created
+        2) Devuelve los datos    -> nombre y descripción coinciden
+        3) El ítem aparece luego en el listado general
+        """
+        payload = {"name": ITEM_NAME, "description": ITEM_DESCRIPTION}
+        create_resp = client.post("/api/items", json=payload) #crea
+>       assert create_resp.status_code == 201 # verifica
+E       assert 400 == 201
+E        +  where 400 = <Response [400 Bad Request]>.status_code
+
+tests/test_api.py:36: AssertionError
+------------------------------------------------------------------ Captured stdout call -------------------------------------------------------------------
+2025-12-14 22:02:10,777 - ERROR - microservice - Error al crear ítem
+Traceback (most recent call last):
+  File "/home/esau/desarrolloDeSoftware/labs/Laboratorio10/microservice/api/routes.py", line 45, in create_item
+    created = business_logic.create_item(item.name, item.description)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/esau/desarrolloDeSoftware/labs/Laboratorio10/microservice/services/business_logic.py", line 15, in create_item
+    item_id = database.add_item(name, description)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/esau/desarrolloDeSoftware/labs/Laboratorio10/microservice/services/database.py", line 53, in add_item
+    cursor.execute(
+sqlite3.IntegrityError: UNIQUE constraint failed: items.name
+---------------------------------------------------------------- Captured stdout teardown -----------------------------------------------------------------
+2025-12-14 22:02:10,808 - INFO - microservice - Deteniendo la aplicación
+==================================================================== warnings summary =====================================================================
+../../../../../usr/lib/python3/dist-packages/_pytest/config/__init__.py:1373
+  Warning: Unknown config option: python_paths
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================================================= short test summary info =================================================================
+FAILED tests/test_api.py::test_create_item_and_verify_in_list - assert 400 == 201
+1 failed, 1 passed, 1 warning in 0.44
+```
+Como es de esperar **def test_healthcheck_items_endpoint(client)** quien solo lista (GET) los elementos de la tabla, pasa el test. Si embargo **def test_create_item_and_verify_in_list(client)** no pasa el test,  pues se solicita (POST) la creacion de una nueva fila en la tabla de datos , particularmente **payload = {"name": ITEM_NAME, "description": ITEM_DESCRIPTION}** , luego esta peticion llega a routes, quien para el prefijo /api/item posee un metodo post , que a su vez llama a logica de negocio, quien hace lo propio redirigiendo la peticion hacia la base de datos donde se tiene 
+```bash
+CREATE TABLE IF NOT EXISTS items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE, # no puede repetirse el nombre
+                description TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+```
+Algo mas de teoria (cortesia de GPT ) : La causa fundamental es que las pruebas de integración están compartiendo estado mutable. La base de datos SQLite utilizada por la aplicación es la misma para todos los tests y no se reinicia entre ellos. Esto viola una propiedad esencial de cualquier suite de pruebas: cada test debe poder ejecutarse de manera independiente, en cualquier orden, y producir siempre el mismo resultado
+
+Qué demuestra esto sobre el tipo de prueba
+
+Este comportamiento confirma que estás ejecutando una prueba de integración real. No hay mocks, no hay stubs y no hay aislamiento artificial. Están interactuando rutas HTTP reales, lógica de negocio real y una base de datos real. Precisamente por eso emergen este tipo de problemas, que no aparecerían en pruebas unitarias.
+
+Qué suposición incorrecta hace el test
+
+El test asume implícitamente que el sistema comienza en un estado vacío. Esa suposición no está garantizada por la infraestructura actual. La base de datos conserva datos de ejecuciones anteriores y, por tanto, el entorno no es limpio al inicio del test.
+
+## Semver por sobre lastest
+
+
  => [production 3/6] WORKDIR /app                                                              0.1sg                        
  => [production 4/6] COPY --from=builder /root/.local /home/appuser/.local                     0.2s
  => [production 5/6] COPY . /app                                                               0.1s
@@ -222,8 +292,6 @@ Total reclaimed space: 0B
  => => naming to docker.io/library/ejemplo-microservice:0.1.0           
  # imagen creada con un ID unico (SHA256)
  #  y tag asignado ejemplo             
-
-
 ```
 ## Etiquetado y verificacion 
 **Contruccion**
