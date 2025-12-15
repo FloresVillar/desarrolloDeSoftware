@@ -688,3 +688,20 @@ spec:
       nodePort: 
 
 ```
+Entonces para poder usar kubernetes, instalammos primero el cliente de Kubernetes(kubectl) 
+```bash
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+sudo mv kubctl /usr/local/bin
+```
+Luego instalamos minikube
+```bash
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+chmod +x minikube-linux-amd64
+sudo mv minikube-linux-amd64 /usr/local/bin/minikube
+```
+Y arrancamos con especificaciones de memoria minima(wsl)
+```bash
+minikube start --drive=docker --memory=1800 --cpus=4
+```
+
