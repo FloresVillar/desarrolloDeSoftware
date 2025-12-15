@@ -280,7 +280,20 @@ Qué suposición incorrecta hace el test
 El test asume implícitamente que el sistema comienza en un estado vacío. Esa suposición no está garantizada por la infraestructura actual. La base de datos conserva datos de ejecuciones anteriores y, por tanto, el entorno no es limpio al inicio del test.
 
 ## Semver por sobre lastest
+En palabras la misma variable (nombre lastest) puede ser la version A, version B ,no necesariamente será la imagen que queramos.
 
+## Desarrollo y despliegue
+Docker compose :declaratividad, gestión automática de redes, dependencias entre servicios, soporte para perfiles (profiles) y entornos reproducibles
+
+Conceptos clave: services, volumes, networks, depends_on, variables de entorno, bind mounts (para recarga en vivo) vs named volumes (para datos persistentes)
+
+1.
+- Staging local : En un entorno real, un microservicio (aunque simple) depende de otros componentes, una base de datos, un sistema cache , un gateway. En produccion estos sistemas son independientes y conectados por la red.
+Docker compose permite replicar esa topologia en una maquina local mediante un unico archivo declarativo.En docker-compose.yml se describen explicitamente los servicios , imagenes , variables. Y se ejecutan con una sola instruccion docker compose up . 
+Eliminamos ,de esta forma, la divergencia entre entornos. 
+- Pruebas de integracion , se busca validar el comportamiento de los componentes interactuando entre si. Para comprobar que una API escribe correctamente en Redis o que una transaccion persiste datos en una tabla SQL, lo que antes se hacia era instalar todo esto, pero con docker-compose podemos oequestar dependencias reales con contenedores efimeros. Cualquier servicio se declara y se conmfigura. De modo que las pruebas de integracion es un proceso determinista y repetible. 
+
+- Recarga en vivo. Detener un contenedor  , reconstruir la imagen y volver a ejecutarla rompe el flujo de trabajo . Docker compose permite el uso de bind mounts, un montaje directo del codigo fuente del host dentro del contenedor.De modo que el contenedor ejecuta el servidor de desarrollo (uvicorn --reload) mientras el codigo reside fisicamente en el sistema de desarrollo. Ante cada cambio el interprete dentro del contenedor deetecta el cambio  y recarga automaticamente la aplicacion. Docker compose se convierte en un facilitador de desarrollo diario.
 
  => [production 3/6] WORKDIR /app                                                              0.1sg                        
  => [production 4/6] COPY --from=builder /root/.local /home/appuser/.local                     0.2s
