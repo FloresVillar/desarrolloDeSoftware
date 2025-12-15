@@ -8,3 +8,5 @@ httpx>=0.27,<0.28         # mínimo 0.27 para transporte síncrono integrado
 pytest==8.2.1
 
 # (añade aquí cualquier otra dependencia interna de tu microservicio)
+httpx>=0.27
+responses

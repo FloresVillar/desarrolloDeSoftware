@@ -323,52 +323,65 @@ docker compose --profile test up
 
 - Relacion entre servicios, api y cache se comunican dentro de la red de compose. **API → redis://cache:6379** , esta dependencia se declara con el campo depends_on en **services: api : depends_on: - redis** para **redis: image: redis:7**
 
-
-
-
- => [production 3/6] WORKDIR /app                                                              0.1sg                        
- => [production 4/6] COPY --from=builder /root/.local /home/appuser/.local                     0.2s
- => [production 5/6] COPY . /app                                                               0.1s
- => [production 6/6] RUN chown -R appuser:appuser /app                                         2.0s
- => exporting to image                                                                         0.2s
- => => exporting layers                                                                        0.2s
- => => writing image sha256:0b33834d629f55081365923979e9dda198e38c9771cdb0f8839b798ce4f339e0   0.0s
- => => naming to docker.io/library/ejemplo-microservice:0.1.0           
- # imagen creada con un ID unico (SHA256)
- #  y tag asignado ejemplo             
-```
-## Etiquetado y verificacion 
-**Contruccion**
+**comandos clave**<br>
 ```bash
-esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio10$ docker build --no-cache -t ejemplo-microservice:0.1.0 .
-[+] Building 18.9s (14/14) FINISHED                                                                                                                                                                                                                                  docker:default
- => [internal] load build definition from Dockerfile                                                                                                                                                                                                                           0.0s
- => => transferring dockerfile: 1.21kB                                                                                                                                                                                                                                         0.0s
- => [internal] load metadata for docker.io/library/python:3.12-slim                                                                                                                                                                                                            1.4s
- => [internal] load .dockerignore                                                                                                                                                                                                                                              0.0s
- => => transferring context: 257B                                                                                                                                                                                                                                              0.0s
- => CACHED [builder 1/4] FROM docker.io/library/python:3.12-slim@sha256:b43ff04d5df04ad5cabb80890b7ef74e8410e3395b19af970dcd52d7a4bff921                                                                                                                                       0.0s
- => => resolve docker.io/library/python:3.12-slim@sha256:b43ff04d5df04ad5cabb80890b7ef74e8410e3395b19af970dcd52d7a4bff921                                                                                                                                                      0.0s
- => [internal] load build context                                                                                                                                                                                                                                              0.1s
- => => transferring context: 157.98kB                                                                                                                                                                                                                                          0.1s
- => CACHED [builder 2/4] WORKDIR /build                                                                                                                                                                                                                                        0.0s
- => [production 2/6] RUN groupadd -r appuser     && useradd -m -r -g appuser appuser                                                                                                                                                                                           0.4s
- => [builder 3/4] COPY requirements.txt .                                                                                                                                                                                                                                      0.0s
- => [builder 4/4] RUN pip install --user --no-cache-dir -r requirements.txt                                                                                                                                                                                                   13.9s
- => [production 3/6] WORKDIR /app                                                                                                                                                                                                                                              0.0s
- => [production 4/6] COPY --from=builder /root/.local /home/appuser/.local                                                                                                                                                                                                     0.3s
- => [production 5/6] COPY . /app                                                                                                                                                                                                                                               0.4s
- => [production 6/6] RUN chown -R appuser:appuser /app                                                                                                                                                                                                                         2.2s
- => exporting to image                                                                                                                                                                                                                                                         0.3s
- => => exporting layers                                                                                                                                                                                                                                                        0.2s
- => => writing image sha256:5990bccba33b6fe3accb6cfeae2d8283489944dc9825911b70df3d709366f77d                                                                                                                                                                                   0.0s
- => => naming to docker.io/library/ejemplo-microservice:0.1.0                                                                                                                                                                                                                  0.0s
+docker compose up --build
+docker compose logs -f api
+docker compose down --volume
 ```
-**Ejecucion**
+**comunicacion entre microservicios**<br>
+REST: (Representational State Transfer) se apoya en HTTP como protocolo de transporte, suele usar json . Cualquier lenguaje puede consumir una API REST sin dependencias especiales.
+
+gPRC: framework que usa http2 y protocol Buffers(ProtoBuf) con contrato definido en .proto. El uso de binario reduce drastiamente el tamaño de los mensajes y, junto con hhtp/2 posibilita la multiplexacion y el streaming bidireccional.
+
+RabbitMQ : message Broker tradicional basado en colas,e mensaje se envia a una cola, un consumidor los procesa y confirma que la ha consumido(ACK) , luego el mensaje se elimina. Modelo ideal para tareas asincronicas; el mensaje debe ser consumido una sola vez. "Entrega confiable, no historial de mensajeria"
+
+Kafka : Es un log distribuido ,los mensajes se escriben en TOPICS particionados y se conservan durante un tiempo configurable .El orden esta garantizado por particion , no globalmente, multiples consumidores pueden leer el mismo mensaje. Kafka es adecuado para arquitecturas orientadas a eventos **event sourcing** , donde se require replay , retencion a largo plazo y alta escalabilidad horizontal
+
+**ejercicios**
+
+1. gRPC superior a REST, (cortesia de la IA)
+**En un sistema de procesamiento de transacciones financieras en tiempo real, donde se manejan miles de operaciones por segundo, los mensajes tienen estructura bien definida y existe la necesidad de streaming continuo (por ejemplo, cotizaciones o confirmaciones), gRPC resulta claramente superior. La serialización binaria reduce el tamaño de los payloads, el contrato evita ambigüedades y el soporte de streaming bidireccional permite flujos eficientes que REST simplemente no puede ofrecer sin capas adicionales.**
+
+2. Kafka > > RabbitMQ 
+**En un sistema de auditoría de eventos de dominio, como OrderCreated o PaymentProcessed, Kafka es la opción natural. Estos eventos no solo deben ser consumidos en tiempo real, sino también reprocesados por nuevos servicios (fraude, analítica, notificaciones) meses después. Kafka permite retener los eventos, garantizar orden por entidad (mediante particiones) y soportar múltiples consumidores sin duplicar la lógica de publicación.**
+
+3. Plan de pruebas con stubs
 ```bash
-esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio10$ docker run --rm -d --name ejemplo-ms -p 80:80 ejemplo-microservice:0.1.0
-7cd2b0679eb53332dee75bba5b884aab2bbc29abd791db56aa3929ce9c01f9ac
+def test_creacion_item_dependencia_externa():
+  mocked_reponse.post("http://ENDPOINT",json={DESCRIPCION})
+  respuesta = client.post("/api/items",json={"name":"test"})
+  assert respuesta.status_code == 201 
 ```
+Antes se incluyen algunas librerias en **requirements.txt** tales como responses y httpx, luego redefinimos el test_ de la siguiente manera
+```bash
+from httpx import MockTransport
+import responses
+def test_mock_inventorio(client):
+    responses.post("http://inventory/api/stock",json={"disponible":True},status = 200)
+    payload = {"name":"test", "descripcion":"mocked"}
+    respuesta = client.post("api/items",json=payload)
+    assert respuesta.status_code == 201
+```
+Ahora bien, el contenedor ya esta creado via previa limpieza , merced a las recetas del makefile 
+make stop  que detiene el contenedor
+make clean que realiza la limpieza de las imagenes incluido, y via make run , que tiene build como prerrequisito.Entonces , con el contenedor ya construido  se ejecuta **docker exec ejemplo-microservice:0.1.0 pytest -q** , lo cual resulta en 2 test passed y 1 failed(de nuevo el que tiene que ver con el acceso a la base de datos para la creacion de una linea con el mismo nombre)
+```bash
+def test_mock_inventorio(client):
+    responses.post("http://inventory/api/stock",json={"disponible":True},status = 200)
+    payload = {"name":"test", "descripcion":"mocked"}
+    respuesta = client.post("api/items",json=payload)
+    assert respuesta.status_code == 201
+```
+
+**Despliegue de despliegue kubernetes local**
+- carga de imagenes locales 
+  - kind
+  - minikube
+- manifiestos minimos
+  - Deployment
+  - livenessProbe
+  - Service
 
 **Verificacion**
 ```bash

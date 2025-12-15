@@ -6,6 +6,8 @@ Se asume que la lógica de negocio está en microservice/main.py y que FastAPI r
 import pytest
 from fastapi.testclient import TestClient
 from microservice.main import app
+from httpx import MockTransport
+import responses
 
 # Fixtures
 
@@ -19,6 +21,11 @@ def client():
 
 ITEM_NAME = "test-item"
 ITEM_DESCRIPTION = "Descripción de prueba"
+def test_mock_inventorio(client):
+    responses.post("http://inventory/api/stock",json={"disponible":True},status = 200)
+    payload = {"name":"test", "descripcion":"mocked"}
+    respuesta = client.post("api/items",json=payload)
+    assert respuesta.status_code == 201
 
 def test_healthcheck_items_endpoint(client):
     """El listado debería responder 200 OK aun cuando no haya ítems."""
