@@ -458,7 +458,7 @@ microservice/main.py:33
   /app/microservice/main.py:33: DeprecationWarning:
           on_event is deprecated, use lifespan event handlers instead.
 
-          Read more about it in the
+vv                                                           d          Read more about it in the
           [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).       
 
     @app.on_event("shutdown")
@@ -579,7 +579,7 @@ SOCKET TCP en el HOST (127.0.0.1:32770)
   - Deployment
   - livenessProbe
   - Service
-Respecto a los manifiestos minimos esto declararlos es mucho mas amigable que entender anterior que es casi transparente al usuario
+Respecto a los manifiestos minimos esto declararlos es mucho mas amigable que entender lo  anterior que es casi transparente.
 ```bash
 apiVersion: ..
 kind: Deployment # tipo reconocido y admitido por kubernetes
@@ -705,3 +705,14 @@ Y arrancamos con especificaciones de memoria minima(wsl)
 minikube start --drive=docker --memory=1800 --cpus=4
 ```
 
+OKAY retomando la solucion de esta actividad, no quedaban muy claros los pasos. Para el uso de minikube , los PASOS COMPLETOS
+```bash
+minikube start #arrancar el cluster
+eval $(minikube docker-env) # usar docker del cluster
+docker build -t ejemplo-ms:0.1.0 . #construir imagen
+#creamos los manifiestos.
+kubtctl apply -f k8s/ # deploy  y service
+kubectl get pods #viendo los pods
+minikube service ejemplo-ms --url #exponer servicio
+curl http://................ #probar
+```

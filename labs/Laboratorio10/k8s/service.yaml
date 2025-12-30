@@ -1,0 +1,11 @@
+kind: Service
+metadata:
+  name: ejemplo-ms
+spec:
+  type: 
+  selector:
+    app: ejemplo-ms
+  ports:
+    - port: 80
+      targetPort:
+      nodePort:

@@ -1,0 +1,32 @@
+kind: Deployment
+metadata: 
+  name: ejemplo-ms
+spec:
+  replicas: 2
+  selector: 
+    matchLabels:
+      app: ejemplo-ms
+  template:
+    metadata:
+      labels:
+        app: ejemplo-ms
+    spec:
+      containers: 
+        - name: ejemplo-ms
+          image: ejemplo-ms:0.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: 
+              path: /health
+              port: 80
+            periodSeconds: 10
+            failureThreshold: 3
+        - name: ejemplo-ms-2
