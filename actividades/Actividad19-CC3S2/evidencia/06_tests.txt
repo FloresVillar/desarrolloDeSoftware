@@ -1,0 +1,41 @@
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio10$ pytest -q                                                                     [100%]
+======================================================================== FAILURES =========================================================================
+___________________________________________________________ test_create_item_and_verify_in_list ___________________________________________________________
+
+client = <starlette.testclient.TestClient object at 0x7539605912b0>
+
+    def test_create_item_and_verify_in_list(client):
+        """
+        1) Crea un ítem          -> 201 Created
+        2) Devuelve los datos    -> nombre y descripción coinciden
+        3) El ítem aparece luego en el listado general
+        """
+        payload = {"name": ITEM_NAME, "description": ITEM_DESCRIPTION}
+        create_resp = client.post("/api/items", json=payload) #crea
+>       assert create_resp.status_code == 201 # verifica
+E       assert 400 == 201
+E        +  where 400 = <Response [400 Bad Request]>.status_code
+
+tests/test_api.py:36: AssertionError
+------------------------------------------------------------------ Captured stdout call -------------------------------------------------------------------
+2025-12-14 22:02:10,777 - ERROR - microservice - Error al crear ítem
+Traceback (most recent call last):
+  File "/home/esau/desarrolloDeSoftware/labs/Laboratorio10/microservice/api/routes.py", line 45, in create_item
+    created = business_logic.create_item(item.name, item.description)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/esau/desarrolloDeSoftware/labs/Laboratorio10/microservice/services/business_logic.py", line 15, in create_item
+    item_id = database.add_item(name, description)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/esau/desarrolloDeSoftware/labs/Laboratorio10/microservice/services/database.py", line 53, in add_item
+    cursor.execute(
+sqlite3.IntegrityError: UNIQUE constraint failed: items.name
+---------------------------------------------------------------- Captured stdout teardown -----------------------------------------------------------------
+2025-12-14 22:02:10,808 - INFO - microservice - Deteniendo la aplicación
+==================================================================== warnings summary =====================================================================
+../../../../../usr/lib/python3/dist-packages/_pytest/config/__init__.py:1373
+  Warning: Unknown config option: python_paths
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================================================= short test summary info =================================================================
+FAILED tests/test_api.py::test_create_item_and_verify_in_list - assert 400 == 201
+1 failed, 1 passed, 1 warning in 0.44

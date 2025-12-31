@@ -721,7 +721,7 @@ kubtctl apply -f k8s/ # deploy  y service, corregir los manifiestos...
 kubectl get pods #viendo los pods
 kubectl get endpoints ejemplo-ms # info
 minikube service ejemplo-ms --url #exponer servicio
-curl http://127.0.0.1:46621/pi//items/  #probar
+curl http://127.0.0.1:46621/pi/items/  #probar
 kubectl get pods
 kubectl logs -l app=ejemplo-ms #logs
 kubectl scale deployment ejemplo-ms --replicas=4 #escalado

@@ -1,0 +1,16 @@
+name: ci kubernetes microservicio
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: revisar
+        uses: actions/checkout@v4
+        
+      - name: build
+        run: docker build -t ejemplo-ms:${{  github.sha }} .
+     
