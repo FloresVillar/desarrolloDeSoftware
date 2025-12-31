@@ -475,7 +475,7 @@ esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio10$ c
 ```
 
 
-**Despliegue de despliegue kubernetes local**
+**Despliegue kubernetes local**
 Teniamos contenedores levantados via docker( o docker-compose) ahora introducimos Kubernetes
 un breve esquema de como actua kubernetes(cortesia de GPT)
 ```bash
@@ -679,12 +679,12 @@ kind: Service
 metadata: 
   name : ejemplo-ms
 spec:
-  type: 
+  type: NodePort
   selector: 
     app: ejemplo-ms
   ports:
     - port : 80
-      targetPort :
+      targetPort : 80
       nodePort: 
 
 ```
@@ -705,14 +705,41 @@ Y arrancamos con especificaciones de memoria minima(wsl)
 minikube start --drive=docker --memory=1800 --cpus=4
 ```
 
-OKAY retomando la solucion de esta actividad, no quedaban muy claros los pasos. Para el uso de minikube , los PASOS COMPLETOS
+Ejercicios 
+1 ,2, 3
+
+OKAY retomando la solucion de esta actividad, no quedaban muy claros los pasos. Para el uso de minikube , los PASOS COMPLETOSjnnnnnnnnnmjkp´+1
 ```bash
 minikube start #arrancar el cluster
+kubectl get nodes # ver info
 eval $(minikube docker-env) # usar docker del cluster
+docker info | grep -i minikube # info
 docker build -t ejemplo-ms:0.1.0 . #construir imagen
 #creamos los manifiestos.
-kubtctl apply -f k8s/ # deploy  y service
+docker images | grep ejemplo-ms # info
+kubtctl apply -f k8s/ # deploy  y service, corregir los manifiestos...
 kubectl get pods #viendo los pods
+kubectl get endpoints ejemplo-ms # info
 minikube service ejemplo-ms --url #exponer servicio
-curl http://................ #probar
+curl http://127.0.0.1:46621/pi//items/  #probar
+kubectl get pods
+kubectl logs -l app=ejemplo-ms #logs
+kubectl scale deployment ejemplo-ms --replicas=4 #escalado
+kubectl delete pod .pod-name..
 ```
+Las correcciones hechas en los manifiestos, en deployment  y en service
+```bash
+Pod
+ └── labels (qué soy)
+
+Deployment
+ └── selector.matchLabels (qué Pods controlo)
+
+Service
+ └── selector (a qué Pods envío tráfico)
+
+```
+Y probando :
+esau@DESKTOP-A3RPEKP:~/desarrolloDeSoftware/labs/Laboratorio10$ curl http://127.0.0.1:42325/api/items/
+[{"name":"test-item","description":"Descripción de prueba","id":1}]
+

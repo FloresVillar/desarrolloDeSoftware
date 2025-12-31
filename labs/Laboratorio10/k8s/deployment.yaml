@@ -1,3 +1,4 @@
+apiVersion: apps/v1
 kind: Deployment
 metadata: 
   name: ejemplo-ms
@@ -19,14 +20,13 @@ spec:
             - containerPort: 80
           readinessProbe:
             httpGet:
-              path: /health
+              path: /api/items/
               port: 80
             periodSeconds: 10
             failureThreshold: 3
           livenessProbe:
             httpGet: 
-              path: /health
+              path: /api/items/
               port: 80
             periodSeconds: 10
-            failureThreshold: 3
-        - name: ejemplo-ms-2
+            failureThreshold: 3 
