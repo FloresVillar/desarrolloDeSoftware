@@ -3,11 +3,16 @@ name: ci kubernetes microservicio
 on:
   push:
     branches: ["main"]
+    paths: 
+      - "labs/Laboratorio10/**"
   workflow_dispatch: {}
 
 jobs:
-  pipeline:
+  build:
     runs-on: ubuntu-latest
+    defaults:
+      run: 
+        working-directory: labs/Laboratorio10
     steps:
       - name: revisar
         uses: actions/checkout@v4
