@@ -3,6 +3,7 @@ name: ci kubernetes microservicio
 on:
   push:
     branches: ["main"]
+  workflow_dispatch: {}
 
 jobs:
   pipeline:
@@ -10,7 +11,7 @@ jobs:
     steps:
       - name: revisar
         uses: actions/checkout@v4
-        
+
       - name: build
         run: docker build -t ejemplo-ms:${{  github.sha }} .
      
