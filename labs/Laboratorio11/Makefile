@@ -131,7 +131,7 @@ smoke:
 	else ./scripts/minikube_smoke.sh user-service 8000 $(K8S_NS); fi
 
 # Flujos de alto nivel 
-.PHONY: devx
+.PHONY: dev
 dev: env minikube-up build k8s-prepare k8s-apply smoke
 	@echo "[DEV] OK -> $(SERVICE) @ $(K8S_IMAGE)"
 
