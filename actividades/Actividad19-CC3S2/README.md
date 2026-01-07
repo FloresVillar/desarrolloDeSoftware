@@ -708,7 +708,7 @@ minikube start --drive=docker --memory=1800 --cpus=4
 Ejercicios 
 1 ,2, 3
 
-OKAY retomando la solucion de esta actividad, no quedaban muy claros los pasos. Para el uso de minikube , los PASOS COMPLETOSjnnnnnnnnnmjkp´+1
+OKAY retomando la solucion de esta actividad, no quedaban muy claros los pasos. Para el uso de minikube , los PASOS COMPLETOS
 ```bash
 minikube start #arrancar el cluster
 kubectl get nodes # ver info
